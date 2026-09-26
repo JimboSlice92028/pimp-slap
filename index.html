@@ -742,12 +742,10 @@ charm: 81
 }
 ];
 
-let crew = [{
-    name: "Player" 
-    role: "player"
-    happiness: 100
-    energy: 100
-    status; "Active"
+let crew = [];
+let namedThugs = [];
+let randomThugs = 0;
+const CREW_CAPACITY = 100;
 
 const recruitNames = [
 "Rico",
@@ -900,27 +898,7 @@ owned: false
 
 let activeVehicle = 0;
 
-function function normalizeCrew(){
-
-if(!Array.isArray(crew)){
-crew = [];
-}
-
-crew = crew
-.filter(member => member)
-.map(member => {
-
-if(typeof member === "string"){
-
-return {
-name: member,
-strength: 50,
-loyalty: 50,
-morale: 75,
-jailUntilDay: 0,
-jailUntilMinute: 0,
-jailReason: ""
-};
+function normalizeCrew(){
 
 if(!Array.isArray(crew)){
 crew = [];
@@ -4838,12 +4816,3 @@ applyTurnRegeneration();
 
 </body>
 </html>
-# === EMERGENCY PLAYER CREW PATCH ===
-if not crew:
-    crew.append({
-        "name": "Player",
-        "role": "Player",
-        "happiness": 100,
-        "energy": 100,
-        "status": "Active"
-    })
