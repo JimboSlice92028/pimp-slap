@@ -437,7 +437,7 @@ BATTLE
 <h2>Send Group</h2>
 
 <p class="tab-note">
-Roanoke says you can send the girls together or one at a time. Someone from the organization will automatically ride along for protection.
+Roanoke says you can send the girls together or one at a time. You ride along for protection. Crew rides with you when available.
 </p>
 
 <button onclick="visitLocation('Bowling Alley')">
@@ -646,7 +646,7 @@ Your game automatically saves in this browser.
 </div>
 
 <div class="good" style="margin-top:8px;">
-Pimp Slap v2.7 — Crew Persistence Fixed.
+Pimp Slap v2.8 — Player Protection Fix.
 </div>
 
 <div
@@ -838,7 +838,6 @@ let armorOwned = 0;
 let battleState = null;
 let activityLog = [];
 
-// Cocaine risk / police consequence tracking.
 let cocaineUseCountToday = 0;
 let cocaineConsecutiveUseCount = 0;
 let cocaineUsersToday = [];
@@ -1201,7 +1200,6 @@ savedCrew.length > 0
 namedThugs = Array.isArray(data.namedThugs) ? data.namedThugs : [];
 randomThugs = Number.isFinite(Number(data.randomThugs)) ? Math.max(0, Math.floor(Number(data.randomThugs))) : 0;
 
-// Legacy saves stored a single "property" object; migrate it into the array.
 ownedProperties =
 Array.isArray(data.ownedProperties)
 ? data.ownedProperties
@@ -1243,7 +1241,6 @@ activityLog = Array.isArray(data.activityLog)
 ? data.activityLog.map(String).slice(-50)
 : [];
 
-// Existing saves already past Level 4 should not be interrupted by the new Level 4 story.
 level4RivalResolved = data.level4RivalResolved !== undefined
 ? Boolean(data.level4RivalResolved)
 : playerLevel > 4;
@@ -1448,8 +1445,6 @@ function log(message){
 
 const cleanMessage = String(message);
 
-// Keep the Activity Log as real game state so actions and outcomes survive
-// screen refreshes, tab changes, saves, and reloads.
 activityLog.push(cleanMessage);
 if(activityLog.length > 50){
 activityLog = activityLog.slice(-50);
@@ -1464,10 +1459,6 @@ if(!box){
 return;
 }
 
-/*
-Activity icons: keep the existing log text, but make the
-type of event immediately recognizable at a glance.
-*/
 let icon = "";
 const text = cleanMessage;
 
@@ -1519,6 +1510,12 @@ icon = "📈 ";
 else if(/decreased|decrease|lost|penalty|cost|spent|reduced|drop/i.test(text)){
 icon = "📉 ";
 }
+else if(/\[STORY\]/i.test(text)){
+icon = "📖 ";
+}
+else if(/\[BORIS\]|\[RIVAL\]/i.test(text)){
+icon = "🔥 ";
+}
 
 box.innerHTML +=
 "<br>" +
@@ -1568,7 +1565,6 @@ else if(/anger|angry|rage/i.test(text)){ icon = "😡 "; }
 else if(/relationship|friendship|romance/i.test(text)){ icon = "❤️ "; }
 else if(/arrest|police|cop|cops|law enforcement/i.test(text)){ icon = "🚔 "; }
 else if(/jail|prison|locked up|lockup/i.test(text)){ icon = "⛓️ "; }
-else if(/beer|alcohol|drink|drinks/i.test(text)){ icon = "🍺 "; }
 else if(/weed|marijuana|smoke|joint/i.test(text)){ icon = "🌿 "; }
 else if(/cocaine|coke/i.test(text)){ icon = "❄️ "; }
 else if(/business|massage parlor|nail salon|operating cost|net income|property|work/i.test(text)){ icon = "💼 "; }
@@ -1578,6 +1574,8 @@ else if(/death|dead|killed|serious consequence/i.test(text)){ icon = "💀 "; }
 else if(/major event|raid|ambush|battle|attack|fight|event/i.test(text)){ icon = "🔥 "; }
 else if(/level up|increased|increase|joined|gained|earned|bonus|boost/i.test(text)){ icon = "📈 "; }
 else if(/decreased|decrease|lost|penalty|cost|spent|reduced|drop/i.test(text)){ icon = "📉 "; }
+else if(/\[STORY\]/i.test(text)){ icon = "📖 "; }
+else if(/\[BORIS\]|\[RIVAL\]/i.test(text)){ icon = "🔥 "; }
 
 box.innerHTML += "<br>" + icon + message;
 });
@@ -1619,20 +1617,22 @@ return;
 storyStage = 1;
 
 const opening = [
-"[STORY] The cell door opens. Roanoke is waiting outside.",
-"[STORY] He looks at you, then at the Civic parked at the curb.",
-"[STORY] He hands you $500 and the keys. Three workers are already waiting on you.",
+"[STORY] The cell door opens with a sound you know too well.",
+"[STORY] Roanoke is waiting outside. No smile. No speech.",
+"[STORY] He looks at the Civic at the curb, then at you.",
+"[STORY] He hands you the keys, $500, and three workers already waiting.",
 "[STORY] Roanoke: \"You made mistakes. That is over. What you do next is up to you.\"",
-"[STORY] He leaves before you can ask what comes next.",
-"[STORY] You are free. Start moving."
+"[STORY] He turns and walks away before you can ask what comes next.",
+"[STORY] The street is loud. You are free. The operation starts now."
 ];
 
 opening.forEach(line => log(line));
 
 document.getElementById("encounter").innerHTML =
 "<strong>ROANOKE</strong><br>" +
-"He got you out. He left you with a Civic, $500, and three workers.<br><br>" +
-"The rest is yours to figure out.";
+"He got you out. He left you a Civic, five hundred dollars, and three workers.<br><br>" +
+"No map. No promises. Just a chance.<br><br>" +
+"<em>Start moving. You ride along for protection until the crew grows.</em>";
 
 saveGame();
 updateScreen();
@@ -1650,10 +1650,11 @@ if(levelBox){ levelBox.textContent = playerLevel; }
 if(messageBox){
 const messages = [
 "You are learning. Keep paying attention.",
-"Your operation is growing. So are the consequences.",
-"Another level. Another chance to make a better mistake.",
+"Your operation is growing. So are the eyes on it.",
+"Another level. Another chance to make a cleaner mistake.",
 "You made it this far. Keep adapting.",
-"The streets are getting harder. So should you."
+"The streets get harder. That is the point.",
+"People notice the ones who last."
 ];
 messageBox.textContent = messages[Math.floor(Math.random() * messages.length)];
 }
@@ -1679,9 +1680,9 @@ xpNeeded();
 playerLevel++;
 
 log(
-"[LEVEL UP] You reached Level " +
+"[LEVEL UP] Level " +
 playerLevel +
-"!"
+". The neighborhood is starting to know your name."
 );
 
 showLevelUpPopup();
@@ -1689,8 +1690,10 @@ showLevelUpPopup();
 if(playerLevel === 2){
   document.getElementById("encounter").innerHTML =
     "<strong>ROANOKE</strong><br>" +
-    "&quot;You are starting to get noticed. Be wary of rivals.&quot;<br><br>" +
-    "Keep building. Keep your eyes open.";
+    "\"You are starting to get noticed. Be wary of rivals.\"<br><br>" +
+    "He does not name them. He does not need to.<br><br>" +
+    "Keep building. Keep your people close.";
+  log("[STORY] Word is traveling. Growth always leaves a trail.");
   markTabAttention("crewTab");
 }
 
@@ -1702,12 +1705,16 @@ if(playerLevel === 3){
     "<strong>ROANOKE</strong><br>" +
     "\"You kept your mouth shut when it mattered. I don't forget that.\"<br><br>" +
     "\"So I'm giving you the Massage Parlor / Nail Salon. Consider it a gift for not snitching. It's already yours.\"<br><br>" +
-    "\"Take your time. Look around. Make sure every member is strapped. Just in case. There is a new place to look for recruits, too. Keep an eye on the Strip Club.\"";
+    "\"Take your time. Look around. Make sure every member is strapped. Just in case.\"<br><br>" +
+    "\"There's a new place to look for people, too. Keep an eye on the Strip Club.\"";
+  log("[STORY] Roanoke paid a debt without calling it a debt.");
+  log("[STORY] The parlor is yours. The streets just got a little more complicated.");
 
   scheduleBorisGiftScene(6500);
 }
 
 if(playerLevel === 4){
+  log("[STORY] Success has a smell. So do threats.");
   scheduleLevel4RivalScene(7500);
 }
 
@@ -1755,7 +1762,6 @@ if(level4RivalResolved){ return; }
 level4RivalResolved = true;
 closeLevel4RivalPopup();
 
-// The rival's operation folds into yours after the confrontation.
 const rivalGirls = [
 {name:"Katya", condition:86, charm:78},
 {name:"Mila", condition:82, charm:84},
@@ -1795,9 +1801,11 @@ owned:true
 cadillac.owned = true;
 }
 
-log("[RIVAL] The rival's girls chose to leave with you. Four joined your stable; two begin working at the nightclub.");
-log("[RIVAL] You won the rival's Cadillac and 3 thugs.");
-log("[RIVAL] The rival swore you were dead meat as he left: \"This is sho nuff territory.\"");
+log("[RIVAL] The rival's girls chose to walk with you instead of stay with him.");
+log("[RIVAL] Four joined the stable. Two start working the nightclub.");
+log("[RIVAL] You took his Cadillac and three of his thugs.");
+log("[RIVAL] He left shouting that this was still his territory and that you were dead meat.");
+log("[STORY] The street heard the whole thing. So did everyone who was waiting to see who folded first.");
 
 saveGame();
 updateScreen();
@@ -1805,17 +1813,17 @@ updateScreen();
 
 function attackLevel4Rival(){
 if(level4RivalResolved){ return; }
-log("[LEVEL 4] You chose to attack the rival before he could make his move.");
+log("[LEVEL 4] You moved first. Better him than you.");
 resolveLevel4Rival();
 }
 
 function waitForLevel4Rival(){
 if(level4RivalResolved){ return; }
 closeLevel4RivalPopup();
-log("[LEVEL 4] You decided to wait. The rival made his move anyway.");
+log("[LEVEL 4] You decided to wait and see.");
 setTimeout(function(){
 if(!level4RivalResolved){
-log("[RIVAL] The rival attacked. You were ready for him.");
+log("[RIVAL] He came anyway. You were ready.");
 resolveLevel4Rival();
 }
 }, 1800);
@@ -1870,10 +1878,10 @@ lastCollectionDay: gameDay
 }
 
 closeBorisGiftPopup();
-log("[BORIS] You accepted Boris's gift: +$100,000.");
-log("[BORIS] Boris gave you his run-down nightclub as a gift for being a stand up guy.");
-log("[BUSINESS] Boris's Run-Down Nightclub is now yours.");
+log("[BORIS] You took the money and the club.");
+log("[BORIS] +$100,000. Boris's Run-Down Nightclub is now under your name.");
 log("[BORIS] Boris: \"Just a small token for a big man.\"");
+log("[STORY] Gifts this size never feel small. You accepted it anyway.");
 saveGame();
 updateScreen();
 }
@@ -1882,8 +1890,10 @@ function declineBorisGift(){
 if(borisGiftResolved){ return; }
 borisGiftResolved = true;
 closeBorisGiftPopup();
-log("[BORIS] You turned down Boris's gift.");
+log("[BORIS] You turned the gift down.");
+log("[BORIS] Boris looked at you for a long second, then smiled without warmth.");
 log("[BORIS] Boris: \"You fool. I promise I will end you.\"");
+log("[STORY] Some refusals are remembered longer than some favors.");
 saveGame();
 updateScreen();
 }
@@ -1937,29 +1947,11 @@ gameDay
 
 }
 
-log(
-"[ROANOKE] You didn't snitch."
-);
-
-log(
-"[ROANOKE] The Massage Parlor / Nail Salon is yours."
-);
-
-log(
-"[ROANOKE] No purchase price. No debt. No payment."
-);
-
-log(
-"[BUSINESS] Generates $1,000 every 24 hours."
-);
-
-log(
-"[BUSINESS] Operating cost is 15% ($150)."
-);
-
-log(
-"[BUSINESS] Net income: $850 every 24 hours."
-);
+log("[ROANOKE] You didn't snitch.");
+log("[ROANOKE] The Massage Parlor / Nail Salon is yours.");
+log("[ROANOKE] No purchase price. No debt. No payment plan.");
+log("[BUSINESS] It will throw off cash every day if you keep it running.");
+log("[STORY] Quiet loyalty still counts for something in this city.");
 
 saveGame();
 
@@ -1986,10 +1978,6 @@ updateScreen();
 return true;
 
 }
-
-/* =========================
-TAB NAVIGATION FIX
-========================= */
 
 function markTabAttention(tabId){
 if(!tabId){ return; }
@@ -2097,11 +2085,6 @@ btn.classList.add("active");
 }
 
 }
-
-/*
-Full live refresh whenever a tab
-is opened.
-*/
 
 updateScreen();
 
@@ -2307,7 +2290,7 @@ Coke $200
 
 <br>
 
-Maintenance uses cash + 1 supply and never uses turns.
+Maintenance uses 1 supply and never uses turns.
 
 </div>
 
@@ -2426,7 +2409,7 @@ html += `<h4>NAMED MEMBERS — AVAILABLE FOR PROMOTION</h4>`;
 namedThugs.forEach((thug,index) => { html += `<div class="crew-member"><strong>${thug.name}</strong><br>Strength: ${thug.strength}<br>Loyalty: ${thug.loyalty}<br>Morale: ${thug.morale}<br><br><button onclick="promoteNamedThug(${index})">PROMOTE TO CREW</button></div>`; });
 }
 }
-if(!crew.length && !namedThugs.length && !randomThugs){ html += `<p>No crew or thugs yet.</p>`; }
+if(!crew.length && !namedThugs.length && !randomThugs){ html += `<p>No crew or thugs yet. You still ride along as protection.</p>`; }
 box.innerHTML = html;
 }
 
@@ -2867,10 +2850,6 @@ log("[BUSINESS] Business not found.");
 return;
 }
 
-/*
-Legacy saves may have an incorrect/missing ready flag.
-The collection day is the authoritative once-per-day check.
-*/
 const collectedToday =
 Number(business.lastCollectionDay) === Number(gameDay);
 
@@ -3165,76 +3144,6 @@ updateScreen();
 
 }
 
-function renderSupplyMarketplace(){
-
-const items = [
-
-{
-key:"condoms",
-label:"Condoms"
-},
-
-{
-key:"medical",
-label:"Medical"
-},
-
-{
-key:"cigarettes",
-label:"Cigarettes"
-},
-
-{
-key:"weed",
-label:"Weed"
-},
-
-{
-key:"beer",
-label:"Beer"
-},
-
-{
-key:"cocaine",
-label:"Coke"
-}
-
-];
-
-return items.map(
-item => `
-
-<div class="market-card">
-
-<strong>
-${item.label}
-</strong>
-
-<p>
-In stock:
-${supplies[item.key] || 0}
-</p>
-
-<p>
-Price:
-$${expenses[item.key]}
-</p>
-
-<button
-onclick="buySupply('${item.key}')">
-
-BUY 1
-${item.label.toUpperCase()}
-
-</button>
-
-</div>
-
-`
-).join("");
-
-}
-
 function renderSmokeShop(){
 
 const box =
@@ -3289,11 +3198,9 @@ BUY +10 MAX TURNS
 
 }
 
-// Kept as a compatibility wrapper for existing updateScreen calls.
 function renderMarket(){
 return;
 }
-
 
 function buyTurnUpgrade(){
 
@@ -3705,52 +3612,55 @@ USE 1 TOKEN FOR +5 TURNS
 
 }
 
-function getTripProtection(
-individual = false
-){
+/* =========================
+   PLAYER IS ALWAYS PROTECTION
+   ========================= */
+function getTripProtection(individual = false){
 
 const availableCrew =
 Array.isArray(crew)
 ? crew.filter(member => member && !isJailActive(member))
 : [];
 
+// Player always rides along as baseline protection.
+const names = [playerName || "You"];
+let count = 1;
+
 if(availableCrew.length > 0){
 
-const count = individual ? 1 : Math.min(3, availableCrew.length);
+// Group trips can bring extra muscle (player + up to 2 crew).
+// Individual trips only need the player.
+const extra = individual ? 0 : Math.min(2, availableCrew.length);
+
+for(let i = 0; i < extra; i++){
+names.push(availableCrew[i].name);
+count++;
+}
+
+}
+else if(!individual && randomThugs > 0){
+
+names.push(randomThugs === 1 ? "Unassigned Thug" : "Unassigned Thug #1");
+count++;
+
+}
+else if(
+!individual &&
+Array.isArray(namedThugs) &&
+namedThugs.length > 0
+){
+
+names.push(namedThugs[0].name);
+count++;
+
+}
 
 return {
 count,
 temporary: false,
-names: availableCrew.slice(0,count).map(member => member.name)
+names
 };
 
-}
-
-// Unassigned thugs automatically fill the escort role when no named crew is available.
-if(randomThugs > 0){
-return {
-count: 1,
-temporary: false,
-names: [randomThugs === 1 ? "Unassigned Thug" : "Unassigned Thug #1"]
-};
-}
-
-// A named thug waiting for promotion can still ride along.
-if(Array.isArray(namedThugs) && namedThugs.length > 0){
-return {
-count: 1,
-temporary: false,
-names: [namedThugs[0].name]
-};
-}
-
-// With no crew, thugs, or named thugs yet, the player rides along themselves.
-// This is what makes the opening trips possible before you've recruited anyone.
-return {
-count: 1,
-temporary: false,
-names: [playerName || "You"]
-};
 }
 
 function isJailActive(entity){
@@ -3792,12 +3702,11 @@ cocaineUsersToday.push(entry);
 log(
 "[COCAINE] " +
 entity.name +
-" used coke. " +
+" used coke. Streak: " +
  cocaineConsecutiveUseCount +
 "."
 );
 
-// Hidden event check.
 if(
 !cocaineBribeEventTriggeredToday &&
 cocaineConsecutiveUseCount >= 5
@@ -3806,7 +3715,6 @@ triggerCocaineBribeEvent();
 return;
 }
 
-// Hidden event check.
 if(
 !cocainePoliceEventTriggeredToday &&
 cocaineUseCountToday >= 3 &&
@@ -3841,7 +3749,6 @@ uniquePeople.push(entry);
 
 let arrestedCount = 0;
 
-// Player is not jailed by this event.
 uniquePeople.forEach(
 entry => {
 
@@ -3874,8 +3781,7 @@ cash -= paid;
 
 log(
 "[ARREST] Police made an unexpected visit. " +
-"" +
-"" + arrestedCount +
+arrestedCount +
 " involved worker(s) were taken in."
 );
 
@@ -3897,6 +3803,9 @@ paid +
 
 log(
 "[COCAINE] Something went very wrong."
+);
+log(
+"[STORY] The city does not like patterns. Especially loud ones."
 );
 
 syncCrewState();
@@ -3993,6 +3902,9 @@ paid +
 log(
 "[COCAINE] The situation has been handled."
 );
+log(
+"[STORY] Quiet money usually costs less than loud problems."
+);
 
 syncCrewState();
 saveGame();
@@ -4043,11 +3955,12 @@ return;
 const protection =
 getTripProtection(individual);
 
+// Player always provides at least 1 protection, so this should never block.
 if(protection.count < 1){
 log("[TRIP] Nobody from the organization is available to ride along.");
 document.getElementById("encounter").innerHTML =
 "<strong>TRIP CANCELLED</strong><br>" +
-"You need at least one available thug or crew member to ride along.";
+"You need at least one available protector to ride along.";
 return;
 }
 
@@ -4162,12 +4075,20 @@ tripType +
 place +
 ": " +
 workers.length +
-" worker(s), " +
+" worker(s), protection " +
 protection.count +
-" thug(s), +$" +
+" (" +
+protection.names.join(", ") +
+"), +$" +
 totalEarnings +
 "."
 );
+
+if(totalEarnings >= 400){
+log("[STORY] The money came easy tonight. That never lasts forever.");
+}else if(totalEarnings <= 200){
+log("[STORY] Slow night. The city does not always cooperate.");
+}
 
 addXP(
 25 *
@@ -4178,7 +4099,6 @@ const roll =
 Math.random();
 
 if(place === "Strip Club") {
-  // The Strip Club quietly favors recruitment without revealing the exact odds.
   if(roll < 0.40){
     recruitWorker(place);
   }else if(roll < 0.68){
@@ -4235,10 +4155,10 @@ return;
 const protection = getTripProtection(true);
 
 if(protection.count < 1){
-log("[TRIP] No available thug or crew member to ride along.");
+log("[TRIP] No available protection to ride along.");
 document.getElementById("encounter").innerHTML =
 "<strong>TRIP CANCELLED</strong><br>" +
-"Nobody is available to ride along. Check the CREW tab.";
+"Nobody is available to ride along.";
 return;
 }
 
@@ -4397,10 +4317,10 @@ function visitLocation(place){
 const protection = getTripProtection(false);
 
 if(protection.count < 1){
-log("[TRIP] No available thug or crew member to ride along.");
+log("[TRIP] No available protection to ride along.");
 document.getElementById("encounter").innerHTML =
 "<strong>TRIP CANCELLED</strong><br>" +
-"Nobody is available to ride along. Check the CREW tab.";
+"Nobody is available to ride along.";
 return;
 }
 
@@ -4491,7 +4411,12 @@ worker.condition;
 log(
 "[RECRUIT] " +
 name +
-" joined your stable."
+" joined your stable after a conversation at " +
+place +
+"."
+);
+log(
+"[STORY] New faces mean new risk. And new money."
 );
 
 }
@@ -4509,13 +4434,15 @@ if(total >= CREW_CAPACITY){
 if(Math.random() < 0.45){
  const existing = namedThugs.find(thug => thug && thug.name === name);
  if(existing){ randomThugs += 1; log("[CREW] Additional thugs joined the organization."); }
- else { namedThugs.push({name, strength, loyalty, morale:75}); log("[CREW] A new named thug joined the organization."); }
+ else { namedThugs.push({name, strength, loyalty, morale:75}); log("[CREW] " + name + " is now available in the organization."); }
  document.getElementById("encounter").innerHTML = "<strong>NEW THUG</strong><br>" + name + " is now available in your organization.<br><br>Strength: " + strength + "<br>Loyalty: " + loyalty + "<br>Morale: 75<br><br>Check the CREW tab to manage the new thug.";
+ log("[STORY] Muscle finds muscle. Word of a working operation travels.");
 }else{
  const amount = Math.min(CREW_CAPACITY - total, Math.floor(Math.random() * 4) + 1);
  randomThugs += amount;
  document.getElementById("encounter").innerHTML = "<strong>THUGS RECRUITED</strong><br>" + amount + " new thugs joined your organization.<br><br>Random Thugs: " + randomThugs + "<br>Total Organization: " + totalOrganizationSize() + " / " + CREW_CAPACITY;
  log("[CREW] " + amount + " additional thugs joined the organization.");
+ log("[STORY] Numbers matter when the street starts paying attention.");
 }
 addXP(25);
 saveGame();
@@ -4532,7 +4459,11 @@ const events = [
 
 "Nothing interesting happened tonight.",
 
-"You discovered a new location to investigate."
+"You discovered a new location to investigate.",
+
+"Someone mentioned your name like they already knew it.",
+
+"A quiet conversation at the edge of the room paid off later."
 
 ];
 
@@ -4574,8 +4505,8 @@ let messages;
 if(roanokeLessons === 1){
 messages = [
 "Start clicking around. The tabs tell you more than I will. If one starts calling for your attention, take a look.",
-"Send the girls together when you want efficiency. Send one when you want more control. Either way, somebody needs to ride along with them.",
-"The girls have their own ways of doing things. Keep them in good shape and pay attention to what they need. You might want to look in the Stable once in a while.",
+"Send the girls together when you want efficiency. Send one when you want more control. Either way, you ride along for protection.",
+"The girls have their own ways of doing things. Keep them in good shape and pay attention to what they need.",
 "You have people now. Take care of the ones working for you, and they will take care of the work. The rest you learn by doing."
 ];
 markTabAttention("stableTab");
@@ -4591,8 +4522,8 @@ messages = [
 ];
 }else if(playerLevel === 2){
 messages = [
-"You are starting to get noticed. Be wary of rivals. You do not need to know who is watching yet. Just remember that somebody may be watching.",
-"Keep building, but do not get careless. Rivals have a way of appearing when things start going well.",
+"You are starting to get noticed. Be wary of rivals. You do not need to know who is watching yet.",
+"Keep building, but do not get careless. Rivals appear when things start going well.",
 "Growth changes the neighborhood. Keep your people close and keep your eyes open."
 ];
 markTabAttention("crewTab");
@@ -4721,6 +4652,7 @@ xp: type.xp
 };
 
 log("[BATTLE] " + type.name + " started. " + type.enemy + " power: " + type.power + ".");
+log("[STORY] The street does not care who started it. Only who is still standing.");
 
 saveGame();
 updateScreen();
@@ -4748,6 +4680,7 @@ member.morale = Math.min(100, (Number(member.morale) || 50) + 5);
 });
 
 log("[BATTLE] Victory. +$" + result.reward + ", +" + result.xp + " XP. Crew morale +5.");
+log("[STORY] Word of a win travels almost as fast as word of a loss.");
 
 }else{
 
@@ -4758,6 +4691,7 @@ member.morale = Math.max(0, (Number(member.morale) || 50) - 8);
 });
 
 log("[BATTLE] You lost. -$" + result.penalty + ". Crew morale -8.");
+log("[STORY] Losses teach. They also attract scavengers.");
 
 }
 
@@ -4859,8 +4793,6 @@ updateScreen();
 
 function payDailyExpenses(){
 
-// Jail time is based on the in-game clock, so a new day clears yesterday's
-// cocaine-use tracking while jailed people remain unavailable until their 24h expires.
 cocaineUseCountToday = 0;
 cocaineConsecutiveUseCount = 0;
 cocaineUsersToday = [];
@@ -4885,6 +4817,9 @@ log(
 "[EXPENSES] Daily operating costs: -$" +
 total
 );
+log(
+"[STORY] Another day. Another bill the street does not care about."
+);
 
 businesses.forEach(
 business => {
@@ -4894,10 +4829,6 @@ business.name ===
 "Massage Parlor / Nail Salon"
 ){
 
-/*
-A new game day makes the payout collectible again.
-Use both fields so older saves remain compatible.
-*/
 business.ready = true;
 business.lastCollectionDay = gameDay - 1;
 
@@ -5052,6 +4983,9 @@ log(
 "[DAY " +
 gameDay +
 "] A new day begins."
+);
+log(
+"[STORY] The city resets its appetite. Yours should too."
 );
 
 payDailyExpenses();
