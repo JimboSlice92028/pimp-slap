@@ -3938,11 +3938,7 @@ return;
 const protection = getTripProtection(true);
 
 if(protection.count < 1){
-log("[TRIP] No available thug or crew member to ride along.");
-document.getElementById("encounter").innerHTML =
-"<strong>TRIP CANCELLED</strong><br>" +
-"Nobody is available to ride along. Check the CREW tab.";
-return;
+    protection = { count: 0 };
 }
 
 if(!useTurn()){
