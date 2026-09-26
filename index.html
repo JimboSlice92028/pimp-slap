@@ -3747,11 +3747,7 @@ const protection =
 getTripProtection(individual);
 
 if(protection.count < 1){
-log("[TRIP] Nobody from the organization is available to ride along.");
-document.getElementById("encounter").innerHTML =
-"<strong>TRIP CANCELLED</strong><br>" +
-"You need at least one available thug or crew member to ride along.";
-return;
+    protection = { count: 0
 }
 
 let totalEarnings = 0;
