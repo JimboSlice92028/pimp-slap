@@ -3430,7 +3430,23 @@ names: availableCrew.slice(0,count).map(member => member.name)
 };
 
 }
+if(availableCrew.length === 0){
+    crew = [{
+        name: "Player",
+        strength: 100,
+        loyalty: 100,
+        morale: 100,
+        jailUntilDay: 0,
+        jailUntilMinute: 0,
+        jailReason: ""
+    }];
 
+    return {
+        count: 1,
+        temporary: false,
+        names: ["Player"]
+    };
+}
 // Unassigned thugs automatically fill the escort role when no named crew is available.
 if(randomThugs > 0){
 return {
