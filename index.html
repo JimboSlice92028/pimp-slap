@@ -3938,7 +3938,11 @@ return;
 const protection = getTripProtection(true);
 
 if(protection.count < 1){
-    protection = { count: 0 };
+log("[TRIP] No available thug or crew member to ride along.");
+document.getElementById("encounter").innerHTML =
+"<strong>TRIP CANCELLED</strong><br>" +
+"Nobody is available to ride along. Check the CREW tab.";
+return;
 }
 
 if(!useTurn()){
@@ -4096,7 +4100,11 @@ function visitLocation(place){
 const protection = getTripProtection(false);
 
 if(protection.count < 1){
-    protection = { count: 0 };
+log("[TRIP] No available thug or crew member to ride along.");
+document.getElementById("encounter").innerHTML =
+"<strong>TRIP CANCELLED</strong><br>" +
+"Nobody is available to ride along. Check the CREW tab.";
+return;
 }
 
 if(!useTurn()){
