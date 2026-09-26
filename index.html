@@ -3931,7 +3931,7 @@ updateScreen();
 return;
 }
 
-const protection = getTripProtection(true);
+let protection = getTripProtection(true);
 
 if(protection.count < 1){
 log("[TRIP] No available thug or crew member to ride along.");
