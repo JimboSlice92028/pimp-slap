@@ -3743,12 +3743,7 @@ return;
 
 }
 
-const protection =
-getTripProtection(individual);
 
-if(protection.count < 1){
-    protection = { count: 0
-}
 
 let totalEarnings = 0;
 let totalFatigue = 0;
@@ -4093,14 +4088,14 @@ updateScreen();
 
 function visitLocation(place){
 
-const protection = getTripProtection(false);
+let protection = getTripProtection(false);
 
 if(protection.count < 1){
-log("[TRIP] No available thug or crew member to ride along.");
-document.getElementById("encounter").innerHTML =
-"<strong>TRIP CANCELLED</strong><br>" +
-"Nobody is available to ride along. Check the CREW tab.";
-return;
+     protection = {
+       count: 0,
+       temporary: false,
+       names []
+     };  
 }
 
 if(!useTurn()){
