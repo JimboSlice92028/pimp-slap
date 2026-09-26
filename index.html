@@ -116,72 +116,33 @@ button:disabled{background:#555;cursor:not-allowed}
 </div>
 </div>
 
-<div id="battleTab" class="tab-panel">
-<div class="panel">
-<h2>Battle</h2>
-<p class="tab-note">Starting a battle uses 1 turn; battle actions do not use additional turns.</p>
-<div id="battlePanel">Loading battle options...</div>
-</div>
-</div>
-
-<div id="stableTab" class="tab-panel">
-<div class="panel"><h2>Your Stable</h2><div id="stable">Loading stable...</div></div>
-</div>
-
-<div id="crewTab" class="tab-panel">
-<div class="panel"><h2>Your Crew</h2><div id="crew">No crew members yet.</div></div>
-</div>
-
-<div id="propertyTab" class="tab-panel">
-<div id="propertySection" class="panel"><h2>Properties</h2><div id="propertyPanel"></div></div>
-</div>
-
-<div id="businessTab" class="tab-panel">
-<div id="businessSection" class="panel"><h2>Businesses</h2><div id="businessPanel"></div></div>
-</div>
-
-<div id="vehiclesTab" class="tab-panel">
-<div class="panel"><h2>Vehicles</h2><div id="vehiclesPanel"></div></div>
-</div>
-
+<div id="battleTab" class="tab-panel"><div class="panel"><h2>Battle</h2><p class="tab-note">Starting a battle uses 1 turn; battle actions do not.</p><div id="battlePanel">Loading...</div></div></div>
+<div id="stableTab" class="tab-panel"><div class="panel"><h2>Your Stable</h2><div id="stable">Loading...</div></div></div>
+<div id="crewTab" class="tab-panel"><div class="panel"><h2>Your Crew</h2><div id="crew">No crew yet.</div></div></div>
+<div id="propertyTab" class="tab-panel"><div id="propertySection" class="panel"><h2>Properties</h2><div id="propertyPanel"></div></div></div>
+<div id="businessTab" class="tab-panel"><div id="businessSection" class="panel"><h2>Businesses</h2><div id="businessPanel"></div></div></div>
+<div id="vehiclesTab" class="tab-panel"><div class="panel"><h2>Vehicles</h2><div id="vehiclesPanel"></div></div></div>
 <div id="marketplaceTab" class="tab-panel">
-<div class="panel">
-<h2>Smoke Shop</h2>
-<p class="tab-note">Beer, weed, cigarettes, condoms, medical, coke. No turns used to shop.</p>
-<div id="smokeShopPanel"></div>
+<div class="panel"><h2>Smoke Shop</h2><p class="tab-note">No turns used to shop.</p><div id="smokeShopPanel"></div></div>
+<div id="marketArmsSection" class="panel" style="margin-top:20px;display:none;"><h2>Arms Dealer</h2><div id="marketArmsPanel"></div></div>
 </div>
-<div id="marketArmsSection" class="panel" style="margin-top:20px;display:none;">
-<h2>Arms Dealer</h2>
-<div id="marketArmsPanel"></div>
-</div>
-</div>
-
 <div id="moreTab" class="tab-panel">
-<div id="identitySection" class="panel" style="display:none;">
-<h2>Identity</h2>
-<div id="identityPanel"></div>
-</div>
-<div class="panel" style="margin-top:20px;">
-<h2>Operations</h2>
-<div id="operationsPanel"></div>
-</div>
+<div id="identitySection" class="panel" style="display:none;"><h2>Identity</h2><div id="identityPanel"></div></div>
+<div class="panel" style="margin-top:20px;"><h2>Operations</h2><div id="operationsPanel"></div></div>
 <div class="panel" style="margin-top:20px;">
 <h2>Game Save</h2>
-<div>Your game automatically saves in this browser.</div>
-<div class="good" style="margin-top:8px;">Pimp Slap v3.0 — Clean Build.</div>
+<div>Auto-saves in this browser.</div>
+<div class="good" style="margin-top:8px;">Pimp Slap v3.1 — Level 4 War Path.</div>
 <div id="saveStatus" class="good" style="margin-top:8px;">Game ready.</div>
 <button onclick="manualSave()">SAVE GAME</button>
 <button onclick="resetGame()">START NEW GAME</button>
 </div>
 <div class="panel" style="margin-top:20px;">
 <h2>Support The Developer</h2>
-<p class="tab-note">Enjoying Pimp Slap? Tips go straight to the developer.</p>
-<a href="https://venmo.com/u/Sirius-Smooth" target="_blank" rel="noopener noreferrer" style="display:block;text-align:center;text-decoration:none;">
-<button type="button">DONATE ON VENMO</button>
-</a>
+<p class="tab-note">Tips go to the developer.</p>
+<a href="https://venmo.com/u/Sirius-Smooth" target="_blank" rel="noopener noreferrer" style="display:block;text-align:center;text-decoration:none;"><button type="button">DONATE ON VENMO</button></a>
 </div>
 </div>
-
 </div>
 
 <div id="levelUpOverlay" class="levelup-overlay">
@@ -189,7 +150,7 @@ button:disabled{background:#555;cursor:not-allowed}
 <h2>LEVEL UP</h2>
 <div id="levelUpPimpName"></div>
 <div class="levelup-number" id="levelUpNumber">2</div>
-<p id="levelUpMessage">You made it another level. Keep going.</p>
+<p id="levelUpMessage">Keep moving.</p>
 <button onclick="closeLevelUpPopup()">KEEP MOVING</button>
 </div>
 </div>
@@ -208,18 +169,21 @@ button:disabled{background:#555;cursor:not-allowed}
 </div>
 
 <div id="level4RivalOverlay" class="levelup-overlay" style="display:none;">
-<div class="levelup-card">
-<h2>A RIVAL IS MAKING THREATS</h2>
-<div style="font-size:22px;font-weight:bold;margin:14px 0;">BORIS &amp; ROANOKE</div>
-<p><strong>ROANOKE:</strong> "We have a problem. A rival pimp has been making threats and says he's ready to take you out."</p>
-<p><strong>BORIS:</strong> "Maybe you visit the Arms Dealer. You should be ready."</p>
+<div class="levelup-card" style="text-align:left;">
+<h2 style="text-align:center;">SOMETHING IS COMING</h2>
+<div style="font-size:20px;font-weight:bold;margin:10px 0;text-align:center;">ROANOKE</div>
+<p><strong>ROANOKE:</strong> "A rival has been making noise. The kind that does not stay talk for long."</p>
+<p><strong>ROANOKE:</strong> "Get prepared for war. Not later. Now."</p>
+<p><strong>ROANOKE:</strong> "Go to the Arms Dealer. Every person you send should be carrying. Pistol for close work. Rifle or shotgun for the rest. Body armor is not optional if you value breathing."</p>
+<p><strong>ROANOKE:</strong> "And do not roll light. You need SUVs — enough metal to move your people together."</p>
+<p><strong>BORIS:</strong> "He is not bluffing. Be ready."</p>
 <p><strong>YOU:</strong> "Why should I care?"</p>
-<p><strong>ROANOKE:</strong> "Because this guy beats his girls and forces them to work even when they don't want to."</p>
-<p><strong>YOU:</strong> "Fuck that. My girls are idiots, not innocent. They choose what they want, like anyone should be allowed to."</p>
-<p><strong>ONE OF YOUR GIRLS:</strong> <em>She nods approvingly, flipping her butterfly knife around her fingers.</em> "Maybe we should make sure he doesn't have the balls to do it again."</p>
-<p class="warning"><strong>The choice is yours.</strong> Attack the rival now, or wait and see what happens.</p>
+<p><strong>ROANOKE:</strong> "Because this one beats his girls and forces them to work when they do not want to."</p>
+<p><strong>YOU:</strong> "Fuck that. My girls choose what they want."</p>
+<p><strong>ONE OF YOUR GIRLS:</strong> <em>Butterfly knife, steady hands.</em> "Then make sure he cannot do it again."</p>
+<p class="warning" style="text-align:center;"><strong>When you are ready — move, or wait.</strong></p>
 <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:18px;">
-<button onclick="attackLevel4Rival()">ATTACK RIVAL</button>
+<button onclick="attackLevel4Rival()">MOVE ON HIM</button>
 <button onclick="waitForLevel4Rival()">WAIT</button>
 </div>
 </div>
@@ -229,7 +193,6 @@ button:disabled{background:#555;cursor:not-allowed}
 let cash=500,turns=5,maxTurns=20,playerLevel=1,playerXP=0,gameMinutes=0,gameDay=1;
 let playerName="Pimp",operationName="The Operation",lastTurnRegenAt=Date.now();
 const SAVE_KEY="pimpSlapSave";
-
 let expenses={condoms:50,medical:75,cigarettes:15,weed:50,beer:20,cocaine:200};
 let supplies={condoms:10,medical:5,cigarettes:10,weed:5,beer:10,cocaine:2};
 let stable=[{name:"Maya",condition:82,charm:72},{name:"Tasha",condition:91,charm:65},{name:"Jenny",condition:74,charm:81}];
@@ -246,7 +209,6 @@ let weapons={"AR-69":0,"AK-67":0,"Revolver":0,".420 Semi-Auto":0,"Sawed-Off Shot
 let armorOwned=0,battleState=null,activityLog=[];
 let cocaineUseCountToday=0,cocaineConsecutiveUseCount=0,cocaineUsersToday=[];
 let cocainePoliceEventTriggeredToday=false,cocaineBribeEventTriggeredToday=false;
-
 const battleTypes=[
 {name:"Street Ambush",enemy:"Street Crew",power:45,reward:350,penalty:20,xp:45},
 {name:"Rival Crew",enemy:"Rival Crew",power:70,reward:650,penalty:30,xp:70},
@@ -264,14 +226,12 @@ let vehicles=[
 {name:"Luxury SUV Executive",tier:3,cost:18000,capacity:8,condition:100,owned:false}
 ];
 let activeVehicle=0;
-
-const BORIS_CLUB_PRICE=250000,BORIS_CLUB_GROSS=2500,BORIS_CLUB_OPERATING=700;
-const BORIS_CLUB_NET=BORIS_CLUB_GROSS-BORIS_CLUB_OPERATING;
+const BORIS_CLUB_PRICE=250000,BORIS_CLUB_GROSS=2500,BORIS_CLUB_OPERATING=700,BORIS_CLUB_NET=1800;
 
 function normalizeCrew(){
 if(!Array.isArray(crew)) crew=[];
 crew=crew.filter(m=>m).map(m=>{
-if(typeof m==="string") return{name:m,strength:50,loyalty:50,morale:75};
+if(typeof m==="string") return{name:m,strength:50,loyalty:50,morale:75,injuredUntilDay:0};
 return{
 name:m.name||"Unknown Thug",
 strength:Number.isFinite(Number(m.strength))?Number(m.strength):50,
@@ -279,7 +239,8 @@ loyalty:Number.isFinite(Number(m.loyalty))?Number(m.loyalty):50,
 morale:Number.isFinite(Number(m.morale))?Number(m.morale):75,
 jailUntilDay:Number.isFinite(Number(m.jailUntilDay))?Number(m.jailUntilDay):0,
 jailUntilMinute:Number.isFinite(Number(m.jailUntilMinute))?Number(m.jailUntilMinute):0,
-jailReason:m.jailReason||""
+jailReason:m.jailReason||"",
+injuredUntilDay:Number.isFinite(Number(m.injuredUntilDay))?Number(m.injuredUntilDay):0
 };
 });
 }
@@ -287,19 +248,15 @@ function normalizeNamedThugs(){
 if(!Array.isArray(namedThugs)) namedThugs=[];
 namedThugs=namedThugs.filter(t=>t).map(t=>{
 if(typeof t==="string") return{name:t,strength:50,loyalty:50,morale:75};
-return{
-name:t.name||"Unknown Thug",
-strength:Number.isFinite(Number(t.strength))?Number(t.strength):50,
-loyalty:Number.isFinite(Number(t.loyalty))?Number(t.loyalty):50,
-morale:Number.isFinite(Number(t.morale))?Number(t.morale):75
-};
+return{name:t.name||"Unknown Thug",strength:Number.isFinite(Number(t.strength))?Number(t.strength):50,loyalty:Number.isFinite(Number(t.loyalty))?Number(t.loyalty):50,morale:Number.isFinite(Number(t.morale))?Number(t.morale):75};
 });
 randomThugs=Math.max(0,Math.floor(Number(randomThugs)||0));
 }
 function totalOrganizationSize(){return crew.length+namedThugs.length+randomThugs}
-function battleReadyThugCount(){return crew.length+randomThugs}
+function battleReadyThugCount(){return crew.filter(m=>m&&!isJailActive(m)&&!isInjured(m)).length+randomThugs}
 function syncCrewState(){normalizeCrew();normalizeNamedThugs();window.pimpCrew=crew;return crew}
 function ownsBorisNightclub(){return businesses.some(b=>b&&b.name==="Boris's Run-Down Nightclub")}
+function isInjured(m){return m&&Number(m.injuredUntilDay)>Number(gameDay)}
 
 function saveGame(){
 syncCrewState();
@@ -311,13 +268,11 @@ borisAttackPending,borisNightclubForSale,level4RivalResolved,storyStage,roanokeL
 cocaineUseCountToday,cocaineConsecutiveUseCount,cocaineUsersToday,cocainePoliceEventTriggeredToday,
 cocaineBribeEventTriggeredToday,activityLog
 }));
-const s=document.getElementById("saveStatus");
-if(s) s.textContent="Game saved.";
+const s=document.getElementById("saveStatus");if(s) s.textContent="Game saved.";
 }
 
 function loadGame(){
-const saved=localStorage.getItem(SAVE_KEY);
-if(!saved) return false;
+const saved=localStorage.getItem(SAVE_KEY);if(!saved) return false;
 try{
 const d=JSON.parse(saved);
 cash=d.cash??cash;turns=d.turns??turns;maxTurns=d.maxTurns??maxTurns;
@@ -326,8 +281,7 @@ gameMinutes=d.gameMinutes??gameMinutes;gameDay=d.gameDay??gameDay;
 playerName=d.playerName??playerName;operationName=d.operationName??operationName;
 lastTurnRegenAt=d.lastTurnRegenAt??lastTurnRegenAt;
 if(!Number.isFinite(lastTurnRegenAt)||lastTurnRegenAt<=0) lastTurnRegenAt=Date.now();
-expenses=d.expenses??expenses;
-expenses.cigarettes=15;expenses.weed=50;expenses.beer=20;expenses.cocaine=200;
+expenses=d.expenses??expenses;expenses.cigarettes=15;expenses.weed=50;expenses.beer=20;expenses.cocaine=200;
 supplies=d.supplies??supplies;stable=d.stable??stable;
 const sc=Array.isArray(d.crew)?d.crew:[],st=Array.isArray(d.thugs)?d.thugs:[];
 crew=sc.length>0?sc:st;
@@ -352,151 +306,93 @@ cocaineConsecutiveUseCount=Number.isFinite(Number(d.cocaineConsecutiveUseCount))
 cocaineUsersToday=Array.isArray(d.cocaineUsersToday)?d.cocaineUsersToday:[];
 cocainePoliceEventTriggeredToday=Boolean(d.cocainePoliceEventTriggeredToday);
 cocaineBribeEventTriggeredToday=Boolean(d.cocaineBribeEventTriggeredToday);
-if(!Array.isArray(stable)) stable=[];
-if(!Array.isArray(crew)) crew=[];
-if(crew.length===0){
-const legacy=Array.isArray(d.thugs)?d.thugs:Array.isArray(d.crewMembers)?d.crewMembers:[];
-if(legacy.length>0) crew=legacy;
-}
+if(!Array.isArray(stable)) stable=[];if(!Array.isArray(crew)) crew=[];
+if(crew.length===0){const legacy=Array.isArray(d.thugs)?d.thugs:Array.isArray(d.crewMembers)?d.crewMembers:[];if(legacy.length>0) crew=legacy}
 normalizeCrew();
 if(playerLevel>=3){
 armsDealerUnlocked=true;
-if(!businesses.find(b=>b&&b.name==="Massage Parlor / Nail Salon")){
+if(!businesses.find(b=>b&&b.name==="Massage Parlor / Nail Salon"))
 businesses.push({name:"Massage Parlor / Nail Salon",gross:1000,operatingRate:0.15,net:850,ready:true,lastCollectionDay:gameDay});
 }
-}
-if(!Array.isArray(vehicles)||vehicles.length===0){
+if(!Array.isArray(vehicles)||!vehicles.length)
 vehicles=[{name:"Honda Civic",tier:1,cost:0,capacity:3,condition:100,owned:true}];
-}
 if(!Number.isInteger(activeVehicle)||activeVehicle<0||activeVehicle>=vehicles.length) activeVehicle=0;
 return true;
-}catch(e){console.log("Save could not be loaded:",e);return false}
+}catch(e){console.log(e);return false}
 }
 
 function manualSave(){saveGame();log("[SAVE] Game saved successfully.");updateScreen()}
-function resetGame(){
-if(!confirm("Start a NEW GAME? This erases your current save.")) return;
-localStorage.removeItem(SAVE_KEY);
-location.reload();
-}
+function resetGame(){if(!confirm("Start a NEW GAME? This erases your save."))return;localStorage.removeItem(SAVE_KEY);location.reload()}
+function formatGameTime(m){let h=Math.floor(m/60),mins=m%60,s=h>=12?"PM":"AM",d=h%12;if(d===0)d=12;return d+":"+String(mins).padStart(2,"0")+" "+s}
 
-function formatGameTime(minutes){
-let hours=Math.floor(minutes/60),mins=minutes%60,suffix=hours>=12?"PM":"AM",displayHour=hours%12;
-if(displayHour===0) displayHour=12;
-return displayHour+":"+String(mins).padStart(2,"0")+" "+suffix;
-}
-
-function logIcon(text){
-if(/\[(?:CASH|PAYMENT|MONEY|SALE|REWARD|INCOME|EXPENSE|PURCHASE|ROANOKE)/i.test(text)||/\$[0-9]/.test(text)) return"💰 ";
-if(/\[(?:MORALE|CREW|STABLE)/i.test(text)||/morale|happiness/i.test(text)) return"😎 ";
-if(/anger|angry|rage/i.test(text)) return"😡 ";
-if(/relationship|friendship|romance/i.test(text)) return"❤️ ";
-if(/arrest|police|cop|cops|law enforcement/i.test(text)) return"🚔 ";
-if(/jail|prison|locked up|lockup/i.test(text)) return"⛓️ ";
-if(/beer|alcohol|drink|drinks/i.test(text)) return"🍺 ";
-if(/weed|marijuana|smoke|joint/i.test(text)) return"🌿 ";
-if(/cocaine|coke/i.test(text)) return"❄️ ";
-if(/business|massage parlor|nail salon|operating cost|net income|property|work/i.test(text)) return"💼 ";
-if(/mission|objective|goal/i.test(text)) return"🎯 ";
-if(/warning|not enough|cannot|can't|full|failed|no .* ready|cancelled/i.test(text)) return"⚠️ ";
-if(/death|dead|killed|serious consequence/i.test(text)) return"💀 ";
-if(/major event|raid|ambush|battle|attack|fight|event/i.test(text)) return"🔥 ";
-if(/level up|increased|increase|joined|gained|earned|bonus|boost/i.test(text)) return"📈 ";
-if(/decreased|decrease|lost|penalty|cost|spent|reduced|drop/i.test(text)) return"📉 ";
-if(/\[STORY\]/i.test(text)) return"📖 ";
-if(/\[BORIS\]|\[RIVAL\]/i.test(text)) return"🔥 ";
+function logIcon(t){
+if(/\[(?:CASH|PAYMENT|MONEY|SALE|REWARD|INCOME|EXPENSE|PURCHASE|ROANOKE)/i.test(t)||/\$[0-9]/.test(t))return"💰 ";
+if(/\[(?:MORALE|CREW|STABLE)/i.test(t)||/morale/i.test(t))return"😎 ";
+if(/arrest|police|cop/i.test(t))return"🚔 ";
+if(/jail|prison|injured/i.test(t))return"⛓️ ";
+if(/beer|drink/i.test(t))return"🍺 ";
+if(/weed|marijuana/i.test(t))return"🌿 ";
+if(/cocaine|coke/i.test(t))return"❄️ ";
+if(/business|property|nightclub/i.test(t))return"💼 ";
+if(/warning|not enough|cannot|failed|cancelled/i.test(t))return"⚠️ ";
+if(/death|dead|killed/i.test(t))return"💀 ";
+if(/battle|attack|fight|raid|war/i.test(t))return"🔥 ";
+if(/level up|joined|gained|earned/i.test(t))return"📈 ";
+if(/\[STORY\]/i.test(t))return"📖 ";
+if(/\[BORIS\]|\[RIVAL\]/i.test(t))return"🔥 ";
 return"";
 }
-
-function log(message){
-const clean=String(message);
-activityLog.push(clean);
-if(activityLog.length>50) activityLog=activityLog.slice(-50);
-const box=document.getElementById("log");
-if(!box) return;
-box.innerHTML+="<br>"+logIcon(clean)+message;
-box.scrollTop=box.scrollHeight;
+function log(msg){
+const c=String(msg);activityLog.push(c);if(activityLog.length>50)activityLog=activityLog.slice(-50);
+const box=document.getElementById("log");if(!box)return;
+box.innerHTML+="<br>"+logIcon(c)+msg;box.scrollTop=box.scrollHeight;
 }
-
-function clearActivityLog(){
-activityLog=[];
-const box=document.getElementById("log");
-if(box){box.innerHTML="[GAME] Activity log cleared.";box.scrollTop=box.scrollHeight}
-saveGame();
-}
-
-function renderActivityLog(){
-const box=document.getElementById("log");
-if(!box||activityLog.length===0) return;
-box.innerHTML="";
-activityLog.forEach(m=>{box.innerHTML+="<br>"+logIcon(String(m))+m});
-box.scrollTop=box.scrollHeight;
-}
-
-function setText(id,value){const el=document.getElementById(id);if(el) el.textContent=value}
+function clearActivityLog(){activityLog=[];const b=document.getElementById("log");if(b){b.innerHTML="[GAME] Activity log cleared.";b.scrollTop=b.scrollHeight}saveGame()}
+function renderActivityLog(){const b=document.getElementById("log");if(!b||!activityLog.length)return;b.innerHTML="";activityLog.forEach(m=>{b.innerHTML+="<br>"+logIcon(String(m))+m});b.scrollTop=b.scrollHeight}
+function setText(id,v){const e=document.getElementById(id);if(e)e.textContent=v}
 function xpNeeded(){return 100+((playerLevel-1)*75)}
 function difficultyMultiplier(){return 1+((Math.max(1,playerLevel)-1)*0.12)}
 
 function startOpeningStory(){
-if(storyStage>0) return;
-storyStage=1;
-[
-"[STORY] The cell door opens with a sound you know too well.",
-"[STORY] Roanoke is waiting outside. No smile. No speech.",
-"[STORY] He looks at the Civic at the curb, then at you.",
-"[STORY] He hands you the keys, $500, and three workers already waiting.",
-"[STORY] Roanoke: \"You made mistakes. That is over. What you do next is up to you.\"",
-"[STORY] He turns and walks away before you can ask what comes next.",
-"[STORY] The street is loud. You are free. The operation starts now."
-].forEach(line=>log(line));
-document.getElementById("encounter").innerHTML=
-"<strong>ROANOKE</strong><br>He got you out. He left you a Civic, five hundred dollars, and three workers.<br><br>No map. No promises. Just a chance.<br><br><em>Start moving. You ride along for protection until the crew grows.</em>";
+if(storyStage>0)return;storyStage=1;
+["[STORY] The cell door opens with a sound you know too well.","[STORY] Roanoke is waiting outside. No smile. No speech.","[STORY] He looks at the Civic at the curb, then at you.","[STORY] He hands you the keys, $500, and three workers already waiting.","[STORY] Roanoke: \"You made mistakes. That is over. What you do next is up to you.\"","[STORY] He turns and walks away before you can ask what comes next.","[STORY] The street is loud. You are free. The operation starts now."].forEach(l=>log(l));
+document.getElementById("encounter").innerHTML="<strong>ROANOKE</strong><br>He got you out. Civic, five hundred, three workers.<br><br><em>Start moving. You ride along for protection.</em>";
 saveGame();updateScreen();
 }
 
 function showLevelUpPopup(){
-const overlay=document.getElementById("levelUpOverlay");
-if(!overlay) return;
-const nameBox=document.getElementById("levelUpPimpName");
-const levelBox=document.getElementById("levelUpNumber");
-const messageBox=document.getElementById("levelUpMessage");
-if(nameBox) nameBox.innerHTML="Congratulations, <strong>"+playerName+"</strong>!";
-if(levelBox) levelBox.textContent=playerLevel;
-if(messageBox){
-const msgs=["You are learning. Keep paying attention.","Your operation is growing. So are the eyes on it.","Another level. Another chance to make a cleaner mistake.","You made it this far. Keep adapting.","The streets get harder. That is the point.","People notice the ones who last."];
-messageBox.textContent=msgs[Math.floor(Math.random()*msgs.length)];
+const o=document.getElementById("levelUpOverlay");if(!o)return;
+const n=document.getElementById("levelUpPimpName"),l=document.getElementById("levelUpNumber"),m=document.getElementById("levelUpMessage");
+if(n)n.innerHTML="Congratulations, <strong>"+playerName+"</strong>!";
+if(l)l.textContent=playerLevel;
+if(m){const msgs=["Keep paying attention.","The eyes on you are growing.","Keep adapting.","The streets get harder."];m.textContent=msgs[Math.floor(Math.random()*msgs.length)]}
+o.style.display="flex";
 }
-overlay.style.display="flex";
-}
-function closeLevelUpPopup(){const o=document.getElementById("levelUpOverlay");if(o) o.style.display="none"}
+function closeLevelUpPopup(){const o=document.getElementById("levelUpOverlay");if(o)o.style.display="none"}
 
 function addXP(amount){
 playerXP+=amount;
 while(playerXP>=xpNeeded()){
-playerXP-=xpNeeded();
-playerLevel++;
-const before=turns;
-turns=Math.min(maxTurns,turns+3);
-const gained=turns-before;
-log("[LEVEL UP] Level "+playerLevel+". The neighborhood is starting to know your name.");
-if(gained>0) log("[LEVEL UP] +"+gained+" turn"+(gained===1?"":"s")+".");
+playerXP-=xpNeeded();playerLevel++;
+const before=turns;turns=Math.min(maxTurns,turns+3);const gained=turns-before;
+log("[LEVEL UP] Level "+playerLevel+".");
+if(gained>0)log("[LEVEL UP] +"+gained+" turn"+(gained===1?"":"s")+".");
 showLevelUpPopup();
 if(playerLevel===2){
-document.getElementById("encounter").innerHTML="<strong>ROANOKE</strong><br>\"You are starting to get noticed. Be wary of rivals.\"<br><br>He does not name them. He does not need to.<br><br>Keep building. Keep your people close.";
-log("[STORY] Word is traveling. Growth always leaves a trail.");
+document.getElementById("encounter").innerHTML="<strong>ROANOKE</strong><br>\"You are starting to get noticed. Be wary of rivals.\"<br><br>Keep building. Keep your people close.";
+log("[STORY] Word is traveling.");
 markTabAttention("crewTab");
 }
 if(playerLevel===3){
-markTabAttention("marketplaceTab");
-markTabAttention("homeTab");
-unlockLevel3();
-document.getElementById("encounter").innerHTML="<strong>ROANOKE</strong><br>\"You kept your mouth shut when it mattered. I don't forget that.\"<br><br>\"So I'm giving you the Massage Parlor / Nail Salon. Consider it a gift for not snitching. It's already yours.\"<br><br>\"Take your time. Look around. Make sure every member is strapped. Just in case.\"<br><br>\"There's a new place to look for people, too. Keep an eye on the Strip Club.\"";
+markTabAttention("marketplaceTab");markTabAttention("homeTab");unlockLevel3();
+document.getElementById("encounter").innerHTML="<strong>ROANOKE</strong><br>\"You kept your mouth shut when it mattered.\"<br><br>\"The Massage Parlor / Nail Salon is yours. A gift for not snitching.\"<br><br>\"Look around. Make sure every member is strapped. Keep an eye on the Strip Club.\"";
 log("[STORY] Roanoke paid a debt without calling it a debt.");
-log("[STORY] The parlor is yours. The streets just got a little more complicated.");
 scheduleBorisGiftScene(6500);
 }
 if(playerLevel===4){
-log("[STORY] Success has a smell. So do threats.");
+log("[STORY] The temperature on the street just changed.");
+markTabAttention("marketplaceTab");
+markTabAttention("vehiclesTab");
 scheduleLevel4RivalScene(7500);
 }
 }
@@ -504,841 +400,574 @@ saveGame();
 }
 
 function scheduleLevel4RivalScene(delayMs){
-if(playerLevel!==4||level4RivalResolved||level4RivalPopupScheduled) return;
+if(playerLevel!==4||level4RivalResolved||level4RivalPopupScheduled)return;
 level4RivalPopupScheduled=true;
-setTimeout(function(){
-level4RivalPopupScheduled=false;
-if(playerLevel===4&&!level4RivalResolved) showLevel4RivalPopup();
-},Math.max(1000,delayMs||7500));
+setTimeout(function(){level4RivalPopupScheduled=false;if(playerLevel===4&&!level4RivalResolved)showLevel4RivalPopup()},Math.max(1000,delayMs||7500));
 }
-function showLevel4RivalPopup(){const o=document.getElementById("level4RivalOverlay");if(!o||level4RivalResolved) return;o.style.display="flex"}
-function closeLevel4RivalPopup(){const o=document.getElementById("level4RivalOverlay");if(o) o.style.display="none"}
+function showLevel4RivalPopup(){const o=document.getElementById("level4RivalOverlay");if(!o||level4RivalResolved)return;o.style.display="flex"}
+function closeLevel4RivalPopup(){const o=document.getElementById("level4RivalOverlay");if(o)o.style.display="none"}
+
+function countOwnedSUVs(){
+return vehicles.filter(v=>v&&v.owned&&/SUV/i.test(v.name)&&Number(v.condition)>0).length;
+}
+function countPistols(){return weapons["Revolver"]||0}
+function countLongGuns(){return (weapons["AR-69"]||0)+(weapons["AK-67"]||0)+(weapons[".420 Semi-Auto"]||0)+(weapons["Sawed-Off Shotgun"]||0)}
+
+function applyLevel4WarDamage(){
+// Active vehicle totaled
+const v=vehicles[activeVehicle];
+if(v&&v.owned){
+v.condition=0;
+log("[VEHICLE] "+v.name+" was totaled in the fight.");
+}
+// Switch to another working owned vehicle if possible
+const alt=vehicles.findIndex((x,i)=>i!==activeVehicle&&x.owned&&Number(x.condition)>0);
+if(alt>=0){activeVehicle=alt;log("[VEHICLE] You switched to the "+vehicles[alt].name+".")}
+else{log("[VEHICLE] No other working vehicle available.")}
+
+// 3 crew injured (24h)
+let injuredNames=[];
+const healthy=crew.filter(m=>m&&!isJailActive(m)&&!isInjured(m));
+for(let i=0;i<3;i++){
+if(healthy[i]){
+healthy[i].injuredUntilDay=gameDay+1;
+healthy[i].morale=Math.max(5,(Number(healthy[i].morale)||50)-40);
+injuredNames.push(healthy[i].name);
+}else if(randomThugs>0){
+randomThugs--;
+injuredNames.push("Unassigned Thug");
+}else if(namedThugs.length>0){
+const t=namedThugs.shift();
+injuredNames.push(t.name+" (sidelined)");
+}
+}
+if(injuredNames.length){
+log("[CREW] Injured and out of action: "+injuredNames.slice(0,3).join(", ")+".");
+}else{
+log("[CREW] No spare bodies to take the hits — the damage still landed on the operation.");
+}
+
+log("[RIVAL] Two of theirs did not walk away.");
+}
 
 function resolveLevel4Rival(){
-if(level4RivalResolved) return;
+if(level4RivalResolved)return;
 level4RivalResolved=true;
 closeLevel4RivalPopup();
+
+applyLevel4WarDamage();
+
 [{name:"Katya",condition:86,charm:78},{name:"Mila",condition:82,charm:84},{name:"Svetlana",condition:89,charm:76},{name:"Nadia",condition:80,charm:88}].forEach(g=>{
-if(!stable.some(e=>e&&e.name===g.name)) stable.push(g);
+if(!stable.some(e=>e&&e.name===g.name))stable.push(g);
 });
 const nightclub=businesses.find(b=>b.name==="Boris's Run-Down Nightclub");
-if(nightclub) nightclub.staff=Math.max(Number(nightclub.staff)||0,2);
-if(totalOrganizationSize()+3<=CREW_CAPACITY) randomThugs+=3;
+if(nightclub)nightclub.staff=Math.max(Number(nightclub.staff)||0,2);
+if(totalOrganizationSize()+3<=CREW_CAPACITY)randomThugs+=3;
 else randomThugs+=Math.max(0,CREW_CAPACITY-totalOrganizationSize());
+
 const cadillac=vehicles.find(v=>v.name==="Cadillac"||v.name==="Rival Cadillac");
-if(!cadillac) vehicles.push({name:"Cadillac",tier:2,cost:0,capacity:6,condition:78,owned:true});
-else cadillac.owned=true;
-log("[RIVAL] The rival's girls chose to walk with you instead of stay with him.");
-log("[RIVAL] Four joined the stable. Two start working the nightclub.");
-log("[RIVAL] You took his Cadillac and three of his thugs.");
-log("[RIVAL] He left shouting that this was still his territory and that you were dead meat.");
-log("[STORY] The street heard the whole thing.");
+if(!cadillac)vehicles.push({name:"Cadillac",tier:2,cost:0,capacity:6,condition:62,owned:true});
+else{cadillac.owned=true;cadillac.condition=Math.min(Number(cadillac.condition)||62,62)}
+
+log("[RIVAL] His girls chose to leave with you. Four joined the stable.");
+log("[RIVAL] You took what was left of his Cadillac and three of his thugs.");
+log("[RIVAL] He left screaming about territory.");
+log("[STORY] The street will talk about this one.");
+
+document.getElementById("encounter").innerHTML=
+"<strong>RIVAL CONFRONTATION</strong><br><br>"+
+"It was loud. It was ugly. It was over.<br><br>"+
+"His girls walked with you. You held the ground.<br><br>"+
+"<span class='warning'>One of your vehicles will not drive again without a full rebuild.</span><br>"+
+"<span class='warning'>Three of yours are hurt bad enough to sit out.</span><br>"+
+"Two of his will not be a problem anymore.";
+
+markTabAttention("crewTab");
+markTabAttention("vehiclesTab");
 saveGame();updateScreen();
 }
-function attackLevel4Rival(){if(level4RivalResolved) return;log("[LEVEL 4] You moved first.");resolveLevel4Rival()}
-function waitForLevel4Rival(){
-if(level4RivalResolved) return;
+
+function attackLevel4Rival(){
+if(level4RivalResolved)return;
 closeLevel4RivalPopup();
-log("[LEVEL 4] You decided to wait and see.");
-setTimeout(function(){if(!level4RivalResolved){log("[RIVAL] He came anyway.");resolveLevel4Rival()}},1800);
+log("[LEVEL 4] You moved on the rival.");
+log("[ROANOKE] \"Hope you listened about the Arms Dealer and the SUVs.\"");
+resolveLevel4Rival();
+}
+function waitForLevel4Rival(){
+if(level4RivalResolved)return;
+closeLevel4RivalPopup();
+log("[LEVEL 4] You held back.");
+setTimeout(function(){
+if(!level4RivalResolved){
+log("[RIVAL] He did not hold back.");
+resolveLevel4Rival();
+}
+},1800);
 }
 
 function scheduleBorisGiftScene(delayMs){
-if(playerLevel<3||borisGiftResolved||borisGiftPopupScheduled) return;
+if(playerLevel<3||borisGiftResolved||borisGiftPopupScheduled)return;
 borisGiftPopupScheduled=true;
-setTimeout(function(){
-borisGiftPopupScheduled=false;
-if(playerLevel>=3&&!borisGiftResolved) showBorisGiftPopup();
-},Math.max(1000,delayMs||6500));
+setTimeout(function(){borisGiftPopupScheduled=false;if(playerLevel>=3&&!borisGiftResolved)showBorisGiftPopup()},Math.max(1000,delayMs||6500));
 }
-function showBorisGiftPopup(){const o=document.getElementById("borisGiftOverlay");if(!o||borisGiftResolved) return;o.style.display="flex"}
-function closeBorisGiftPopup(){const o=document.getElementById("borisGiftOverlay");if(o) o.style.display="none"}
+function showBorisGiftPopup(){const o=document.getElementById("borisGiftOverlay");if(!o||borisGiftResolved)return;o.style.display="flex"}
+function closeBorisGiftPopup(){const o=document.getElementById("borisGiftOverlay");if(o)o.style.display="none"}
 
 function acceptBorisGift(){
-if(borisGiftResolved) return;
-borisGiftResolved=true;
-borisAttackPending=false;
-borisNightclubForSale=false;
-cash+=100000;
-if(!ownsBorisNightclub()){
-businesses.push({name:"Boris's Run-Down Nightclub",gross:1500,operatingRate:0.20,operatingCost:300,net:1200,ready:true,lastCollectionDay:gameDay});
-}
+if(borisGiftResolved)return;
+borisGiftResolved=true;borisAttackPending=false;borisNightclubForSale=false;cash+=100000;
+if(!ownsBorisNightclub())businesses.push({name:"Boris's Run-Down Nightclub",gross:1500,operatingRate:0.20,operatingCost:300,net:1200,ready:true,lastCollectionDay:gameDay});
 closeBorisGiftPopup();
-log("[BORIS] You took the money and the club.");
-log("[BORIS] +$100,000. Boris's Run-Down Nightclub is now under your name.");
+log("[BORIS] You took the money and the club. +$100,000.");
 log("[BORIS] Boris: \"Just a small token for a big man.\"");
-log("[STORY] Gifts this size never feel small. You accepted it anyway.");
-markTabAttention("businessTab");
-saveGame();updateScreen();
+markTabAttention("businessTab");saveGame();updateScreen();
 }
-
 function declineBorisGift(){
-if(borisGiftResolved) return;
-borisGiftResolved=true;
-borisAttackPending=true;
-borisNightclubForSale=false;
+if(borisGiftResolved)return;
+borisGiftResolved=true;borisAttackPending=true;borisNightclubForSale=false;
 closeBorisGiftPopup();
 log("[BORIS] You turned the gift down.");
-log("[BORIS] Boris looked at you for a long second, then smiled without warmth.");
 log("[BORIS] Boris: \"You fool. I promise I will end you.\"");
 log("[STORY] Some refusals are remembered longer than some favors.");
 document.getElementById("encounter").innerHTML="<strong>BORIS</strong><br>You refused the gift.<br><br>He did not argue. He only made a promise.";
 saveGame();updateScreen();
 }
-
 function resolveBorisAttack(){
-if(!borisAttackPending) return;
-borisAttackPending=false;
-cash+=100000;
-borisNightclubForSale=true;
+if(!borisAttackPending)return;borisAttackPending=false;cash+=100000;borisNightclubForSale=true;
 log("[BORIS] Boris came for you.");
 log("[BATTLE] The fight did not go his way.");
 log("[BORIS] +$100,000.");
 log("[BUSINESS] His run-down nightclub is on the market for $250,000.");
-log("[BUSINESS] Gross $2,500 / 24 hours. Operating cost $700. Net $1,800.");
-log("[STORY] A gift refused. A debt collected the hard way.");
-document.getElementById("encounter").innerHTML=
-"<strong>BORIS</strong><br><br>He showed up ready to finish what he promised.<br>You finished it instead.<br><br><span class='good'>+$100,000</span><br><br>His nightclub is now available under Businesses for <strong>$250,000</strong>.<br>Revenue: $2,500 / 24 hours · Operating cost: $700 · Net: $1,800.";
-markTabAttention("businessTab");
-markTabAttention("homeTab");
-saveGame();updateScreen();
+document.getElementById("encounter").innerHTML="<strong>BORIS</strong><br><br>He showed up ready to finish what he promised.<br>You finished it instead.<br><br><span class='good'>+$100,000</span><br><br>His nightclub is available under Businesses for <strong>$250,000</strong>.";
+markTabAttention("businessTab");markTabAttention("homeTab");saveGame();updateScreen();
 }
-
 function buyBorisNightclub(){
-if(!borisNightclubForSale){log("[BUSINESS] That club is not for sale.");return}
-if(ownsBorisNightclub()){log("[BUSINESS] You already own Boris's Run-Down Nightclub.");borisNightclubForSale=false;saveGame();updateScreen();return}
-if(cash<BORIS_CLUB_PRICE){log("[BUSINESS] Not enough cash. Need $"+BORIS_CLUB_PRICE.toLocaleString()+".");return}
-cash-=BORIS_CLUB_PRICE;
-borisNightclubForSale=false;
-businesses.push({
-name:"Boris's Run-Down Nightclub",
-gross:BORIS_CLUB_GROSS,
-operatingRate:BORIS_CLUB_OPERATING/BORIS_CLUB_GROSS,
-operatingCost:BORIS_CLUB_OPERATING,
-net:BORIS_CLUB_NET,
-ready:true,
-lastCollectionDay:gameDay-1
-});
+if(!borisNightclubForSale){log("[BUSINESS] Not for sale.");return}
+if(ownsBorisNightclub()){borisNightclubForSale=false;saveGame();updateScreen();return}
+if(cash<BORIS_CLUB_PRICE){log("[BUSINESS] Need $"+BORIS_CLUB_PRICE.toLocaleString()+".");return}
+cash-=BORIS_CLUB_PRICE;borisNightclubForSale=false;
+businesses.push({name:"Boris's Run-Down Nightclub",gross:BORIS_CLUB_GROSS,operatingRate:BORIS_CLUB_OPERATING/BORIS_CLUB_GROSS,operatingCost:BORIS_CLUB_OPERATING,net:BORIS_CLUB_NET,ready:true,lastCollectionDay:gameDay-1});
 log("[BUSINESS] Purchased Boris's Run-Down Nightclub for $"+BORIS_CLUB_PRICE.toLocaleString()+".");
-log("[BUSINESS] Net income available: $"+BORIS_CLUB_NET+" / 24 hours.");
 saveGame();updateScreen();
 }
 
-function unlockLevel3(){armsDealerUnlocked=true;if(!roanokeGiftReceived) receiveRoanokeGift()}
+function unlockLevel3(){armsDealerUnlocked=true;if(!roanokeGiftReceived)receiveRoanokeGift()}
 function receiveRoanokeGift(){
-if(roanokeGiftReceived) return;
-roanokeGiftReceived=true;
-if(!businesses.find(b=>b.name==="Massage Parlor / Nail Salon")){
+if(roanokeGiftReceived)return;roanokeGiftReceived=true;
+if(!businesses.find(b=>b.name==="Massage Parlor / Nail Salon"))
 businesses.push({name:"Massage Parlor / Nail Salon",gross:1000,operatingRate:0.15,net:850,ready:true,lastCollectionDay:gameDay});
-}
-log("[ROANOKE] You didn't snitch.");
-log("[ROANOKE] The Massage Parlor / Nail Salon is yours.");
-log("[ROANOKE] No purchase price. No debt. No payment plan.");
-log("[BUSINESS] It will throw off cash every day if you keep it running.");
-log("[STORY] Quiet loyalty still counts for something in this city.");
+log("[ROANOKE] You didn't snitch. The Massage Parlor / Nail Salon is yours.");
 saveGame();
 }
 
 function useTurn(){
 if(turns<=0){log("[TURN] You're out of turns.");return false}
 turns--;
-if(borisAttackPending){
-resolveBorisAttack();
-saveGame();updateScreen();
-return false;
-}
-saveGame();updateScreen();
-return true;
+if(borisAttackPending){resolveBorisAttack();saveGame();updateScreen();return false}
+saveGame();updateScreen();return true;
 }
 
-function markTabAttention(tabId){if(!tabId) return;tabAttention[tabId]=true;saveGame();updateTabAttention()}
-function clearTabAttention(tabId){if(!tabId) return;tabAttention[tabId]=false;updateTabAttention()}
+function markTabAttention(id){if(!id)return;tabAttention[id]=true;saveGame();updateTabAttention()}
+function clearTabAttention(id){if(!id)return;tabAttention[id]=false;updateTabAttention()}
 function updateTabAttention(){
 const map={homeTab:"tabBtn-home",stableTab:"tabBtn-stable",crewTab:"tabBtn-crew",propertyTab:"tabBtn-property",businessTab:"tabBtn-business",vehiclesTab:"tabBtn-vehicles",marketplaceTab:"tabBtn-marketplace",moreTab:"tabBtn-more",battleTab:"tabBtn-battle"};
-Object.keys(map).forEach(tabId=>{
-const btn=document.getElementById(map[tabId]);
-if(!btn) return;
-btn.classList.toggle("attention",!!tabAttention[tabId]);
+Object.keys(map).forEach(id=>{
+const btn=document.getElementById(map[id]);if(!btn)return;
+btn.classList.toggle("attention",!!tabAttention[id]);
 const base=btn.dataset.baseLabel||btn.textContent.replace(/^❗\s*/,"").trim();
-btn.dataset.baseLabel=base;
-btn.textContent=tabAttention[tabId]?"❗ "+base:base;
+btn.dataset.baseLabel=base;btn.textContent=tabAttention[id]?"❗ "+base:base;
 });
 }
-
 function showTab(tabId){
 clearTabAttention(tabId);
 document.querySelectorAll(".tab-panel").forEach(t=>t.classList.remove("active"));
-const target=document.getElementById(tabId);
-if(target) target.classList.add("active");
+const t=document.getElementById(tabId);if(t)t.classList.add("active");
 document.querySelectorAll(".tab-button").forEach(b=>b.classList.remove("active"));
 const map={homeTab:"tabBtn-home",stableTab:"tabBtn-stable",crewTab:"tabBtn-crew",propertyTab:"tabBtn-property",businessTab:"tabBtn-business",vehiclesTab:"tabBtn-vehicles",marketplaceTab:"tabBtn-marketplace",moreTab:"tabBtn-more"};
-if(map[tabId]){const btn=document.getElementById(map[tabId]);if(btn) btn.classList.add("active")}
+if(map[tabId]){const b=document.getElementById(map[tabId]);if(b)b.classList.add("active")}
 updateScreen();
 }
-
 function updateTabVisibility(){
 const p=document.getElementById("tabBtn-property"),b=document.getElementById("tabBtn-business"),bt=document.getElementById("tabBtn-battle");
-if(p) p.style.display=playerLevel>=3?"block":"none";
-if(b) b.style.display=playerLevel>=3?"block":"none";
-if(bt) bt.style.display=playerLevel>=5?"block":"none";
+if(p)p.style.display=playerLevel>=3?"block":"none";
+if(b)b.style.display=playerLevel>=3?"block":"none";
+if(bt)bt.style.display=playerLevel>=5?"block":"none";
 }
-
 function updateScreen(){
-syncCrewState();
-updateTabVisibility();
-updateTabAttention();
-setText("cash","$"+cash);
-setText("turns",turns);
+syncCrewState();updateTabVisibility();updateTabAttention();
+setText("cash","$"+cash);setText("turns",turns);
 setText("gameTime","Day "+gameDay+" — "+formatGameTime(gameMinutes));
-setText("stable-count",stable.length);
-setText("crew-count",totalOrganizationSize());
-setText("player-level",playerLevel);
+setText("stable-count",stable.length);setText("crew-count",totalOrganizationSize());setText("player-level",playerLevel);
 renderActivityLog();renderProgress();renderStable();renderCrew();renderSupplies();
 renderIdentity();renderProperty();renderBusinesses();renderArmsDealer();renderSmokeShop();
 renderVehicles();renderOperations();renderBattle();
 const strip=document.getElementById("stripClubLocationButton");
-if(strip) strip.style.display=playerLevel>=3?"block":"none";
+if(strip)strip.style.display=playerLevel>=3?"block":"none";
 }
 
 function renderProgress(){
-const box=document.getElementById("progress");
-if(!box) return;
+const box=document.getElementById("progress");if(!box)return;
 box.innerHTML=`<div><b>${playerName}</b></div><div>Operation: <b>${operationName}</b></div><div style="margin-top:8px;">Level: <span class="highlight">${playerLevel}</span></div><div>XP: ${playerXP} / ${xpNeeded()}</div>`;
 }
-
 function renderSupplies(){
-const box=document.getElementById("supplies");
-if(!box) return;
-box.innerHTML=`
-<div class="supply-item">Condoms: ${supplies.condoms}</div>
-<div class="supply-item">Medical: ${supplies.medical}</div>
-<div class="supply-item">Cigarettes: ${supplies.cigarettes}</div>
-<div class="supply-item">Weed: ${supplies.weed}</div>
-<div class="supply-item">Beer: ${supplies.beer}</div>
-<div class="supply-item">Cocaine: ${supplies.cocaine}</div>
-<div class="supply-item">Maintenance uses 1 supply and never uses turns.</div>`;
+const box=document.getElementById("supplies");if(!box)return;
+box.innerHTML=`<div class="supply-item">Condoms: ${supplies.condoms}</div><div class="supply-item">Medical: ${supplies.medical}</div><div class="supply-item">Cigarettes: ${supplies.cigarettes}</div><div class="supply-item">Weed: ${supplies.weed}</div><div class="supply-item">Beer: ${supplies.beer}</div><div class="supply-item">Cocaine: ${supplies.cocaine}</div>`;
 }
-
 function renderStable(){
-const box=document.getElementById("stable");
-if(!box) return;
-box.innerHTML="";
-stable.forEach((worker,index)=>{
-const div=document.createElement("div");
-div.className="worker";
-div.innerHTML=`
-<div class="worker-name">${worker.name}</div>
-Condition: <span class="condition">${worker.condition}</span><br>Charm: ${worker.charm}
-${isWorkerJailed(worker)?'<div class="warning" style="margin-top:8px;">⛓️ JAILED — unavailable for 24 hours.</div>':''}
-<button ${isWorkerJailed(worker)?"disabled":""} onclick="sendWorker(${index})">SEND ${worker.name.toUpperCase()} — INDIVIDUAL</button>
-<button onclick="restWorker(${index})">REST ${worker.name.toUpperCase()} — FREE / NO TURNS</button>
-<button onclick="maintainWorker(${index}, 'beer')">GIVE BEER — 1 SUPPLY</button>
-<button onclick="maintainWorker(${index}, 'weed')">GIVE WEED — 1 SUPPLY</button>
-<button onclick="maintainWorker(${index}, 'cocaine')">GIVE COKE — 1 SUPPLY</button>`;
+const box=document.getElementById("stable");if(!box)return;box.innerHTML="";
+stable.forEach((w,i)=>{
+const div=document.createElement("div");div.className="worker";
+div.innerHTML=`<div class="worker-name">${w.name}</div>Condition: <span class="condition">${w.condition}</span><br>Charm: ${w.charm}
+${isWorkerJailed(w)?'<div class="warning" style="margin-top:8px;">⛓️ JAILED</div>':''}
+<button ${isWorkerJailed(w)?"disabled":""} onclick="sendWorker(${i})">SEND ${w.name.toUpperCase()}</button>
+<button onclick="restWorker(${i})">REST ${w.name.toUpperCase()}</button>
+<button onclick="maintainWorker(${i},'beer')">GIVE BEER</button>
+<button onclick="maintainWorker(${i},'weed')">GIVE WEED</button>
+<button onclick="maintainWorker(${i},'cocaine')">GIVE COKE</button>`;
 box.appendChild(div);
 });
 }
-
 function renderCrew(){
-syncCrewState();
-const box=document.getElementById("crew");
-if(!box) return;
-let html=`<div class="vehicle-card"><strong>CREW ORGANIZATION</strong><p><strong>Total Organization: ${totalOrganizationSize()} / ${CREW_CAPACITY}</strong></p><p>Active Crew: ${crew.length}</p><p>Available Named Members: ${namedThugs.length}</p><p>Available Unassigned Thugs: ${randomThugs}</p><p>Battle-Ready Members: ${battleReadyThugCount()}</p></div>`;
-if(crew.length){
-html+="<h3>CREW</h3>";
-crew.forEach((m,i)=>{
-html+=`<div class="crew-member"><strong>${m.name}</strong><br>Strength: ${m.strength}<br>Loyalty: ${m.loyalty}<br>Morale: ${m.morale}${isJailActive(m)?'<div class="warning" style="margin-top:8px;">⛓️ JAILED — unavailable for 24 hours.</div>':''}<br><br>
-<button onclick="maintainCrew(${i}, 'beer')">GIVE BEER — 1 SUPPLY</button>
-<button onclick="maintainCrew(${i}, 'weed')">GIVE WEED — 1 SUPPLY</button>
-<button onclick="maintainCrew(${i}, 'cigarettes')">GIVE CIGS — 1 SUPPLY</button>
-<button onclick="maintainCrew(${i}, 'cocaine')">GIVE COKE — 1 SUPPLY</button></div>`;
-});
-}
+syncCrewState();const box=document.getElementById("crew");if(!box)return;
+let html=`<div class="vehicle-card"><strong>CREW ORGANIZATION</strong><p><strong>Total: ${totalOrganizationSize()} / ${CREW_CAPACITY}</strong></p><p>Active Crew: ${crew.length}</p><p>Named Available: ${namedThugs.length}</p><p>Unassigned Thugs: ${randomThugs}</p><p>Battle-Ready: ${battleReadyThugCount()}</p></div>`;
+if(crew.length){html+="<h3>CREW</h3>";crew.forEach((m,i)=>{
+html+=`<div class="crew-member"><strong>${m.name}</strong><br>Strength: ${m.strength}<br>Loyalty: ${m.loyalty}<br>Morale: ${m.morale}
+${isJailActive(m)?'<div class="warning">⛓️ JAILED</div>':''}
+${isInjured(m)?'<div class="warning">🩹 INJURED — sitting out</div>':''}
+<br><button onclick="maintainCrew(${i},'beer')">BEER</button>
+<button onclick="maintainCrew(${i},'weed')">WEED</button>
+<button onclick="maintainCrew(${i},'cigarettes')">CIGS</button>
+<button onclick="maintainCrew(${i},'cocaine')">COKE</button></div>`;
+})}
 if(namedThugs.length||randomThugs){
-html+="<h3>AVAILABLE MEMBERS</h3>";
-if(randomThugs) html+=`<div class="crew-member"><strong>${randomThugs} UNASSIGNED THUG${randomThugs===1?"":"S"}</strong><br>Available to support the organization and battles.</div>`;
-if(namedThugs.length){
-html+="<h4>NAMED MEMBERS — AVAILABLE FOR PROMOTION</h4>";
-namedThugs.forEach((t,i)=>{
-html+=`<div class="crew-member"><strong>${t.name}</strong><br>Strength: ${t.strength}<br>Loyalty: ${t.loyalty}<br>Morale: ${t.morale}<br><br><button onclick="promoteNamedThug(${i})">PROMOTE TO CREW</button></div>`;
-});
+html+="<h3>AVAILABLE</h3>";
+if(randomThugs)html+=`<div class="crew-member"><strong>${randomThugs} UNASSIGNED THUG(S)</strong></div>`;
+namedThugs.forEach((t,i)=>{html+=`<div class="crew-member"><strong>${t.name}</strong><br>Str ${t.strength} · Loy ${t.loyalty}<br><button onclick="promoteNamedThug(${i})">PROMOTE TO CREW</button></div>`});
 }
-}
-if(!crew.length&&!namedThugs.length&&!randomThugs) html+="<p>No crew or thugs yet. You still ride along as protection.</p>";
+if(!crew.length&&!namedThugs.length&&!randomThugs)html+="<p>No crew yet. You still ride as protection.</p>";
 box.innerHTML=html;
 }
-
-function promoteNamedThug(index){
-syncCrewState();
-const thug=namedThugs[index];
-if(!thug) return;
-if(totalOrganizationSize()>=CREW_CAPACITY){log("[CREW] Organization capacity is full.");return}
-crew.push(thug);namedThugs.splice(index,1);
-log("[CREW] "+thug.name+" has been promoted into the crew.");
-saveGame();updateScreen();
-}
+function promoteNamedThug(i){syncCrewState();const t=namedThugs[i];if(!t)return;if(totalOrganizationSize()>=CREW_CAPACITY){log("[CREW] Full.");return}crew.push(t);namedThugs.splice(i,1);log("[CREW] "+t.name+" promoted.");saveGame();updateScreen()}
 
 function renderIdentity(){
-const box=document.getElementById("identityPanel"),section=document.getElementById("identitySection");
-if(!box) return;
-if(playerLevel<2){box.innerHTML="";if(section) section.style.display="none";return}
-if(section) section.style.display="block";
-box.innerHTML=`
-<div class="identity-card">
-<div class="identity-section"><b>Current Player Name</b><div>${playerName}</div>
-<input id="newPlayerName" class="identity-input" type="text" maxlength="30" value="${playerName}">
-<button onclick="changePlayerName()">CHANGE PLAYER NAME</button></div>
-<div class="identity-section"><b>Current Operation Name</b><div>${operationName}</div>
-<input id="newOperationName" class="identity-input" type="text" maxlength="40" value="${operationName}">
-<button onclick="changeOperationName()">RENAME OPERATION</button></div>
-</div>`;
+const box=document.getElementById("identityPanel"),sec=document.getElementById("identitySection");if(!box)return;
+if(playerLevel<2){box.innerHTML="";if(sec)sec.style.display="none";return}
+if(sec)sec.style.display="block";
+box.innerHTML=`<div class="identity-card"><div class="identity-section"><b>Player Name</b><div>${playerName}</div>
+<input id="newPlayerName" class="identity-input" maxlength="30" value="${playerName}"><button onclick="changePlayerName()">CHANGE NAME</button></div>
+<div class="identity-section"><b>Operation</b><div>${operationName}</div>
+<input id="newOperationName" class="identity-input" maxlength="40" value="${operationName}"><button onclick="changeOperationName()">RENAME</button></div></div>`;
 }
-function changePlayerName(){
-const input=document.getElementById("newPlayerName");if(!input) return;
-const n=input.value.trim();if(!n){log("[IDENTITY] Enter a name first.");return}
-playerName=n;log("[IDENTITY] Player name changed to "+playerName+".");saveGame();updateScreen();
-}
-function changeOperationName(){
-const input=document.getElementById("newOperationName");if(!input) return;
-const n=input.value.trim();if(!n){log("[IDENTITY] Enter an operation name first.");return}
-operationName=n;log("[IDENTITY] Operation renamed to "+operationName+".");saveGame();updateScreen();
-}
+function changePlayerName(){const i=document.getElementById("newPlayerName");if(!i)return;const n=i.value.trim();if(!n)return;playerName=n;log("[IDENTITY] Name: "+playerName);saveGame();updateScreen()}
+function changeOperationName(){const i=document.getElementById("newOperationName");if(!i)return;const n=i.value.trim();if(!n)return;operationName=n;log("[IDENTITY] Operation: "+operationName);saveGame();updateScreen()}
 
 function renderProperty(){
-const box=document.getElementById("propertyPanel"),section=document.getElementById("propertySection");
-if(!box) return;
-if(playerLevel<3){box.innerHTML="";if(section) section.style.display="none";return}
-if(section) section.style.display="block";
-const properties=[
-{name:"Trailer Park",price:15000,info:"Cheap entry. High capacity. Heavy police exposure."},
-{name:"Condo",price:25000,info:"Better security. 2 vehicle capacity. Rivals know your location."},
-{name:"Ranch",price:75000,info:"15 vehicles. 10-man security. 99% offline security. $700/day income."},
-{name:"Estate",price:250000,info:"100 crew. 50 vehicles. Absolute protection. $0 income. Random repairs."}
-];
-let html="";
-if(propertyStatusMessage) html+=`<div class="property-card"><p class="warning">${propertyStatusMessage}</p></div>`;
-if(ownedProperties.length>0) html+=`<div class="property-card"><strong>OWNED PROPERTIES (${ownedProperties.length})</strong>${ownedProperties.map(p=>`<p class="good">${p.name||"Property"}</p>`).join("")}</div>`;
-properties.forEach((item,index)=>{
-const owned=ownedProperties.some(p=>p.name===item.name);
-html+=`<div class="property-card"><strong>${item.name}</strong><p>Price: <strong>$${item.price.toLocaleString()}</strong></p><p>${item.info}</p>
-<button onclick="buyProperty(${index})" ${owned?"disabled":""}>${owned?"OWNED":"BUY "+item.name.toUpperCase()}</button></div>`;
-});
+const box=document.getElementById("propertyPanel"),sec=document.getElementById("propertySection");if(!box)return;
+if(playerLevel<3){box.innerHTML="";if(sec)sec.style.display="none";return}
+if(sec)sec.style.display="block";
+const props=[{name:"Trailer Park",price:15000,info:"Cheap entry."},{name:"Condo",price:25000,info:"Better security."},{name:"Ranch",price:75000,info:"Heavy capacity."},{name:"Estate",price:250000,info:"Absolute protection."}];
+let html=propertyStatusMessage?`<div class="property-card"><p class="warning">${propertyStatusMessage}</p></div>`:"";
+if(ownedProperties.length)html+=`<div class="property-card"><strong>OWNED</strong>${ownedProperties.map(p=>`<p class="good">${p.name}</p>`).join("")}</div>`;
+props.forEach((item,i)=>{const owned=ownedProperties.some(p=>p.name===item.name);
+html+=`<div class="property-card"><strong>${item.name}</strong><p>$${item.price.toLocaleString()}</p><p>${item.info}</p>
+<button onclick="buyProperty(${i})" ${owned?"disabled":""}>${owned?"OWNED":"BUY"}</button></div>`});
 box.innerHTML=html;
 }
-
-function buyProperty(index){
-const properties=[{name:"Trailer Park",price:15000},{name:"Condo",price:25000},{name:"Ranch",price:75000},{name:"Estate",price:250000}];
-const selected=properties[index];
-if(!selected){propertyStatusMessage="That property could not be found.";updateScreen();return}
-if(ownedProperties.some(p=>p.name===selected.name)){propertyStatusMessage="You already own "+selected.name+".";log("[PROPERTY] You already own "+selected.name+".");updateScreen();return}
-if(cash<selected.price){propertyStatusMessage="Not enough cash for "+selected.name+".";log("[PROPERTY] Not enough cash for "+selected.name+".");updateScreen();return}
-cash-=selected.price;
-ownedProperties.push({name:selected.name,price:selected.price,purchasedDay:gameDay});
-propertyStatusMessage="";
-log("[PROPERTY] Purchased "+selected.name+" for $"+selected.price+".");
-saveGame();updateScreen();
+function buyProperty(i){
+const props=[{name:"Trailer Park",price:15000},{name:"Condo",price:25000},{name:"Ranch",price:75000},{name:"Estate",price:250000}];
+const s=props[i];if(!s)return;
+if(ownedProperties.some(p=>p.name===s.name)){log("[PROPERTY] Already own "+s.name);return}
+if(cash<s.price){log("[PROPERTY] Need $"+s.price);return}
+cash-=s.price;ownedProperties.push({name:s.name,price:s.price,purchasedDay:gameDay});
+log("[PROPERTY] Bought "+s.name);saveGame();updateScreen();
 }
 
 function renderBusinesses(){
-const box=document.getElementById("businessPanel"),section=document.getElementById("businessSection");
-if(!box) return;
-if(playerLevel<3){box.innerHTML="";if(section) section.style.display="none";return}
-if(section) section.style.display="block";
+const box=document.getElementById("businessPanel"),sec=document.getElementById("businessSection");if(!box)return;
+if(playerLevel<3){box.innerHTML="";if(sec)sec.style.display="none";return}
+if(sec)sec.style.display="block";
 let html="";
 if(borisNightclubForSale&&!ownsBorisNightclub()){
-html+=`<div class="business-card">
-<strong>Boris's Run-Down Nightclub</strong>
-<p class="warning">FOR SALE</p>
-<p>Price: <strong>$${BORIS_CLUB_PRICE.toLocaleString()}</strong></p>
-<p>Gross: $${BORIS_CLUB_GROSS} / 24 hours</p>
-<p>Operating cost: $${BORIS_CLUB_OPERATING}</p>
-<p>Net: <span class="good">$${BORIS_CLUB_NET}</span></p>
-<button onclick="buyBorisNightclub()">BUY NIGHTCLUB — $${BORIS_CLUB_PRICE.toLocaleString()}</button>
-</div>`;
+html+=`<div class="business-card"><strong>Boris's Run-Down Nightclub</strong><p class="warning">FOR SALE</p>
+<p>Price: $${BORIS_CLUB_PRICE.toLocaleString()}</p><p>Gross: $${BORIS_CLUB_GROSS}/24h · Op: $${BORIS_CLUB_OPERATING} · Net: $${BORIS_CLUB_NET}</p>
+<button onclick="buyBorisNightclub()">BUY — $${BORIS_CLUB_PRICE.toLocaleString()}</button></div>`;
 }
-if(businesses.length===0&&!(borisNightclubForSale&&!ownsBorisNightclub())){
-box.innerHTML='<div class="locked">No businesses currently operating.</div>';
-return;
-}
-businesses.forEach((business,index)=>{
-const opCost=Number.isFinite(Number(business.operatingCost))?Number(business.operatingCost):Math.round(Number(business.gross)*Number(business.operatingRate));
-html+=`<div class="business-card">
-<strong>${business.name}</strong>
-${business.name==="Massage Parlor / Nail Salon"?'<p class="good">ROANOKE REWARD — YOU DIDN\'T SNITCH</p>':''}
-${business.staff?`<p>Staff working here: ${business.staff}</p>`:''}
-<p>Gross: $${business.gross} / 24 hours</p>
-<p>Operating cost: $${opCost}</p>
-<p>Net: <span class="good">$${business.net}</span></p>
-<p>Status: ${Number(business.lastCollectionDay)===Number(gameDay)?"COLLECTED":"READY TO COLLECT"}</p>
-<button onclick="collectBusiness(${index})" ${Number(business.lastCollectionDay)===Number(gameDay)?"disabled":""}>COLLECT $${business.net}</button>
-</div>`;
+if(!businesses.length&&!html){box.innerHTML='<div class="locked">No businesses.</div>';return}
+businesses.forEach((b,i)=>{
+const op=Number.isFinite(Number(b.operatingCost))?Number(b.operatingCost):Math.round(Number(b.gross)*Number(b.operatingRate));
+html+=`<div class="business-card"><strong>${b.name}</strong>
+${b.name==="Massage Parlor / Nail Salon"?'<p class="good">ROANOKE REWARD</p>':''}
+${b.staff?`<p>Staff: ${b.staff}</p>`:''}
+<p>Gross $${b.gross} · Op $${op} · Net <span class="good">$${b.net}</span></p>
+<p>${Number(b.lastCollectionDay)===Number(gameDay)?"COLLECTED":"READY"}</p>
+<button onclick="collectBusiness(${i})" ${Number(b.lastCollectionDay)===Number(gameDay)?"disabled":""}>COLLECT $${b.net}</button></div>`;
 });
 box.innerHTML=html;
 }
-
-function collectBusiness(index){
-const business=businesses[index];
-if(!business){log("[BUSINESS] Business not found.");return}
-if(Number(business.lastCollectionDay)===Number(gameDay)){
-business.ready=false;log("[BUSINESS] "+business.name+" has already paid out today.");saveGame();updateScreen();return;
-}
-const payout=Number(business.net);
-if(!Number.isFinite(payout)||payout<=0){log("[BUSINESS] Invalid payout amount.");return}
-cash+=payout;business.ready=false;business.lastCollectionDay=gameDay;
-log("[BUSINESS] "+business.name+" paid out $"+payout+".");
-addXP(25);saveGame();updateScreen();
+function collectBusiness(i){
+const b=businesses[i];if(!b)return;
+if(Number(b.lastCollectionDay)===Number(gameDay)){log("[BUSINESS] Already collected.");return}
+const p=Number(b.net);if(!Number.isFinite(p)||p<=0)return;
+cash+=p;b.lastCollectionDay=gameDay;log("[BUSINESS] "+b.name+" paid $"+p);addXP(25);saveGame();updateScreen();
 }
 
 function renderArmsDealer(){
-const box=document.getElementById("marketArmsPanel"),section=document.getElementById("marketArmsSection");
-if(!box) return;
-if(playerLevel<3){box.innerHTML="";if(section) section.style.display="none";return}
-if(section) section.style.display="block";
-let html=`<div class="weapon-card"><strong>THE ARMS DEALER</strong><p>The dealer is now available.</p><p class="warning">Purchased items are stored in your inventory.</p></div>`;
+const box=document.getElementById("marketArmsPanel"),sec=document.getElementById("marketArmsSection");if(!box)return;
+if(playerLevel<3){box.innerHTML="";if(sec)sec.style.display="none";return}
+if(sec)sec.style.display="block";
+let html=`<div class="weapon-card"><strong>THE ARMS DEALER</strong><p>Pistols, rifles, shotguns, armor.</p>
+${playerLevel>=4?'<p class="warning">Roanoke\'s advice: arm every rider. Pistol + rifle or shotgun. Body armor if you can afford it.</p>':''}
+</div>`;
 armsDealerItems.forEach(item=>{
-let owned=item.type==="Weapon"?(weapons[item.name]||0):armorOwned;
-html+=`<div class="weapon-card"><strong>${item.name}</strong><br>Type: ${item.type}<br>Price: $${item.price}<br>
-${owned>0?"<span class='weapon-owned'>Owned: "+owned+"</span>":"Not owned"}
-<button onclick="buyArmsDealerItem('${item.name}')">BUY ${item.name.toUpperCase()}</button></div>`;
+const owned=item.type==="Weapon"?(weapons[item.name]||0):armorOwned;
+html+=`<div class="weapon-card"><strong>${item.name}</strong><br>${item.type} · $${item.price}<br>
+${owned>0?`<span class="weapon-owned">Owned: ${owned}</span>`:"Not owned"}
+<button onclick="buyArmsDealerItem('${item.name}')">BUY</button></div>`;
 });
 box.innerHTML=html;
 }
-
 function buyArmsDealerItem(name){
-if(playerLevel<3){log("[ARMS] The Arms Dealer is locked.");return}
-const item=armsDealerItems.find(x=>x.name===name);if(!item) return;
-if(cash<item.price){log("[ARMS] Not enough cash for "+item.name+".");return}
+if(playerLevel<3){log("[ARMS] Locked.");return}
+const item=armsDealerItems.find(x=>x.name===name);if(!item)return;
+if(cash<item.price){log("[ARMS] Not enough cash.");return}
 cash-=item.price;
-if(item.type==="Weapon") weapons[item.name]=(weapons[item.name]||0)+1;
-if(item.type==="Armor") armorOwned++;
-log("[ARMS] Purchased "+item.name+" for $"+item.price+".");
-saveGame();updateScreen();
+if(item.type==="Weapon")weapons[item.name]=(weapons[item.name]||0)+1;
+if(item.type==="Armor")armorOwned++;
+log("[ARMS] Bought "+item.name+" for $"+item.price+".");saveGame();updateScreen();
 }
 
-function buySupply(item){
-const price=expenses[item];if(!Number.isFinite(price)) return;
-if(cash<price){log("[SMOKE SHOP] Not enough cash for "+item+".");return}
-cash-=price;supplies[item]=(supplies[item]||0)+1;
-log("[SMOKE SHOP] Bought 1 "+item+" for $"+price+".");
-saveGame();updateScreen();
-}
-
+function buySupply(item){const price=expenses[item];if(!Number.isFinite(price))return;if(cash<price){log("[SMOKE SHOP] Not enough cash.");return}cash-=price;supplies[item]=(supplies[item]||0)+1;log("[SMOKE SHOP] Bought 1 "+item+".");saveGame();updateScreen()}
 function renderSmokeShop(){
-const box=document.getElementById("smokeShopPanel");if(!box) return;
-const items=[
-{key:"weed",label:"Weed",price:50},{key:"beer",label:"Beer",price:20},{key:"cigarettes",label:"Cigarettes",price:15},
-{key:"condoms",label:"Condoms",price:expenses.condoms},{key:"medical",label:"Medical",price:expenses.medical},{key:"cocaine",label:"Coke",price:200}
-];
-box.innerHTML=items.map(item=>`
-<div class="market-card"><strong>${item.label}</strong><p>In stock: ${supplies[item.key]||0}</p><p>Price: $${item.price}</p>
-<button onclick="buySupply('${item.key}')">BUY 1 ${item.label.toUpperCase()}</button></div>`).join("")+`
-<div class="market-card"><strong>TURN CAPACITY UPGRADE</strong><p>Current max turns: ${maxTurns}</p><p>Cost: $3,000</p>
-<button onclick="buyTurnUpgrade()">BUY +10 MAX TURNS</button></div>`;
+const box=document.getElementById("smokeShopPanel");if(!box)return;
+const items=[{key:"weed",label:"Weed",price:50},{key:"beer",label:"Beer",price:20},{key:"cigarettes",label:"Cigarettes",price:15},{key:"condoms",label:"Condoms",price:expenses.condoms},{key:"medical",label:"Medical",price:expenses.medical},{key:"cocaine",label:"Coke",price:200}];
+box.innerHTML=items.map(it=>`<div class="market-card"><strong>${it.label}</strong><p>Stock: ${supplies[it.key]||0} · $${it.price}</p><button onclick="buySupply('${it.key}')">BUY 1</button></div>`).join("")+
+`<div class="market-card"><strong>TURN CAPACITY</strong><p>Max turns: ${maxTurns} · $3000</p><button onclick="buyTurnUpgrade()">+10 MAX TURNS</button></div>`;
 }
-
-function buyTurnUpgrade(){
-if(cash<3000){log("[MARKET] Not enough cash.");return}
-cash-=3000;maxTurns+=10;log("[MARKET] Maximum turns increased by 10.");saveGame();updateScreen();
-}
-
-function useToken(){
-if(tokens<=0){log("[TOKEN] You don't have any tokens.");return}
-if(turns>=maxTurns){log("[TOKEN] You're already at maximum turns.");return}
-tokens--;turns+=5;if(turns>maxTurns) turns=maxTurns;
-log("[TOKEN] +5 turns.");saveGame();updateScreen();
-}
+function buyTurnUpgrade(){if(cash<3000){log("[MARKET] Not enough cash.");return}cash-=3000;maxTurns+=10;log("[MARKET] Max turns +10.");saveGame();updateScreen()}
+function useToken(){if(tokens<=0){log("[TOKEN] None left.");return}if(turns>=maxTurns){log("[TOKEN] Turns full.");return}tokens--;turns=Math.min(maxTurns,turns+5);log("[TOKEN] +5 turns.");saveGame();updateScreen()}
 
 function renderVehicles(){
-const box=document.getElementById("vehiclesPanel");if(!box) return;
+const box=document.getElementById("vehiclesPanel");if(!box)return;
 const active=vehicles[activeVehicle];
-let html=`<div class="vehicle-card"><strong>Active Vehicle: ${active.name}</strong><p>Crew Capacity: ${active.capacity}</p><p>Condition: ${active.condition}%</p></div>`;
+let html=`<div class="vehicle-card"><strong>Active: ${active.name}</strong><p>Capacity ${active.capacity} · Condition ${active.condition}%</p>
+${active.condition<=0?'<p class="warning">TOTALED — needs repair or switch vehicles</p>':''}</div>`;
+if(playerLevel>=4&&!level4RivalResolved)html+=`<div class="vehicle-card warning"><strong>ROANOKE</strong><p>Bring SUVs if you plan to move people as a unit.</p></div>`;
 vehicles.forEach((v,i)=>{
-html+=`<div class="vehicle-card"><strong>${v.name}</strong><br>Tier: ${v.tier}<br>Cost: $${v.cost}<br>Capacity: ${v.capacity}<br>Condition: ${v.condition}%
-<button onclick="selectVehicle(${i})">${activeVehicle===i?"ACTIVE VEHICLE":"SELECT VEHICLE"}</button>
-${v.owned?"":`<button onclick="buyVehicle(${i})">BUY FOR $${v.cost}</button>`}
-${v.owned?`<button onclick="repairVehicle(${i})">REPAIR — $750</button>`:""}</div>`;
+html+=`<div class="vehicle-card"><strong>${v.name}</strong><br>Tier ${v.tier} · $${v.cost} · Cap ${v.capacity} · Cond ${v.condition}%
+<button onclick="selectVehicle(${i})" ${!v.owned||v.condition<=0?"disabled":""}>${activeVehicle===i?"ACTIVE":"SELECT"}</button>
+${v.owned?"":`<button onclick="buyVehicle(${i})">BUY $${v.cost}</button>`}
+${v.owned?`<button onclick="repairVehicle(${i})">${v.condition<=0?"REBUILD — $2500":"REPAIR — $750"}</button>`:""}</div>`;
 });
 box.innerHTML=html;
 }
-function selectVehicle(i){if(!vehicles[i].owned){log("[VEHICLE] You don't own that vehicle.");return}activeVehicle=i;log("[VEHICLE] "+vehicles[i].name+" selected.");saveGame();updateScreen()}
-function buyVehicle(i){const v=vehicles[i];if(v.owned){log("[VEHICLE] You already own this vehicle.");return}if(cash<v.cost){log("[VEHICLE] Not enough cash.");return}cash-=v.cost;v.owned=true;log("[VEHICLE] Purchased "+v.name+" for $"+v.cost+".");saveGame();updateScreen()}
-function repairVehicle(i){const v=vehicles[i];if(!v.owned) return;if(v.condition>=100){log("[VEHICLE] Already excellent.");return}if(cash<750){log("[VEHICLE] Not enough cash.");return}cash-=750;v.condition=100;log("[VEHICLE] "+v.name+" repaired.");saveGame();updateScreen()}
+function selectVehicle(i){if(!vehicles[i].owned){log("[VEHICLE] Not owned.");return}if(vehicles[i].condition<=0){log("[VEHICLE] Totaled. Repair it first.");return}activeVehicle=i;log("[VEHICLE] "+vehicles[i].name+" selected.");saveGame();updateScreen()}
+function buyVehicle(i){const v=vehicles[i];if(v.owned)return;if(cash<v.cost){log("[VEHICLE] Not enough cash.");return}cash-=v.cost;v.owned=true;log("[VEHICLE] Bought "+v.name);saveGame();updateScreen()}
+function repairVehicle(i){
+const v=vehicles[i];if(!v.owned)return;
+const totaled=v.condition<=0;const cost=totaled?2500:750;
+if(v.condition>=100){log("[VEHICLE] Already excellent.");return}
+if(cash<cost){log("[VEHICLE] Need $"+cost);return}
+cash-=cost;v.condition=100;log("[VEHICLE] "+v.name+(totaled?" rebuilt.":" repaired."));saveGame();updateScreen();
+}
 
 function renderOperations(){
-const box=document.getElementById("operationsPanel");if(!box) return;
-const active=vehicles[activeVehicle];
-box.innerHTML=`
-<div class="market-card">
-<strong>OPERATION STATUS</strong>
-<p>Player: ${playerName}</p>
-<p>Operation: ${operationName}</p>
-<p>Active Vehicle: ${active.name}</p>
-<p>Vehicle Capacity: ${active.capacity}</p>
-<p>Organization Capacity: ${CREW_CAPACITY}</p>
-<p>Promoted Crew: ${crew.length}</p>
-<p>Random Thugs: ${randomThugs}</p>
-<p>Battle-Ready Thugs: ${battleReadyThugCount()}</p>
-<p>Available Turns: ${turns} / ${maxTurns}</p>
-<p>Tokens: ${tokens}</p>
-</div>
-<button onclick="useToken()">USE 1 TOKEN FOR +5 TURNS</button>`;
+const box=document.getElementById("operationsPanel");if(!box)return;
+const a=vehicles[activeVehicle];
+box.innerHTML=`<div class="market-card"><strong>OPERATION</strong>
+<p>${playerName} · ${operationName}</p><p>Vehicle: ${a.name} (${a.condition}%)</p>
+<p>Org ${totalOrganizationSize()}/${CREW_CAPACITY} · Turns ${turns}/${maxTurns}</p></div>
+<button onclick="useToken()">USE TOKEN +5 TURNS</button>`;
 }
 
 function getTripProtection(individual=false){
-const availableCrew=Array.isArray(crew)?crew.filter(m=>m&&!isJailActive(m)):[];
-const names=[playerName||"You"];
-let count=1;
-if(availableCrew.length>0){
-const extra=individual?0:Math.min(2,availableCrew.length);
-for(let i=0;i<extra;i++){names.push(availableCrew[i].name);count++}
-}else if(!individual&&randomThugs>0){
-names.push(randomThugs===1?"Unassigned Thug":"Unassigned Thug #1");count++;
-}else if(!individual&&Array.isArray(namedThugs)&&namedThugs.length>0){
-names.push(namedThugs[0].name);count++;
-}
+const available=Array.isArray(crew)?crew.filter(m=>m&&!isJailActive(m)&&!isInjured(m)):[];
+const names=[playerName||"You"];let count=1;
+if(available.length){const extra=individual?0:Math.min(2,available.length);for(let i=0;i<extra;i++){names.push(available[i].name);count++}}
+else if(!individual&&randomThugs>0){names.push("Unassigned Thug");count++}
+else if(!individual&&namedThugs.length){names.push(namedThugs[0].name);count++}
 return{count,temporary:false,names};
 }
-
-function isJailActive(entity){
-if(!entity||!entity.jailUntilDay) return false;
-return entity.jailUntilDay>gameDay||(entity.jailUntilDay===gameDay&&(gameMinutes<(entity.jailUntilMinute||0)));
-}
+function isJailActive(e){if(!e||!e.jailUntilDay)return false;return e.jailUntilDay>gameDay||(e.jailUntilDay===gameDay&&gameMinutes<(e.jailUntilMinute||0))}
 function isWorkerJailed(w){return isJailActive(w)}
 
 function recordCocaineUse(entity,type){
-if(!entity) return;
-cocaineUseCountToday++;cocaineConsecutiveUseCount++;
+if(!entity)return;cocaineUseCountToday++;cocaineConsecutiveUseCount++;
 cocaineUsersToday.push({name:entity.name,type});
 log("[COCAINE] "+entity.name+" used coke. Streak: "+cocaineConsecutiveUseCount+".");
 if(!cocaineBribeEventTriggeredToday&&cocaineConsecutiveUseCount>=5){triggerCocaineBribeEvent();return}
-if(!cocainePoliceEventTriggeredToday&&cocaineUseCountToday>=3&&Math.random()<0.45) triggerCocainePoliceEvent();
+if(!cocainePoliceEventTriggeredToday&&cocaineUseCountToday>=3&&Math.random()<0.45)triggerCocainePoliceEvent();
 }
-
 function triggerCocaineBribeEvent(){
-if(cocaineBribeEventTriggeredToday) return;
-cocaineBribeEventTriggeredToday=true;
-const unique=[];
-for(const e of cocaineUsersToday){if(!unique.some(p=>p.type===e.type&&p.name===e.name)) unique.push(e)}
-let arrested=0;
-unique.forEach(e=>{
-const list=e.type==="crew"?crew:stable;
-const person=list.find(m=>m&&m.name===e.name);if(!person) return;
-person.jailUntilDay=gameDay+1;person.jailUntilMinute=gameMinutes;person.jailReason="Cocaine streak arrest";arrested++;
-});
+if(cocaineBribeEventTriggeredToday)return;cocaineBribeEventTriggeredToday=true;
+const unique=[];for(const e of cocaineUsersToday){if(!unique.some(p=>p.type===e.type&&p.name===e.name))unique.push(e)}
+let n=0;unique.forEach(e=>{const list=e.type==="crew"?crew:stable;const p=list.find(m=>m&&m.name===e.name);if(!p)return;p.jailUntilDay=gameDay+1;p.jailUntilMinute=gameMinutes;n++});
 const bribe=1000,paid=Math.min(cash,bribe);cash-=paid;
-log("[ARREST] Police made an unexpected visit. "+arrested+" involved worker(s) were taken in.");
-log("[BRIBE] Unexpected expenses came to $"+bribe+".");
-if(paid<bribe) log("[WARNING] You could only cover $"+paid+".");
-log("[COCAINE] Something went very wrong.");
-syncCrewState();saveGame();updateScreen();
+log("[ARREST] "+n+" taken in. Bribe $"+bribe+".");syncCrewState();saveGame();updateScreen();
 }
-
 function triggerCocainePoliceEvent(){
-if(cocainePoliceEventTriggeredToday) return;
-cocainePoliceEventTriggeredToday=true;
-const unique=[];
-for(const e of cocaineUsersToday){if(!unique.some(p=>p.type===e.type&&p.name===e.name)) unique.push(e)}
-const fine=Math.floor(Math.random()*251)+250;
-let jailed=0;
-unique.forEach(e=>{
-const list=e.type==="crew"?crew:stable;
-const person=list.find(m=>m&&m.name===e.name);if(!person) return;
-person.jailUntilDay=gameDay+1;person.jailUntilMinute=gameMinutes;person.jailReason="Cocaine police event";jailed++;
-});
-const paid=Math.min(cash,fine);cash-=paid;
-log("[ARREST] Police made an unexpected visit. "+jailed+" involved worker(s) are jailed for 24 hours.");
-log("[JAIL] Fines and rehab costs: $"+fine+".");
-if(paid<fine) log("[WARNING] Cash exhausted.");
-log("[COCAINE] The situation has been handled.");
-syncCrewState();saveGame();updateScreen();
+if(cocainePoliceEventTriggeredToday)return;cocainePoliceEventTriggeredToday=true;
+const unique=[];for(const e of cocaineUsersToday){if(!unique.some(p=>p.type===e.type&&p.name===e.name))unique.push(e)}
+const fine=Math.floor(Math.random()*251)+250;let n=0;
+unique.forEach(e=>{const list=e.type==="crew"?crew:stable;const p=list.find(m=>m&&m.name===e.name);if(!p)return;p.jailUntilDay=gameDay+1;p.jailUntilMinute=gameMinutes;n++});
+cash-=Math.min(cash,fine);log("[ARREST] "+n+" jailed 24h. Fine $"+fine+".");syncCrewState();saveGame();updateScreen();
 }
 
 function getReadyWorkers(limit){return stable.filter(w=>w&&w.condition>=25&&!isWorkerJailed(w)).slice(0,limit)}
-
 function processLocationTrip(place,workers,individual=false){
-if(!workers||workers.length===0){
-log("[TRIP] No workers are ready for "+place+".");
-document.getElementById("encounter").innerHTML="<strong>NO WORKERS READY</strong><br>Everyone available needs 25+ condition.";
-return;
-}
-const protection=getTripProtection(individual);
-if(protection.count<1){
-log("[TRIP] No protection available.");
-document.getElementById("encounter").innerHTML="<strong>TRIP CANCELLED</strong><br>No protector available.";
-return;
-}
-let totalEarnings=0,totalFatigue=0;const results=[];
-workers.forEach(worker=>{
-const earnings=Math.floor(Math.random()*(individual?131:101))+(individual?120:100);
-const fatigue=Math.floor(Math.random()*16)+10;
-worker.condition-=fatigue;if(worker.condition<0) worker.condition=0;
-totalEarnings+=earnings;totalFatigue+=fatigue;
-results.push(worker.name+" +$"+earnings+" ("+worker.condition+" condition)");
-});
-cash+=totalEarnings;
-const tripType=individual?"INDIVIDUAL TRIP":"GROUP TRIP";
-document.getElementById("encounter").innerHTML=
-"<strong>"+tripType+" — "+place+"</strong><br><br>Workers sent: "+workers.length+"<br>Protection: "+protection.names.join(", ")+" ("+protection.count+")<br>Total cash earned: $"+totalEarnings+"<br>Total worker fatigue: "+totalFatigue+"<br><br>"+results.join("<br>")+
-(individual?"<br><br>Individual work pays slightly better.":"<br><br>Group work is efficient, but pays slightly less per worker.");
-log("[TRIP] "+tripType+" to "+place+": "+workers.length+" worker(s), protection "+protection.count+" ("+protection.names.join(", ")+"), +$"+totalEarnings+".");
-if(totalEarnings>=400) log("[STORY] The money came easy tonight. That never lasts forever.");
-else if(totalEarnings<=200) log("[STORY] Slow night. The city does not always cooperate.");
+if(!workers||!workers.length){log("[TRIP] No workers ready.");return}
+const protection=getTripProtection(individual);if(protection.count<1){log("[TRIP] No protection.");return}
+let total=0,fat=0,results=[];
+workers.forEach(w=>{const earn=Math.floor(Math.random()*(individual?131:101))+(individual?120:100);const f=Math.floor(Math.random()*16)+10;w.condition=Math.max(0,w.condition-f);total+=earn;fat+=f;results.push(w.name+" +$"+earn+" ("+w.condition+")")});
+cash+=total;
+document.getElementById("encounter").innerHTML=`<strong>${individual?"INDIVIDUAL":"GROUP"} — ${place}</strong><br>Workers: ${workers.length}<br>Protection: ${protection.names.join(", ")} (${protection.count})<br>Cash: $${total}<br>Fatigue: ${fat}<br><br>${results.join("<br>")}`;
+log("[TRIP] "+place+": "+workers.length+" workers, +$"+total+".");
 addXP(25*workers.length);
 const roll=Math.random();
-if(place==="Strip Club"){
-if(roll<0.40) recruitWorker(place);else if(roll<0.68) crewEncounter(place);else if(roll<0.82) randomEvent(place);
-}else if(roll<0.20) recruitWorker(place);else if(roll<0.35) crewEncounter(place);else if(roll<0.50) randomEvent(place);
+if(place==="Strip Club"){if(roll<0.40)recruitWorker(place);else if(roll<0.68)crewEncounter(place);else if(roll<0.82)randomEvent(place)}
+else if(roll<0.20)recruitWorker(place);else if(roll<0.35)crewEncounter(place);else if(roll<0.50)randomEvent(place);
 }
-
-function getWorkerByIndex(index){
-const i=Number(index);
-if(!Number.isInteger(i)||i<0||i>=stable.length){log("[WORKER] Worker not found.");return null}
-return stable[i];
+function getWorkerByIndex(i){i=Number(i);if(!Number.isInteger(i)||i<0||i>=stable.length)return null;return stable[i]}
+function sendWorker(i){
+const w=getWorkerByIndex(i);if(!w)return;if(isWorkerJailed(w)){log("[JAIL] Jailed.");return}
+if(!useTurn())return;if(w.condition<25){log("[WORK] Needs rest.");turns++;updateScreen();return}
+processLocationTrip("Individual Run",[w],true);saveGame();updateScreen();
 }
-
-function sendWorker(index){
-const worker=getWorkerByIndex(index);if(!worker) return;
-if(isWorkerJailed(worker)){log("[JAIL] "+worker.name+" is jailed.");updateScreen();return}
-if(getTripProtection(true).count<1){log("[TRIP] No protection.");return}
-if(!useTurn()) return;
-if(worker.condition<25){log("[WORK] "+worker.name+" needs to rest.");turns++;updateScreen();return}
-processLocationTrip("Individual Run",[worker],true);saveGame();updateScreen();
-}
-
-function restWorker(index){
-const worker=getWorkerByIndex(index);if(!worker) return;
-const recovery=Math.floor(Math.random()*21)+20;
-worker.condition+=recovery;if(worker.condition>100) worker.condition=100;
-log("[REST] "+worker.name+" rested. Recovered "+recovery+" condition.");
-saveGame();updateScreen();
-}
-
+function restWorker(i){const w=getWorkerByIndex(i);if(!w)return;const r=Math.floor(Math.random()*21)+20;w.condition=Math.min(100,w.condition+r);log("[REST] "+w.name+" +"+r);saveGame();updateScreen()}
 const maintenanceRecovery={beer:15,weed:30,cigarettes:10,cocaine:50};
-
-function maintainWorker(index,item){
-const worker=getWorkerByIndex(index);if(!worker) return;
-if(isWorkerJailed(worker)){log("[JAIL] "+worker.name+" is jailed.");return}
-const recovery=maintenanceRecovery[item];if(!recovery) return;
-if((supplies[item]||0)<=0){log("[MAINTENANCE] Out of "+(item==="cocaine"?"coke":item)+".");return}
-supplies[item]--;
-if(item==="cocaine") recordCocaineUse(worker,"worker");else cocaineConsecutiveUseCount=0;
-worker.condition+=recovery;if(worker.condition>100) worker.condition=100;
-log("[MAINTENANCE] "+worker.name+" given "+(item==="cocaine"?"coke":item)+". -1 supply, +"+recovery+" condition.");
-saveGame();updateScreen();
+function maintainWorker(i,item){
+const w=getWorkerByIndex(i);if(!w||isWorkerJailed(w))return;const r=maintenanceRecovery[item];if(!r)return;
+if((supplies[item]||0)<=0){log("[MAINTENANCE] Out of supply.");return}supplies[item]--;
+if(item==="cocaine")recordCocaineUse(w,"worker");else cocaineConsecutiveUseCount=0;
+w.condition=Math.min(100,w.condition+r);log("[MAINTENANCE] "+w.name+" +"+r);saveGame();updateScreen();
 }
-
-function maintainCrew(index,item){
-const member=crew[index];if(!member) return;
-if(isJailActive(member)){log("[JAIL] "+member.name+" is jailed.");return}
-const recovery=maintenanceRecovery[item];if(!recovery) return;
-if((supplies[item]||0)<=0){log("[CREW MAINTENANCE] Out of "+(item==="cocaine"?"coke":item)+".");return}
-supplies[item]--;
-if(item==="cocaine") recordCocaineUse(member,"crew");else cocaineConsecutiveUseCount=0;
-member.morale+=recovery;if(member.morale>100) member.morale=100;
-log("[CREW MAINTENANCE] "+member.name+" given "+(item==="cocaine"?"coke":item)+". -1 supply, +"+recovery+" morale.");
-syncCrewState();saveGame();updateScreen();
+function maintainCrew(i,item){
+const m=crew[i];if(!m||isJailActive(m))return;const r=maintenanceRecovery[item];if(!r)return;
+if((supplies[item]||0)<=0){log("[CREW] Out of supply.");return}supplies[item]--;
+if(item==="cocaine")recordCocaineUse(m,"crew");else cocaineConsecutiveUseCount=0;
+m.morale=Math.min(100,(m.morale||0)+r);log("[CREW] "+m.name+" morale +"+r);syncCrewState();saveGame();updateScreen();
 }
-
 function visitLocation(place){
-if(getTripProtection(false).count<1){log("[TRIP] No protection.");return}
-if(!useTurn()) return;
+if(!useTurn())return;
 const workers=getReadyWorkers(vehicles[activeVehicle].capacity);
-if(workers.length===0){
-log("[TRIP] Nobody is ready to work at "+place+".");
-document.getElementById("encounter").innerHTML="<strong>TRIP CANCELLED</strong><br>No workers ready.";
-saveGame();updateScreen();return;
-}
+if(!workers.length){log("[TRIP] Nobody ready.");saveGame();updateScreen();return}
 processLocationTrip(place,workers,false);saveGame();updateScreen();
 }
-
 function recruitWorker(place){
 const name=workerNames[Math.floor(Math.random()*workerNames.length)];
-const worker={name,condition:Math.floor(Math.random()*31)+60,charm:Math.floor(Math.random()*41)+50};
-stable.push(worker);
-document.getElementById("encounter").innerHTML="<strong>NEW RECRUIT</strong><br>You met "+name+" at "+place+".<br><br>Charm: "+worker.charm+"<br>Condition: "+worker.condition;
-log("[RECRUIT] "+name+" joined your stable after a conversation at "+place+".");
-log("[STORY] New faces mean new risk. And new money.");
+const w={name,condition:Math.floor(Math.random()*31)+60,charm:Math.floor(Math.random()*41)+50};
+stable.push(w);log("[RECRUIT] "+name+" joined at "+place+".");
+document.getElementById("encounter").innerHTML="<strong>NEW RECRUIT</strong><br>"+name+" · Charm "+w.charm+" · Cond "+w.condition;
 }
-
 function crewEncounter(place){
 const name=recruitNames[Math.floor(Math.random()*recruitNames.length)];
-const strength=Math.min(100,Math.floor(Math.random()*41)+40+((playerLevel-1)*3));
-const loyalty=Math.min(100,Math.floor(Math.random()*41)+40+((playerLevel-1)*2));
+const strength=Math.min(100,Math.floor(Math.random()*41)+40+(playerLevel-1)*3);
+const loyalty=Math.min(100,Math.floor(Math.random()*41)+40+(playerLevel-1)*2);
 const total=totalOrganizationSize();
-if(total>=CREW_CAPACITY){
-document.getElementById("encounter").innerHTML="<strong>CREW ENCOUNTER</strong><br>Organization full.<br>"+total+" / "+CREW_CAPACITY;
-log("[CREW] Organization capacity is full.");return;
-}
+if(total>=CREW_CAPACITY){log("[CREW] Full.");return}
 if(Math.random()<0.45){
-if(namedThugs.find(t=>t&&t.name===name)){randomThugs+=1;log("[CREW] Additional thugs joined.")}
-else{namedThugs.push({name,strength,loyalty,morale:75});log("[CREW] "+name+" is now available.")}
-document.getElementById("encounter").innerHTML="<strong>NEW THUG</strong><br>"+name+" is available.<br>Strength: "+strength+"<br>Loyalty: "+loyalty+"<br>Morale: 75";
-}else{
-const amount=Math.min(CREW_CAPACITY-total,Math.floor(Math.random()*4)+1);
-randomThugs+=amount;
-document.getElementById("encounter").innerHTML="<strong>THUGS RECRUITED</strong><br>"+amount+" new thugs joined.<br>Random Thugs: "+randomThugs;
-log("[CREW] "+amount+" additional thugs joined.");
-}
+if(namedThugs.find(t=>t&&t.name===name))randomThugs++;
+else namedThugs.push({name,strength,loyalty,morale:75});
+log("[CREW] "+name+" available.");
+}else{const amt=Math.min(CREW_CAPACITY-total,Math.floor(Math.random()*4)+1);randomThugs+=amt;log("[CREW] +"+amt+" thugs.")}
 addXP(25);saveGame();updateScreen();
 }
-
 function randomEvent(place){
-const events=["You found a useful local contact.","A bartender gives you some information.","Nothing interesting happened tonight.","You discovered a new location to investigate.","Someone mentioned your name like they already knew it.","A quiet conversation at the edge of the room paid off later."];
-const event=events[Math.floor(Math.random()*events.length)];
-document.getElementById("encounter").innerHTML="<strong>RANDOM EVENT</strong><br>"+event;
-log("[EVENT] "+event);
+const e=["Useful local contact.","Bartender shared information.","Quiet night.","New pattern in the crowd."][Math.floor(Math.random()*4)];
+document.getElementById("encounter").innerHTML="<strong>EVENT</strong><br>"+e;log("[EVENT] "+e);
 }
 
 function callRoanoke(){
-if(cash<100){log("[ROANOKE] Not enough cash. Need $100.");return}
-cash-=100;roanokeLessons++;
+if(cash<100){log("[ROANOKE] Need $100.");return}cash-=100;roanokeLessons++;
 let messages;
-if(roanokeLessons===1){
-messages=["Start clicking around. The tabs tell you more than I will.","Send the girls together for efficiency, or one at a time for control. You ride along either way.","Keep the girls in good shape and pay attention to what they need.","Take care of the ones working for you. The rest you learn by doing."];
-markTabAttention("stableTab");markTabAttention("crewTab");storyStage=Math.max(storyStage,2);
+if(playerLevel>=4&&!level4RivalResolved){
+messages=[
+"Get prepared for war. Arms Dealer. Now.",
+"Every rider needs a pistol and a rifle or shotgun. Body armor if you can pay for it.",
+"Do not roll in sedans when the street is this hot. Get SUVs that can carry your people.",
+"A rival is making the wrong kind of noise. Be ready before you answer it."
+];
+markTabAttention("marketplaceTab");markTabAttention("vehiclesTab");
+}else if(roanokeLessons===1){
+messages=["Start clicking around. The tabs tell you more than I will.","You ride along for protection. Crew helps when you have it.","Keep the girls in shape."];
+markTabAttention("stableTab");markTabAttention("crewTab");
 }else if(playerLevel<=1){
-messages=["You cannot fix yesterday. You can make today count.","Keep your head up. Watch your cash. Watch your people.","Nobody is coming to save the operation. That is why it is yours.","You have a car, people, and a chance. Do something with them."];
+messages=["Watch your cash. Watch your people.","Nobody is coming to save the operation.","Make a mistake once. Learn from it."];
 }else if(playerLevel===2){
-messages=["You are starting to get noticed. Be wary of rivals.","Keep building, but do not get careless.","Growth changes the neighborhood. Keep your people close."];
-markTabAttention("crewTab");storyStage=Math.max(storyStage,3);
-}else if(playerLevel<=3){
-messages=["You are getting noticed. Decide what deserves your attention.","More money brings more problems.","Do not confuse growth with control.","The easy days are usually the ones that teach the least."];
+messages=["You are getting noticed. Be wary of rivals.","Keep your people close."];
+}else if(playerLevel===3){
+messages=["More money, more problems.","Make sure people are strapped. Look at the Arms Dealer.","The Strip Club draws different blood."];
+markTabAttention("marketplaceTab");
 }else{
-messages=["The next lessons will cost more.","The bigger you get, the less room for careless decisions.","Decide what matters before somebody else decides for you.","You made it this far by adapting. Keep doing that."];
+messages=["Adapt or get buried.","Decide what matters before someone else does."];
 }
-const message=messages[Math.floor(Math.random()*messages.length)];
-document.getElementById("encounter").innerHTML="<strong>ROANOKE</strong><br>"+message;
-log("[ROANOKE] "+message+" -$100. No turn used.");
-saveGame();updateScreen();
+const msg=messages[Math.floor(Math.random()*messages.length)];
+document.getElementById("encounter").innerHTML="<strong>ROANOKE</strong><br>"+msg;
+log("[ROANOKE] "+msg+" -$100.");saveGame();updateScreen();
 }
 
 function battlePower(){
 let power=35+playerLevel*8;
-crew.forEach(m=>{if(!isJailActive(m)) power+=Math.floor((Number(m.strength)||50)/4)});
+crew.forEach(m=>{if(!isJailActive(m)&&!isInjured(m))power+=Math.floor((Number(m.strength)||50)/4)});
 power+=randomThugs*3;
 Object.keys(weapons).forEach(n=>{power+=(weapons[n]||0)*12});
-if(armorOwned>0) power+=20;
-return power;
+if(armorOwned>0)power+=20;return power;
 }
-
 function renderBattle(){
-const box=document.getElementById("battlePanel");if(!box) return;
+const box=document.getElementById("battlePanel");if(!box)return;
 if(playerLevel<5){box.innerHTML='<div class="locked">Battle unlocks at Level 5.</div>';return}
 if(battleState){
-box.innerHTML=`<div class="battle-status"><strong>${battleState.name}</strong><br>Enemy: ${battleState.enemy}<br>Enemy Power: ${battleState.enemyPower}<br>Your Power: ${battlePower()}</div>
-<div class="battle-actions"><button onclick="battleAttack()">ATTACK</button><button onclick="battleDefend()">DEFEND</button><button onclick="battleUseWeapon()">USE WEAPON</button><button onclick="battleEscape()">ESCAPE</button></div>`;
-return;
+box.innerHTML=`<div class="battle-status"><strong>${battleState.name}</strong><br>${battleState.enemy} · Enemy ${battleState.enemyPower} · You ${battlePower()}</div>
+<div class="battle-actions"><button onclick="battleAttack()">ATTACK</button><button onclick="battleDefend()">DEFEND</button><button onclick="battleUseWeapon()">WEAPON</button><button onclick="battleEscape()">ESCAPE</button></div>`;return;
 }
-box.innerHTML=battleTypes.map((t,i)=>`
-<div class="battle-card"><strong>${t.name}</strong>
-<p class="tab-note">Enemy: ${t.enemy}<br>Reward: $${t.reward} · XP: ${t.xp}</p>
-<button onclick="startBattle(${i})">START ${t.name.toUpperCase()}</button></div>`).join("");
+box.innerHTML=battleTypes.map((t,i)=>`<div class="battle-card"><strong>${t.name}</strong><p class="tab-note">${t.enemy} · $${t.reward} · ${t.xp} XP</p><button onclick="startBattle(${i})">START</button></div>`).join("");
 }
-
-function startBattle(index){
-if(!useTurn()) return;
-const type=battleTypes[index];if(!type) return;
-battleState={
-name:type.name,enemy:type.enemy,
-enemyPower:Math.floor(type.power*difficultyMultiplier())+((playerLevel-1)*5),
-reward:Math.floor(type.reward*(1+((playerLevel-1)*0.06))),
-penalty:type.penalty,xp:type.xp
-};
-log("[BATTLE] "+type.name+" started.");
+function startBattle(i){if(!useTurn())return;const t=battleTypes[i];if(!t)return;
+battleState={name:t.name,enemy:t.enemy,enemyPower:Math.floor(t.power*difficultyMultiplier())+(playerLevel-1)*5,reward:Math.floor(t.reward*(1+(playerLevel-1)*0.06)),penalty:t.penalty,xp:t.xp};
+log("[BATTLE] "+t.name+" started.");saveGame();updateScreen();
+}
+function finishBattle(win){
+if(!battleState)return;const r=battleState;battleState=null;
+if(win){cash+=r.reward;addXP(r.xp);crew.forEach(m=>m.morale=Math.min(100,(m.morale||50)+5));log("[BATTLE] Victory +$"+r.reward)}
+else{cash=Math.max(0,cash-r.penalty);crew.forEach(m=>m.morale=Math.max(0,(m.morale||50)-8));log("[BATTLE] Lost -$"+r.penalty)}
 saveGame();updateScreen();
 }
-
-function finishBattle(victory){
-if(!battleState) return;
-const result=battleState;battleState=null;
-if(victory){
-cash+=result.reward;addXP(result.xp);
-crew.forEach(m=>{m.morale=Math.min(100,(Number(m.morale)||50)+5)});
-log("[BATTLE] Victory. +$"+result.reward+", +"+result.xp+" XP.");
-}else{
-cash=Math.max(0,cash-result.penalty);
-crew.forEach(m=>{m.morale=Math.max(0,(Number(m.morale)||50)-8)});
-log("[BATTLE] You lost. -$"+result.penalty+".");
-}
-saveGame();updateScreen();
-}
-
-function battleAttack(){
-if(!battleState) return;
-if(battlePower()+Math.floor(Math.random()*31)>=battleState.enemyPower){finishBattle(true);return}
-log("[BATTLE] Your attack missed.");
-battleState.enemyPower=Math.max(10,battleState.enemyPower-10);saveGame();updateScreen();
-}
-function battleDefend(){
-if(!battleState) return;
-if(battlePower()+25+Math.floor(Math.random()*21)>=battleState.enemyPower+20){finishBattle(true);return}
-log("[BATTLE] You held your ground.");
-battleState.enemyPower=Math.max(10,battleState.enemyPower-18);saveGame();updateScreen();
-}
-function battleUseWeapon(){
-if(!battleState) return;
-const weaponName=Object.keys(weapons).find(n=>(weapons[n]||0)>0);
-if(!weaponName){log("[BATTLE] No weapon available.");return}
-weapons[weaponName]--;
-if(battlePower()+45+Math.floor(Math.random()*31)>=battleState.enemyPower){log("[BATTLE] "+weaponName+" turned the fight.");finishBattle(true);return}
-log("[BATTLE] "+weaponName+" used, enemy still standing.");
-battleState.enemyPower=Math.max(10,battleState.enemyPower-25);saveGame();updateScreen();
-}
-function battleEscape(){
-if(!battleState) return;
-if(Math.random()<0.65){log("[BATTLE] You escaped.");battleState=null;saveGame();updateScreen();return}
-log("[BATTLE] Escape failed.");
-battleState.enemyPower=Math.max(10,battleState.enemyPower-8);saveGame();updateScreen();
-}
+function battleAttack(){if(!battleState)return;if(battlePower()+Math.floor(Math.random()*31)>=battleState.enemyPower){finishBattle(true);return}battleState.enemyPower=Math.max(10,battleState.enemyPower-10);log("[BATTLE] Missed.");saveGame();updateScreen()}
+function battleDefend(){if(!battleState)return;if(battlePower()+25+Math.floor(Math.random()*21)>=battleState.enemyPower+20){finishBattle(true);return}battleState.enemyPower=Math.max(10,battleState.enemyPower-18);log("[BATTLE] Held ground.");saveGame();updateScreen()}
+function battleUseWeapon(){if(!battleState)return;const w=Object.keys(weapons).find(n=>(weapons[n]||0)>0);if(!w){log("[BATTLE] No weapon.");return}weapons[w]--;if(battlePower()+45+Math.floor(Math.random()*31)>=battleState.enemyPower){finishBattle(true);return}battleState.enemyPower=Math.max(10,battleState.enemyPower-25);log("[BATTLE] "+w+" used.");saveGame();updateScreen()}
+function battleEscape(){if(!battleState)return;if(Math.random()<0.65){battleState=null;log("[BATTLE] Escaped.");saveGame();updateScreen();return}battleState.enemyPower=Math.max(10,battleState.enemyPower-8);log("[BATTLE] Escape failed.");saveGame();updateScreen()}
 
 function payDailyExpenses(){
 cocaineUseCountToday=0;cocaineConsecutiveUseCount=0;cocaineUsersToday=[];
 cocainePoliceEventTriggeredToday=false;cocaineBribeEventTriggeredToday=false;
-let total=0;
-for(let item in expenses) total+=Math.ceil(expenses[item]*(1+((playerLevel-1)*0.04)));
-cash-=total;
-log("[EXPENSES] Daily operating costs: -$"+total);
-businesses.forEach(b=>{
-if(b.name==="Massage Parlor / Nail Salon"){
-b.ready=true;b.lastCollectionDay=gameDay-1;
-log("[BUSINESS] "+b.name+" generated $"+b.gross+" gross. Net available: $"+b.net);
-}
-});
-if(cash<0){cash=0;log("[WARNING] You're broke. Time to hustle.")}
+let total=0;for(let k in expenses)total+=Math.ceil(expenses[k]*(1+(playerLevel-1)*0.04));
+cash-=total;log("[EXPENSES] -$"+total);
+businesses.forEach(b=>{if(b.name==="Massage Parlor / Nail Salon"){b.ready=true;b.lastCollectionDay=gameDay-1}});
+if(cash<0){cash=0;log("[WARNING] Broke.")}
 saveGame();updateScreen();
 }
 
 const loaded=loadGame();
-if(loaded) log("[SAVE] Previous game loaded.");
-else startOpeningStory();
+if(loaded)log("[SAVE] Previous game loaded.");else startOpeningStory();
 updateScreen();
 
 const TURN_REGEN_MS=13*60*1000;
 function applyTurnRegeneration(){
 const now=Date.now();
 if(!Number.isFinite(lastTurnRegenAt)||lastTurnRegenAt<=0){lastTurnRegenAt=now;return}
-const intervals=Math.floor((now-lastTurnRegenAt)/TURN_REGEN_MS);
-if(intervals<=0) return;
-lastTurnRegenAt+=intervals*TURN_REGEN_MS;
-gameMinutes+=intervals*13;
-const old=turns;
-if(turns<maxTurns) turns=Math.min(maxTurns,turns+intervals*3);
-const gained=turns-old;
-if(gained>0) log("[TIME] "+intervals+" x 13-minute period(s) passed. +"+gained+" turns.");
-else log("[TIME] "+intervals+" x 13-minute period(s) passed. Turns already full.");
-while(gameMinutes>=1440){
-gameMinutes-=1440;gameDay++;
-log("[DAY "+gameDay+"] A new day begins.");
-payDailyExpenses();
-}
-if(playerLevel>=3&&!roanokeGiftReceived) receiveRoanokeGift();
+const intervals=Math.floor((now-lastTurnRegenAt)/TURN_REGEN_MS);if(intervals<=0)return;
+lastTurnRegenAt+=intervals*TURN_REGEN_MS;gameMinutes+=intervals*13;
+const old=turns;if(turns<maxTurns)turns=Math.min(maxTurns,turns+intervals*3);
+if(turns>old)log("[TIME] +"+ (turns-old) +" turns.");
+while(gameMinutes>=1440){gameMinutes-=1440;gameDay++;log("[DAY "+gameDay+"] New day.");payDailyExpenses()}
+if(playerLevel>=3&&!roanokeGiftReceived)receiveRoanokeGift();
 saveGame();updateScreen();
 }
 applyTurnRegeneration();
-if(playerLevel>=3&&!borisGiftResolved) scheduleBorisGiftScene(3500);
-if(playerLevel===4&&!level4RivalResolved) scheduleLevel4RivalScene(5000);
-setInterval(applyTurnRegeneration,30*1000);
-document.addEventListener("visibilitychange",function(){if(!document.hidden) applyTurnRegeneration()});
+if(playerLevel>=3&&!borisGiftResolved)scheduleBorisGiftScene(3500);
+if(playerLevel===4&&!level4RivalResolved)scheduleLevel4RivalScene(5000);
+setInterval(applyTurnRegeneration,30000);
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)applyTurnRegeneration()});
 window.addEventListener("focus",applyTurnRegeneration);
 </script>
 </body>
