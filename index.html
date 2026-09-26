@@ -3421,26 +3421,28 @@ USE 1 TOKEN FOR +5 TURNS
 
 }
 
-function getTripProtection(
-individual = false
-){
+function getTripProtection(individual = false){
 
-const availableCrew =
-Array.isArray(crew)
-? crew.filter(member => member && !isJailActive(member))
-: [];
+    const availableCrew = Array.isArray(crew)
+        ? crew.filter(member =>
+            member &&
+            !isJailActive(member)
+        )
+        : [];
 
-if(availableCrew.length > 0){
+    // PLAYER IS ALWAYS AVAILABLE AS THE PRIMARY CREW MEMBER
+    if(availableCrew.length === 0){
 
-const count = individual ? 1 : Math.min(3, availableCrew.length);
+        const player = {
+            name: "Player",
+            strength: 100,
+            loyalty: 100,
+            morale: 100,
+            jailUntilDay: 0,
+            jailUntilMinute: 0,
+            jailReason: ""
+        };
 
-return {
-count,
-temporary: false,
-names: availableCrew.slice(0,count).map(member => member.name)
-};
-
-}
 
 // Unassigned thugs automatically fill the escort role when no named crew is available.
 if(randomThugs > 0){
