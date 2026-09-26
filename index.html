@@ -4816,3 +4816,12 @@ applyTurnRegeneration();
 
 </body>
 </html>
+# === EMERGENCY PLAYER CREW PATCH ===
+if not crew:
+    crew.append({
+        "name": "Player",
+        "role": "Player",
+        "happiness": 100,
+        "energy": 100,
+        "status": "Active"
+    })
