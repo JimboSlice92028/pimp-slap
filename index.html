@@ -3744,10 +3744,12 @@ names: [namedThugs[0].name]
 };
 }
 
+// With no crew, thugs, or named thugs yet, the player rides along themselves.
+// This is what makes the opening trips possible before you've recruited anyone.
 return {
-count: 0,
+count: 1,
 temporary: false,
-names: []
+names: [playerName || "You"]
 };
 }
 
