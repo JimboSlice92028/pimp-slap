@@ -900,7 +900,27 @@ owned: false
 
 let activeVehicle = 0;
 
-function normalizeCrew(){
+function function normalizeCrew(){
+
+if(!Array.isArray(crew)){
+crew = [];
+}
+
+crew = crew
+.filter(member => member)
+.map(member => {
+
+if(typeof member === "string"){
+
+return {
+name: member,
+strength: 50,
+loyalty: 50,
+morale: 75,
+jailUntilDay: 0,
+jailUntilMinute: 0,
+jailReason: ""
+};
 
 if(!Array.isArray(crew)){
 crew = [];
