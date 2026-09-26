@@ -105,7 +105,7 @@ border-radius: 6px;
 background: #090909;
 border-radius: 8px;
 padding: 12px;
-height: 220px;
+height: 160px;
 overflow-y: auto;
 font-family: monospace;
 font-size: 14px;
@@ -420,6 +420,8 @@ BATTLE
 
 <h2>Activity Log</h2>
 
+<button onclick="clearActivityLog()" style="margin-bottom:8px;">CLEAR LOG</button>
+
 <div id="log" class="log">
 [GAME] Welcome to Pimp Slap.<br>
 [STORY] The cell door opens. Roanoke is waiting outside.<br>
@@ -664,6 +666,26 @@ START NEW GAME
 
 </div>
 
+<div class="panel" style="margin-top:20px;">
+
+<h2>Support The Developer</h2>
+
+<p class="tab-note">
+Enjoying Pimp Slap? Tips are appreciated and go straight to the developer.
+</p>
+
+<a
+href="https://venmo.com/u/Sirius-Smooth"
+target="_blank"
+rel="noopener noreferrer"
+style="display:block;text-align:center;text-decoration:none;">
+<button type="button">
+DONATE ON VENMO
+</button>
+</a>
+
+</div>
+
 </div>
 
 </div>
@@ -687,6 +709,24 @@ START NEW GAME
 <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:18px;">
 <button onclick="acceptBorisGift()">YES. THANK YOU.</button>
 <button onclick="declineBorisGift()">UMMMMM... NO...</button>
+</div>
+</div>
+</div>
+
+<div id="level4RivalOverlay" class="levelup-overlay" style="display:none;">
+<div class="levelup-card">
+<h2>A RIVAL IS MAKING THREATS</h2>
+<div style="font-size:22px;font-weight:bold;margin:14px 0;">BORIS &amp; ROANOKE</div>
+<p><strong>ROANOKE:</strong> "We have a problem. A rival pimp has been making threats and says he's ready to take you out."</p>
+<p><strong>BORIS:</strong> "Maybe you visit the Arms Dealer. You should be ready."</p>
+<p><strong>YOU:</strong> "Why should I care?"</p>
+<p><strong>ROANOKE:</strong> "Because this guy beats his girls and forces them to work even when they don't want to."</p>
+<p><strong>YOU:</strong> "Fuck that. My girls are idiots, not innocent. They choose what they want, like anyone should be allowed to."</p>
+<p><strong>ONE OF YOUR GIRLS:</strong> <em>She nods approvingly, flipping her butterfly knife around her fingers.</em> "Maybe we should make sure he doesn't have the balls to do it again."</p>
+<p class="warning"><strong>The choice is yours.</strong> Attack the rival now, or wait and see what happens.</p>
+<div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:18px;">
+<button onclick="attackLevel4Rival()">ATTACK RIVAL</button>
+<button onclick="waitForLevel4Rival()">WAIT</button>
 </div>
 </div>
 </div>
@@ -769,7 +809,8 @@ const workerNames = [
 "Sasha"
 ];
 
-let property = null;
+let ownedProperties = [];
+let propertyStatusMessage = "";
 let businesses = [];
 let upgrades = [];
 let tokens = 0;
@@ -777,6 +818,8 @@ let tokens = 0;
 let roanokeGiftReceived = false;
 let borisGiftResolved = false;
 let borisGiftPopupScheduled = false;
+let level4RivalResolved = false;
+let level4RivalPopupScheduled = false;
 let storyStage = 0;
 let roanokeLessons = 0;
 let tabAttention = {};
@@ -793,6 +836,7 @@ let weapons = {
 let armorOwned = 0;
 
 let battleState = null;
+let activityLog = [];
 
 // Cocaine risk / police consequence tracking.
 let cocaineUseCountToday = 0;
@@ -1029,7 +1073,7 @@ crew,
 namedThugs,
 randomThugs,
 thugs: crew,
-property,
+ownedProperties,
 businesses,
 upgrades,
 tokens,
@@ -1040,6 +1084,7 @@ armorOwned,
 armsDealerUnlocked,
 roanokeGiftReceived,
 borisGiftResolved,
+level4RivalResolved,
 storyStage,
 roanokeLessons,
 tabAttention,
@@ -1048,7 +1093,8 @@ cocaineUseCountToday,
 cocaineConsecutiveUseCount,
 cocaineUsersToday,
 cocainePoliceEventTriggeredToday,
-cocaineBribeEventTriggeredToday
+cocaineBribeEventTriggeredToday,
+activityLog
 
 };
 
@@ -1155,8 +1201,11 @@ savedCrew.length > 0
 namedThugs = Array.isArray(data.namedThugs) ? data.namedThugs : [];
 randomThugs = Number.isFinite(Number(data.randomThugs)) ? Math.max(0, Math.floor(Number(data.randomThugs))) : 0;
 
-property =
-data.property ?? property;
+// Legacy saves stored a single "property" object; migrate it into the array.
+ownedProperties =
+Array.isArray(data.ownedProperties)
+? data.ownedProperties
+: (data.property ? [data.property] : []);
 
 businesses =
 data.businesses ?? businesses;
@@ -1189,6 +1238,15 @@ roanokeGiftReceived;
 
 borisGiftResolved =
 Boolean(data.borisGiftResolved);
+
+activityLog = Array.isArray(data.activityLog)
+? data.activityLog.map(String).slice(-50)
+: [];
+
+// Existing saves already past Level 4 should not be interrupted by the new Level 4 story.
+level4RivalResolved = data.level4RivalResolved !== undefined
+? Boolean(data.level4RivalResolved)
+: playerLevel > 4;
 
 storyStage = Number.isFinite(Number(data.storyStage)) ? Number(data.storyStage) : 0;
 roanokeLessons = Number.isFinite(Number(data.roanokeLessons)) ? Number(data.roanokeLessons) : 0;
@@ -1388,6 +1446,15 @@ suffix
 
 function log(message){
 
+const cleanMessage = String(message);
+
+// Keep the Activity Log as real game state so actions and outcomes survive
+// screen refreshes, tab changes, saves, and reloads.
+activityLog.push(cleanMessage);
+if(activityLog.length > 50){
+activityLog = activityLog.slice(-50);
+}
+
 const box =
 document.getElementById(
 "log"
@@ -1402,7 +1469,7 @@ Activity icons: keep the existing log text, but make the
 type of event immediately recognizable at a glance.
 */
 let icon = "";
-const text = String(message);
+const text = cleanMessage;
 
 if(/\[(?:CASH|PAYMENT|MONEY|SALE|REWARD|INCOME|EXPENSE|PURCHASE|ROANOKE)/i.test(text) || /\$[0-9]/.test(text)){
 icon = "💰 ";
@@ -1460,6 +1527,62 @@ message;
 
 box.scrollTop =
 box.scrollHeight;
+
+}
+
+function clearActivityLog(){
+
+activityLog = [];
+
+const box = document.getElementById("log");
+if(box){
+    box.innerHTML = "[GAME] Activity log cleared.";
+    box.scrollTop = box.scrollHeight;
+}
+
+saveGame();
+
+}
+
+function renderActivityLog(){
+
+const box = document.getElementById("log");
+if(!box){
+return;
+}
+
+if(activityLog.length === 0){
+return;
+}
+
+box.innerHTML = "";
+
+activityLog.forEach(message => {
+
+let icon = "";
+const text = String(message);
+
+if(/\[(?:CASH|PAYMENT|MONEY|SALE|REWARD|INCOME|EXPENSE|PURCHASE|ROANOKE)/i.test(text) || /\$[0-9]/.test(text)){ icon = "💰 "; }
+else if(/\[(?:MORALE|CREW|STABLE)/i.test(text) || /morale|happiness/i.test(text)){ icon = "😎 "; }
+else if(/anger|angry|rage/i.test(text)){ icon = "😡 "; }
+else if(/relationship|friendship|romance/i.test(text)){ icon = "❤️ "; }
+else if(/arrest|police|cop|cops|law enforcement/i.test(text)){ icon = "🚔 "; }
+else if(/jail|prison|locked up|lockup/i.test(text)){ icon = "⛓️ "; }
+else if(/beer|alcohol|drink|drinks/i.test(text)){ icon = "🍺 "; }
+else if(/weed|marijuana|smoke|joint/i.test(text)){ icon = "🌿 "; }
+else if(/cocaine|coke/i.test(text)){ icon = "❄️ "; }
+else if(/business|massage parlor|nail salon|operating cost|net income|property|work/i.test(text)){ icon = "💼 "; }
+else if(/mission|objective|goal/i.test(text)){ icon = "🎯 "; }
+else if(/warning|not enough|cannot|can't|full|failed|no .* ready|cancelled/i.test(text)){ icon = "⚠️ "; }
+else if(/death|dead|killed|serious consequence/i.test(text)){ icon = "💀 "; }
+else if(/major event|raid|ambush|battle|attack|fight|event/i.test(text)){ icon = "🔥 "; }
+else if(/level up|increased|increase|joined|gained|earned|bonus|boost/i.test(text)){ icon = "📈 "; }
+else if(/decreased|decrease|lost|penalty|cost|spent|reduced|drop/i.test(text)){ icon = "📉 "; }
+
+box.innerHTML += "<br>" + icon + message;
+});
+
+box.scrollTop = box.scrollHeight;
 
 }
 
@@ -1584,10 +1707,118 @@ if(playerLevel === 3){
   scheduleBorisGiftScene(6500);
 }
 
+if(playerLevel === 4){
+  scheduleLevel4RivalScene(7500);
+}
+
 }
 
 saveGame();
 
+}
+
+function scheduleLevel4RivalScene(delayMs){
+
+if(playerLevel !== 4 || level4RivalResolved || level4RivalPopupScheduled){
+return;
+}
+
+level4RivalPopupScheduled = true;
+
+setTimeout(function(){
+
+level4RivalPopupScheduled = false;
+
+if(playerLevel === 4 && !level4RivalResolved){
+showLevel4RivalPopup();
+}
+
+}, Math.max(1000, delayMs || 7500));
+
+}
+
+function showLevel4RivalPopup(){
+const overlay = document.getElementById("level4RivalOverlay");
+if(!overlay || level4RivalResolved){ return; }
+overlay.style.display = "flex";
+}
+
+function closeLevel4RivalPopup(){
+const overlay = document.getElementById("level4RivalOverlay");
+if(overlay){ overlay.style.display = "none"; }
+}
+
+function resolveLevel4Rival(){
+
+if(level4RivalResolved){ return; }
+
+level4RivalResolved = true;
+closeLevel4RivalPopup();
+
+// The rival's operation folds into yours after the confrontation.
+const rivalGirls = [
+{name:"Katya", condition:86, charm:78},
+{name:"Mila", condition:82, charm:84},
+{name:"Svetlana", condition:89, charm:76},
+{name:"Nadia", condition:80, charm:88}
+];
+
+rivalGirls.forEach(girl => {
+if(!stable.some(existing => existing && existing.name === girl.name)){
+stable.push(girl);
+}
+});
+
+const nightclub = businesses.find(b => b.name === "Boris's Run-Down Nightclub");
+if(nightclub){
+nightclub.staff = Math.max(Number(nightclub.staff) || 0, 2);
+}
+
+if(totalOrganizationSize() + 3 <= CREW_CAPACITY){
+randomThugs += 3;
+}else{
+const room = Math.max(0, CREW_CAPACITY - totalOrganizationSize());
+randomThugs += room;
+}
+
+const cadillac = vehicles.find(v => v.name === "Cadillac" || v.name === "Rival Cadillac");
+if(!cadillac){
+vehicles.push({
+name:"Cadillac",
+tier:2,
+cost:0,
+capacity:6,
+condition:78,
+owned:true
+});
+}else{
+cadillac.owned = true;
+}
+
+log("[RIVAL] The rival's girls chose to leave with you. Four joined your stable; two begin working at the nightclub.");
+log("[RIVAL] You won the rival's Cadillac and 3 thugs.");
+log("[RIVAL] The rival swore you were dead meat as he left: \"This is sho nuff territory.\"");
+
+saveGame();
+updateScreen();
+}
+
+function attackLevel4Rival(){
+if(level4RivalResolved){ return; }
+log("[LEVEL 4] You chose to attack the rival before he could make his move.");
+resolveLevel4Rival();
+}
+
+function waitForLevel4Rival(){
+if(level4RivalResolved){ return; }
+closeLevel4RivalPopup();
+log("[LEVEL 4] You decided to wait. The rival made his move anyway.");
+setTimeout(function(){
+if(!level4RivalResolved){
+log("[RIVAL] The rival attacked. You were ready for him.");
+resolveLevel4Rival();
+}
+}, 1800);
 }
 
 function scheduleBorisGiftScene(delayMs){
@@ -1962,6 +2193,7 @@ setText(
 playerLevel
 );
 
+renderActivityLog();
 renderProgress();
 renderStable();
 renderCrew();
@@ -2397,8 +2629,7 @@ if(playerLevel < 3){
 box.innerHTML = "";
 
 if(section){
-section.style.display =
-"none";
+section.style.display = "none";
 }
 
 return;
@@ -2406,47 +2637,112 @@ return;
 }
 
 if(section){
-section.style.display =
-"block";
+section.style.display = "block";
 }
 
-if(!property){
+const properties = [
+{
+name: "Trailer Park",
+price: 15000,
+info: "Cheap entry. High capacity. Heavy police exposure."
+},
+{
+name: "Condo",
+price: 25000,
+info: "Better security. 2 vehicle capacity. Rivals know your location."
+},
+{
+name: "Ranch",
+price: 75000,
+info: "15 vehicles. 10-man security. 99% offline security. $700/day income."
+},
+{
+name: "Estate",
+price: 250000,
+info: "100 crew. 50 vehicles. Absolute protection. $0 income. Random repairs."
+}
+];
 
-box.innerHTML = `
+let html = "";
 
+if(propertyStatusMessage){
+html += `
 <div class="property-card">
-
-<strong>
-NO PROPERTY
-</strong>
-
-<p>
-No property assets are currently owned.
-</p>
-
+<p class="warning">${propertyStatusMessage}</p>
 </div>
-
 `;
+}
 
+if(ownedProperties.length > 0){
+html += `
+<div class="property-card">
+<strong>OWNED PROPERTIES (${ownedProperties.length})</strong>
+${ownedProperties.map(p => `<p class="good">${p.name || "Property"}</p>`).join("")}
+</div>
+`;
+}
+
+properties.forEach((item,index) => {
+const owned = ownedProperties.some(p => p.name === item.name);
+html += `
+<div class="property-card">
+<strong>${item.name}</strong>
+<p>Price: <strong>$${item.price.toLocaleString()}</strong></p>
+<p>${item.info}</p>
+<button onclick="buyProperty(${index})" ${owned ? "disabled" : ""}>
+${owned ? "OWNED" : "BUY " + item.name.toUpperCase()}
+</button>
+</div>
+`;
+});
+
+box.innerHTML = html;
+
+}
+
+function buyProperty(index){
+
+const properties = [
+{name:"Trailer Park",price:15000},
+{name:"Condo",price:25000},
+{name:"Ranch",price:75000},
+{name:"Estate",price:250000}
+];
+
+const selected = properties[index];
+if(!selected){
+propertyStatusMessage = "That property could not be found.";
+updateScreen();
 return;
-
 }
 
-box.innerHTML = `
+if(ownedProperties.some(p => p.name === selected.name)){
+propertyStatusMessage = "You already own " + selected.name + ".";
+log("[PROPERTY] You already own " + selected.name + ".");
+updateScreen();
+return;
+}
 
-<div class="property-card">
+if(cash < selected.price){
+propertyStatusMessage = "Not enough cash for " + selected.name + ". You have $" + cash + ", you need $" + selected.price.toLocaleString() + ".";
+log("[PROPERTY] Not enough cash for " + selected.name + ". Need $" + selected.price + ".");
+updateScreen();
+return;
+}
 
-<strong>
-PROPERTY
-</strong>
+cash -= selected.price;
+ownedProperties.push({
+name: selected.name,
+price: selected.price,
+purchasedDay: gameDay
+});
 
-<p>
-${property.name || "Property"}
-</p>
+propertyStatusMessage = "";
 
-</div>
+log("[PROPERTY] Purchased " + selected.name + " for $" + selected.price + ".");
 
-`;
+saveGame();
+updateScreen();
 
 }
 
@@ -2506,9 +2802,8 @@ html += `
 ${business.name}
 </strong>
 
-<p class="good">
-ROANOKE REWARD — YOU DIDN'T SNITCH
-</p>
+${business.name === "Massage Parlor / Nail Salon" ? `<p class="good">ROANOKE REWARD — YOU DIDN'T SNITCH</p>` : ""}
+${business.staff ? `<p>Staff working here: ${business.staff}</p>` : ""}
 
 <p>
 Gross:
@@ -3430,23 +3725,7 @@ names: availableCrew.slice(0,count).map(member => member.name)
 };
 
 }
-if(availableCrew.length === 0){
-    crew = [{
-        name: "Player",
-        strength: 100,
-        loyalty: 100,
-        morale: 100,
-        jailUntilDay: 0,
-        jailUntilMinute: 0,
-        jailReason: ""
-    }];
 
-    return {
-        count: 1,
-        temporary: false,
-        names: ["Player"]
-    };
-}
 // Unassigned thugs automatically fill the escort role when no named crew is available.
 if(randomThugs > 0){
 return {
@@ -4795,6 +5074,10 @@ applyTurnRegeneration();
 
 if(playerLevel >= 3 && !borisGiftResolved){
   scheduleBorisGiftScene(3500);
+}
+
+if(playerLevel === 4 && !level4RivalResolved){
+  scheduleLevel4RivalScene(5000);
 }
 
 setInterval(
