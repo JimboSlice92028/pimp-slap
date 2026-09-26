@@ -742,9 +742,9 @@ charm: 81
 }
 ];
 
-let crew = [1];
+let crew = [];
 let namedThugs = [];
-let randomThugs = 1;
+let randomThugs = 0;
 const CREW_CAPACITY = 100;
 
 const recruitNames = [
@@ -3743,7 +3743,16 @@ return;
 
 }
 
+const protection =
+getTripProtection(individual);
 
+if(protection.count < 1){
+log("[TRIP] Nobody from the organization is available to ride along.");
+document.getElementById("encounter").innerHTML =
+"<strong>TRIP CANCELLED</strong><br>" +
+"You need at least one available thug or crew member to ride along.";
+return;
+}
 
 let totalEarnings = 0;
 let totalFatigue = 0;
@@ -3926,7 +3935,7 @@ updateScreen();
 return;
 }
 
-let protection = getTripProtection(true);
+const protection = getTripProtection(true);
 
 if(protection.count < 1){
 log("[TRIP] No available thug or crew member to ride along.");
@@ -4088,14 +4097,14 @@ updateScreen();
 
 function visitLocation(place){
 
-let protection = getTripProtection(false);
+const protection = getTripProtection(false);
 
 if(protection.count < 1){
-     protection = {
-       count: 0,
-       temporary: false,
-       names []
-     };  
+log("[TRIP] No available thug or crew member to ride along.");
+document.getElementById("encounter").innerHTML =
+"<strong>TRIP CANCELLED</strong><br>" +
+"Nobody is available to ride along. Check the CREW tab.";
+return;
 }
 
 if(!useTurn()){
