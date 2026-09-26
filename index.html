@@ -981,6 +981,17 @@ return crew.length + randomThugs;
 
 function syncCrewState(){
 normalizeCrew();
+  if(!crew.some(member => member && member.name === "Player")){
+    crew.unshift({
+        name: "Player",
+        strength: 100,
+        loyalty: 100,
+        morale: 100,
+        jailUntilDay: 0,
+        jailUntilMinute: 0,
+        jailReason: ""
+    });
+}
 normalizeNamedThugs();
 window.pimpCrew = crew;
 return crew;
