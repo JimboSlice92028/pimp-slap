@@ -228,12 +228,12 @@ const armsDealerItems=[
 {name:"Sawed-Off Shotgun",price:400,type:"Weapon"},{name:"Body Armor",price:3000,type:"Armor"}
 ];
 let vehicles=[
-{name:"Honda Civic",tier:1,cost:1000,capacity:3,speed:55,toughness:35,reliability:85,attention:15,condition:85,owned:true,weather:"all",upgradeLevel:0},
-{name:"Chevrolet Blazer",tier:2,cost:3500,capacity:5,speed:48,toughness:75,reliability:78,attention:20,condition:100,owned:false,weather:"all",upgradeLevel:0},
-{name:"Used Cadillac Escalade",tier:2,cost:3500,capacity:7,speed:68,toughness:70,reliability:72,attention:80,condition:100,owned:false,weather:"all",upgradeLevel:0},
-{name:"Used Corvette",tier:2,cost:3500,capacity:2,speed:92,toughness:30,reliability:58,attention:85,condition:100,owned:false,weather:"all",upgradeLevel:0},
+{name:"Altima",tier:1,cost:1000,capacity:5,speed:80,toughness:40,reliability:77,attention:10,condition:85,owned:true,weather:"all",upgradeLevel:0},
+{name:"Yukon",tier:2,cost:3500,capacity:7,speed:55,toughness:60,reliability:80,attention:20,condition:100,owned:false,weather:"all",upgradeLevel:0},
+{name:"Escalade",tier:2,cost:3500,capacity:7,speed:70,toughness:65,reliability:80,attention:25,condition:100,owned:false,weather:"all",upgradeLevel:0},
+{name:"Used Corvette",tier:2,cost:3500,capacity:2,speed:92,toughness:30,reliability:58,attention:85,condition:100,owned:false,weather:"dry",upgradeLevel:0},
 {name:"Humvee",tier:3,cost:10000,capacity:8,speed:35,toughness:98,reliability:88,attention:70,condition:100,owned:false,weather:"all",upgradeLevel:0},
-{name:"Used Porsche 911",tier:3,cost:10000,capacity:2,speed:100,toughness:25,reliability:45,attention:90,condition:100,owned:false,weather:"all",upgradeLevel:0},
+{name:"Used Porsche 911",tier:3,cost:10000,capacity:2,speed:100,toughness:15,reliability:45,attention:90,condition:100,owned:false,weather:"dry",upgradeLevel:0},
 {name:"Shelby Mustang",tier:3,cost:10000,capacity:4,speed:88,toughness:78,reliability:80,attention:95,condition:100,owned:false,weather:"dry",upgradeLevel:0}
 ];
 let activeVehicle=0;
@@ -403,13 +403,17 @@ if(!businesses.find(b=>b&&b.name==="Massage Parlor / Nail Salon"))
 businesses.push({name:"Massage Parlor / Nail Salon",gross:500,operatingRate:0.15,net:425,ready:true,lastCollectionDay:gameDay-1});
 else { const mp=businesses.find(b=>b&&b.name==="Massage Parlor / Nail Salon"); mp.gross=500;mp.operatingRate=0.15;mp.net=425; }
 }
+// Rename legacy vehicle names from older saves onto the current lineup, so an owned
+// vehicle keeps its condition/ownership instead of showing up as a stray duplicate.
+const vehicleRenames={"Honda Civic":"Altima","Chevrolet Blazer":"Yukon","Used Cadillac Escalade":"Escalade"};
+vehicles.forEach(v=>{if(v&&vehicleRenames[v.name])v.name=vehicleRenames[v.name];});
 // Migrate older vehicle saves without deleting owned vehicles.
 const vehicleDefaults=[
-["Honda Civic",1,1000,3,55,35,85,15,"all"],["Chevrolet Blazer",2,3500,5,48,75,78,20,"all"],["Used Cadillac Escalade",2,3500,7,68,70,72,80,"all"],["Used Corvette",2,3500,2,92,30,58,85,"all"],["Humvee",3,10000,8,35,98,88,70,"all"],["Used Porsche 911",3,10000,2,100,25,45,90,"all"],["Shelby Mustang",3,10000,4,88,78,80,95,"dry"]
+["Altima",1,1000,5,80,40,77,10,"all"],["Yukon",2,3500,7,55,60,80,20,"all"],["Escalade",2,3500,7,70,65,80,25,"all"],["Used Corvette",2,3500,2,92,30,58,85,"dry"],["Humvee",3,10000,8,35,98,88,70,"all"],["Used Porsche 911",3,10000,2,100,15,45,90,"dry"],["Shelby Mustang",3,10000,4,88,78,80,95,"dry"]
 ];
-vehicleDefaults.forEach(dv=>{let v=vehicles.find(x=>x&&x.name===dv[0]);if(!v){vehicles.push({name:dv[0],tier:dv[1],cost:dv[2],capacity:dv[3],speed:dv[4],toughness:dv[5],reliability:dv[6],attention:dv[7],condition:100,owned:false,weather:dv[8],upgradeLevel:0});}else{v.tier=dv[1];v.cost=dv[2];v.capacity=dv[3];v.speed=dv[4];v.toughness=dv[5];v.reliability=dv[6];v.attention=dv[7];v.weather=v.weather||dv[8];v.upgradeLevel=Number(v.upgradeLevel)||0;}});
+vehicleDefaults.forEach(dv=>{let v=vehicles.find(x=>x&&x.name===dv[0]);if(!v){vehicles.push({name:dv[0],tier:dv[1],cost:dv[2],capacity:dv[3],speed:dv[4],toughness:dv[5],reliability:dv[6],attention:dv[7],condition:100,owned:false,weather:dv[8],upgradeLevel:0});}else{v.tier=dv[1];v.cost=dv[2];v.capacity=dv[3];v.speed=dv[4];v.toughness=dv[5];v.reliability=dv[6];v.attention=dv[7];v.weather=dv[8];v.upgradeLevel=Number(v.upgradeLevel)||0;}});
 if(!Array.isArray(vehicles)||!vehicles.length)
-vehicles=[{name:"Honda Civic",tier:1,cost:0,capacity:3,condition:100,owned:true}];
+vehicles=[{name:"Altima",tier:1,cost:0,capacity:5,condition:100,owned:true}];
 if(!Number.isInteger(activeVehicle)||activeVehicle<0||activeVehicle>=vehicles.length) activeVehicle=0;
 return true;
 }catch(e){console.log(e);return false}
@@ -514,7 +518,7 @@ function showLevel4RivalPopup(){const o=document.getElementById("level4RivalOver
 function closeLevel4RivalPopup(){const o=document.getElementById("level4RivalOverlay");if(o)o.style.display="none"}
 
 function countOwnedSUVs(){
-const suvNames=["Chevrolet Blazer","Used Cadillac Escalade","Humvee"];
+const suvNames=["Yukon","Escalade","Humvee"];
 return vehicles.filter(v=>v&&v.owned&&suvNames.includes(v.name)&&Number(v.condition)>0).length;
 }
 function countPistols(){return weapons["Revolver"]||0}
@@ -586,8 +590,14 @@ if(totalOrganizationSize()+3<=CREW_CAPACITY)randomThugs+=3;
 else randomThugs+=Math.max(0,CREW_CAPACITY-totalOrganizationSize());
 
 const cadillac=vehicles.find(v=>v.name==="Cadillac"||v.name==="Rival Cadillac");
-if(!cadillac)vehicles.push({name:"Cadillac",tier:2,cost:0,capacity:6,condition:62,owned:true});
-else{cadillac.owned=true;cadillac.condition=Math.min(Number(cadillac.condition)||62,62)}
+if(!cadillac){
+vehicles.push({name:"Cadillac",tier:2,cost:0,capacity:6,speed:60,toughness:50,reliability:50,attention:30,condition:62,owned:true,weather:"all",upgradeLevel:0});
+}else{
+cadillac.owned=true;cadillac.condition=Math.min(Number(cadillac.condition)||62,62);
+cadillac.speed=60;cadillac.toughness=50;cadillac.reliability=50;cadillac.attention=30;
+if(!cadillac.capacity)cadillac.capacity=6;
+if(!cadillac.weather)cadillac.weather="all";
+}
 
 log("[RIVAL] His girls chose to leave with you. Four joined the stable.");
 log("[RIVAL] You took what was left of his Cadillac and three of his thugs.");
