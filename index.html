@@ -228,7 +228,8 @@ const armsDealerItems=[
 {name:"Sawed-Off Shotgun",price:400,type:"Weapon"},{name:"Body Armor",price:3000,type:"Armor"}
 ];
 let vehicles=[
-{name:"Altima",tier:1,cost:1000,capacity:5,speed:80,toughness:40,reliability:77,attention:10,condition:85,owned:true,weather:"all",upgradeLevel:0},
+{name:"Honda Civic",tier:1,cost:1000,capacity:4,speed:55,toughness:30,reliability:50,attention:5,condition:85,owned:true,weather:"all",upgradeLevel:0},
+{name:"Altima",tier:1,cost:1000,capacity:5,speed:80,toughness:40,reliability:77,attention:10,condition:100,owned:false,weather:"all",upgradeLevel:0},
 {name:"Yukon",tier:2,cost:3500,capacity:7,speed:55,toughness:60,reliability:80,attention:20,condition:100,owned:false,weather:"all",upgradeLevel:0},
 {name:"Escalade",tier:2,cost:3500,capacity:7,speed:70,toughness:65,reliability:80,attention:25,condition:100,owned:false,weather:"all",upgradeLevel:0},
 {name:"Used Corvette",tier:2,cost:3500,capacity:2,speed:92,toughness:30,reliability:58,attention:85,condition:100,owned:false,weather:"dry",upgradeLevel:0},
@@ -405,15 +406,15 @@ else { const mp=businesses.find(b=>b&&b.name==="Massage Parlor / Nail Salon"); m
 }
 // Rename legacy vehicle names from older saves onto the current lineup, so an owned
 // vehicle keeps its condition/ownership instead of showing up as a stray duplicate.
-const vehicleRenames={"Honda Civic":"Altima","Chevrolet Blazer":"Yukon","Used Cadillac Escalade":"Escalade"};
+const vehicleRenames={"Chevrolet Blazer":"Yukon","Used Cadillac Escalade":"Escalade"};
 vehicles.forEach(v=>{if(v&&vehicleRenames[v.name])v.name=vehicleRenames[v.name];});
 // Migrate older vehicle saves without deleting owned vehicles.
 const vehicleDefaults=[
-["Altima",1,1000,5,80,40,77,10,"all"],["Yukon",2,3500,7,55,60,80,20,"all"],["Escalade",2,3500,7,70,65,80,25,"all"],["Used Corvette",2,3500,2,92,30,58,85,"dry"],["Humvee",3,10000,8,35,98,88,70,"all"],["Used Porsche 911",3,10000,2,100,15,45,90,"dry"],["Shelby Mustang",3,10000,4,88,78,80,95,"dry"]
+["Honda Civic",1,1000,4,55,30,50,5,"all"],["Altima",1,1000,5,80,40,77,10,"all"],["Yukon",2,3500,7,55,60,80,20,"all"],["Escalade",2,3500,7,70,65,80,25,"all"],["Used Corvette",2,3500,2,92,30,58,85,"dry"],["Humvee",3,10000,8,35,98,88,70,"all"],["Used Porsche 911",3,10000,2,100,15,45,90,"dry"],["Shelby Mustang",3,10000,4,88,78,80,95,"dry"]
 ];
 vehicleDefaults.forEach(dv=>{let v=vehicles.find(x=>x&&x.name===dv[0]);if(!v){vehicles.push({name:dv[0],tier:dv[1],cost:dv[2],capacity:dv[3],speed:dv[4],toughness:dv[5],reliability:dv[6],attention:dv[7],condition:100,owned:false,weather:dv[8],upgradeLevel:0});}else{v.tier=dv[1];v.cost=dv[2];v.capacity=dv[3];v.speed=dv[4];v.toughness=dv[5];v.reliability=dv[6];v.attention=dv[7];v.weather=dv[8];v.upgradeLevel=Number(v.upgradeLevel)||0;}});
 if(!Array.isArray(vehicles)||!vehicles.length)
-vehicles=[{name:"Altima",tier:1,cost:0,capacity:5,condition:100,owned:true}];
+vehicles=[{name:"Honda Civic",tier:1,cost:0,capacity:4,condition:100,owned:true}];
 if(!Number.isInteger(activeVehicle)||activeVehicle<0||activeVehicle>=vehicles.length) activeVehicle=0;
 return true;
 }catch(e){console.log(e);return false}
