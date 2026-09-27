@@ -220,12 +220,28 @@ const armsDealerItems=[
 {name:"Sawed-Off Shotgun",price:400,type:"Weapon"},{name:"Body Armor",price:3000,type:"Armor"}
 ];
 let vehicles=[
-{name:"Honda Civic",tier:1,cost:0,capacity:3,condition:85,owned:true},
-{name:"Used Sedan",tier:1,cost:2500,capacity:4,condition:100,owned:false},
-{name:"SUV Crew",tier:2,cost:7500,capacity:6,condition:100,owned:false},
-{name:"Luxury SUV Executive",tier:3,cost:18000,capacity:8,condition:100,owned:false}
+{name:"Honda Civic",tier:1,cost:1000,capacity:3,speed:55,toughness:35,reliability:85,attention:15,condition:85,owned:true,weather:"all",upgradeLevel:0},
+{name:"Chevrolet Blazer",tier:2,cost:3500,capacity:5,speed:48,toughness:75,reliability:78,attention:20,condition:100,owned:false,weather:"all",upgradeLevel:0},
+{name:"Used Cadillac Escalade",tier:2,cost:3500,capacity:7,speed:68,toughness:70,reliability:72,attention:80,condition:100,owned:false,weather:"all",upgradeLevel:0},
+{name:"Used Corvette",tier:2,cost:3500,capacity:2,speed:92,toughness:30,reliability:58,attention:85,condition:100,owned:false,weather:"all",upgradeLevel:0},
+{name:"Humvee",tier:3,cost:10000,capacity:8,speed:35,toughness:98,reliability:88,attention:70,condition:100,owned:false,weather:"all",upgradeLevel:0},
+{name:"Used Porsche 911",tier:3,cost:10000,capacity:2,speed:100,toughness:25,reliability:45,attention:90,condition:100,owned:false,weather:"all",upgradeLevel:0},
+{name:"Shelby Mustang",tier:3,cost:10000,capacity:4,speed:88,toughness:78,reliability:80,attention:95,condition:100,owned:false,weather:"dry",upgradeLevel:0}
 ];
 let activeVehicle=0;
+let currentWeather="clear";
+let weatherDay=0;
+let firstThreeBattles=0;
+let globalAttackCounter=0;
+let lastEstateMishapDay=-9999;
+let lastRanchUpkeepDay=0;
+let lastPropertyTaxDay=0;
+const PROPERTY_DATA={
+"Trailer Park":{price:15000,capacity:100,vehicles:5,security:25,police:0.18,rival:0.12,info:"Cheap and useful, but police are constantly nearby. Cop pressure can mean bribes."},
+"Condo":{price:25000,capacity:25,vehicles:2,security:70,police:0.07,rival:0.18,info:"Affordable protection, but rivals know where you live. Optional security costs $1,000/24h."},
+"Ranch":{price:75000,capacity:100,vehicles:15,security:99,police:0.025,rival:0.01,info:"Private, huge, profitable and almost impossible to find. Animals cost money to keep."},
+"Estate":{price:250000,capacity:100,vehicles:50,security:100,police:0,rival:0,info:"Massive capacity and near-absolute security. No passive income. Old-house repairs can hurt."}
+};
 const BORIS_CLUB_PRICE=250000,BORIS_CLUB_GROSS=2500,BORIS_CLUB_OPERATING=700,BORIS_CLUB_NET=1800;
 
 function normalizeCrew(){
@@ -266,7 +282,7 @@ expenses,supplies,stable,crew,namedThugs,randomThugs,thugs:crew,ownedProperties,
 vehicles,activeVehicle,weapons,armorOwned,armsDealerUnlocked,roanokeGiftReceived,borisGiftResolved,
 borisAttackPending,borisNightclubForSale,level4RivalResolved,storyStage,roanokeLessons,tabAttention,battleState,
 cocaineUseCountToday,cocaineConsecutiveUseCount,cocaineUsersToday,cocainePoliceEventTriggeredToday,
-cocaineBribeEventTriggeredToday,activityLog
+cocaineBribeEventTriggeredToday,activityLog,currentWeather,weatherDay,firstThreeBattles,globalAttackCounter,lastEstateMishapDay,lastRanchUpkeepDay,lastPropertyTaxDay
 }));
 const s=document.getElementById("saveStatus");if(s) s.textContent="Game saved.";
 }
@@ -306,14 +322,26 @@ cocaineConsecutiveUseCount=Number.isFinite(Number(d.cocaineConsecutiveUseCount))
 cocaineUsersToday=Array.isArray(d.cocaineUsersToday)?d.cocaineUsersToday:[];
 cocainePoliceEventTriggeredToday=Boolean(d.cocainePoliceEventTriggeredToday);
 cocaineBribeEventTriggeredToday=Boolean(d.cocaineBribeEventTriggeredToday);
+currentWeather=d.currentWeather||"clear";weatherDay=Number.isFinite(Number(d.weatherDay))?Number(d.weatherDay):0;
+firstThreeBattles=Number.isFinite(Number(d.firstThreeBattles))?Number(d.firstThreeBattles):0;
+globalAttackCounter=Number.isFinite(Number(d.globalAttackCounter))?Number(d.globalAttackCounter):0;
+lastEstateMishapDay=Number.isFinite(Number(d.lastEstateMishapDay))?Number(d.lastEstateMishapDay):-9999;
+lastRanchUpkeepDay=Number.isFinite(Number(d.lastRanchUpkeepDay))?Number(d.lastRanchUpkeepDay):0;
+lastPropertyTaxDay=Number.isFinite(Number(d.lastPropertyTaxDay))?Number(d.lastPropertyTaxDay):0;
 if(!Array.isArray(stable)) stable=[];if(!Array.isArray(crew)) crew=[];
 if(crew.length===0){const legacy=Array.isArray(d.thugs)?d.thugs:Array.isArray(d.crewMembers)?d.crewMembers:[];if(legacy.length>0) crew=legacy}
 normalizeCrew();
 if(playerLevel>=3){
 armsDealerUnlocked=true;
 if(!businesses.find(b=>b&&b.name==="Massage Parlor / Nail Salon"))
-businesses.push({name:"Massage Parlor / Nail Salon",gross:1000,operatingRate:0.15,net:850,ready:true,lastCollectionDay:gameDay});
+businesses.push({name:"Massage Parlor / Nail Salon",gross:500,operatingRate:0.15,net:425,ready:true,lastCollectionDay:gameDay-1});
+else { const mp=businesses.find(b=>b&&b.name==="Massage Parlor / Nail Salon"); mp.gross=500;mp.operatingRate=0.15;mp.net=425; }
 }
+// Migrate older vehicle saves without deleting owned vehicles.
+const vehicleDefaults=[
+["Honda Civic",1,1000,3,55,35,85,15,"all"],["Chevrolet Blazer",2,3500,5,48,75,78,20,"all"],["Used Cadillac Escalade",2,3500,7,68,70,72,80,"all"],["Used Corvette",2,3500,2,92,30,58,85,"all"],["Humvee",3,10000,8,35,98,88,70,"all"],["Used Porsche 911",3,10000,2,100,25,45,90,"all"],["Shelby Mustang",3,10000,4,88,78,80,95,"dry"]
+];
+vehicleDefaults.forEach(dv=>{let v=vehicles.find(x=>x&&x.name===dv[0]);if(!v){vehicles.push({name:dv[0],tier:dv[1],cost:dv[2],capacity:dv[3],speed:dv[4],toughness:dv[5],reliability:dv[6],attention:dv[7],condition:100,owned:false,weather:dv[8],upgradeLevel:0});}else{v.tier=dv[1];v.cost=dv[2];v.capacity=dv[3];v.speed=dv[4];v.toughness=dv[5];v.reliability=dv[6];v.attention=dv[7];v.weather=v.weather||dv[8];v.upgradeLevel=Number(v.upgradeLevel)||0;}});
 if(!Array.isArray(vehicles)||!vehicles.length)
 vehicles=[{name:"Honda Civic",tier:1,cost:0,capacity:3,condition:100,owned:true}];
 if(!Number.isInteger(activeVehicle)||activeVehicle<0||activeVehicle>=vehicles.length) activeVehicle=0;
@@ -350,7 +378,11 @@ box.innerHTML+="<br>"+logIcon(c)+msg;box.scrollTop=box.scrollHeight;
 function clearActivityLog(){activityLog=[];const b=document.getElementById("log");if(b){b.innerHTML="[GAME] Activity log cleared.";b.scrollTop=b.scrollHeight}saveGame()}
 function renderActivityLog(){const b=document.getElementById("log");if(!b||!activityLog.length)return;b.innerHTML="";activityLog.forEach(m=>{b.innerHTML+="<br>"+logIcon(String(m))+m});b.scrollTop=b.scrollHeight}
 function setText(id,v){const e=document.getElementById(id);if(e)e.textContent=v}
-function xpNeeded(){return 100+((playerLevel-1)*75)}
+function xpNeeded(){
+// XP curve intentionally slows as the operation grows.
+const lvl=Math.max(1,playerLevel);
+return Math.floor(100 + ((lvl-1)*85) + Math.pow(Math.max(0,lvl-3),1.35)*35);
+}
 function difficultyMultiplier(){return 1+((Math.max(1,playerLevel)-1)*0.12)}
 
 function startOpeningStory(){
@@ -388,6 +420,14 @@ markTabAttention("marketplaceTab");markTabAttention("homeTab");unlockLevel3();
 document.getElementById("encounter").innerHTML="<strong>ROANOKE</strong><br>\"You kept your mouth shut when it mattered.\"<br><br>\"The Massage Parlor / Nail Salon is yours. A gift for not snitching.\"<br><br>\"Look around. Make sure every member is strapped. Keep an eye on the Strip Club.\"";
 log("[STORY] Roanoke paid a debt without calling it a debt.");
 scheduleBorisGiftScene(6500);
+}
+if(playerLevel===7){
+log("[STORY] Businesses are opening up. Money can work while you sleep.");
+markTabAttention("businessTab");
+document.getElementById("encounter").innerHTML="<strong>ROANOKE</strong><br>\"You have enough moving parts now. Let some of them make money while you are somewhere else.\"<br><br>The Strip Club and Auto Repair Shop are now available.";
+}
+if(playerLevel===6){
+markTabAttention("propertyTab");log("[STORY] Property ownership is now available.");
 }
 if(playerLevel===4){
 log("[STORY] The temperature on the street just changed.");
@@ -556,7 +596,7 @@ function unlockLevel3(){armsDealerUnlocked=true;if(!roanokeGiftReceived)receiveR
 function receiveRoanokeGift(){
 if(roanokeGiftReceived)return;roanokeGiftReceived=true;
 if(!businesses.find(b=>b.name==="Massage Parlor / Nail Salon"))
-businesses.push({name:"Massage Parlor / Nail Salon",gross:1000,operatingRate:0.15,net:850,ready:true,lastCollectionDay:gameDay});
+businesses.push({name:"Massage Parlor / Nail Salon",gross:500,operatingRate:0.15,net:425,ready:true,lastCollectionDay:gameDay-1});
 log("[ROANOKE] You didn't snitch. The Massage Parlor / Nail Salon is yours.");
 saveGame();
 }
@@ -590,8 +630,8 @@ updateScreen();
 }
 function updateTabVisibility(){
 const p=document.getElementById("tabBtn-property"),b=document.getElementById("tabBtn-business"),bt=document.getElementById("tabBtn-battle");
-if(p)p.style.display=playerLevel>=3?"block":"none";
-if(b)b.style.display=playerLevel>=3?"block":"none";
+if(p)p.style.display=playerLevel>=6?"block":"none";
+if(b)b.style.display=playerLevel>=7?"block":"none";
 if(bt)bt.style.display=playerLevel>=5?"block":"none";
 }
 function updateScreen(){
@@ -603,7 +643,7 @@ renderActivityLog();renderProgress();renderStable();renderCrew();renderSupplies(
 renderIdentity();renderProperty();renderBusinesses();renderArmsDealer();renderSmokeShop();
 renderVehicles();renderOperations();renderBattle();
 const strip=document.getElementById("stripClubLocationButton");
-if(strip)strip.style.display=playerLevel>=3?"block":"none";
+if(strip){strip.style.display=playerLevel>=7&&hasBusiness("Strip Club")?"block":"none";}
 }
 
 function renderProgress(){
@@ -662,55 +702,44 @@ box.innerHTML=`<div class="identity-card"><div class="identity-section"><b>Playe
 function changePlayerName(){const i=document.getElementById("newPlayerName");if(!i)return;const n=i.value.trim();if(!n)return;playerName=n;log("[IDENTITY] Name: "+playerName);saveGame();updateScreen()}
 function changeOperationName(){const i=document.getElementById("newOperationName");if(!i)return;const n=i.value.trim();if(!n)return;operationName=n;log("[IDENTITY] Operation: "+operationName);saveGame();updateScreen()}
 
+function ownedProperty(name){return ownedProperties.find(p=>p&&p.name===name)||null}
+function propertyCapacity(){
+const p=ownedProperties.length?ownedProperties[ownedProperties.length-1]:null;return p&&PROPERTY_DATA[p.name]?PROPERTY_DATA[p.name].capacity:25;
+}
+function vehicleStorageLimit(){
+if(hasBusiness("Auto Repair Shop"))return 50;
+const p=ownedProperties.length?ownedProperties[ownedProperties.length-1]:null;return p&&PROPERTY_DATA[p.name]?PROPERTY_DATA[p.name].vehicles:5;
+}
+function hasBusiness(name){return businesses.some(b=>b&&b.name===name)}
 function renderProperty(){
 const box=document.getElementById("propertyPanel"),sec=document.getElementById("propertySection");if(!box)return;
-if(playerLevel<3){box.innerHTML="";if(sec)sec.style.display="none";return}
-if(sec)sec.style.display="block";
-const props=[{name:"Trailer Park",price:15000,info:"Cheap entry."},{name:"Condo",price:25000,info:"Better security."},{name:"Ranch",price:75000,info:"Heavy capacity."},{name:"Estate",price:250000,info:"Absolute protection."}];
-let html=propertyStatusMessage?`<div class="property-card"><p class="warning">${propertyStatusMessage}</p></div>`:"";
-if(ownedProperties.length)html+=`<div class="property-card"><strong>OWNED</strong>${ownedProperties.map(p=>`<p class="good">${p.name}</p>`).join("")}</div>`;
-props.forEach((item,i)=>{const owned=ownedProperties.some(p=>p.name===item.name);
-html+=`<div class="property-card"><strong>${item.name}</strong><p>$${item.price.toLocaleString()}</p><p>${item.info}</p>
-<button onclick="buyProperty(${i})" ${owned?"disabled":""}>${owned?"OWNED":"BUY"}</button></div>`});
-box.innerHTML=html;
+if(playerLevel<6){box.innerHTML="";if(sec)sec.style.display="none";return} if(sec)sec.style.display="block";
+let html=`<div class="property-card"><strong>PROPERTY STATUS</strong><p>Owned: ${ownedProperties.length?ownedProperties.map(p=>p.name).join(", "):"None"}</p><p>Current capacity: ${propertyCapacity()} crew · ${vehicleStorageLimit()} vehicles</p></div>`;
+if(propertyStatusMessage)html+=`<div class="property-card"><p class="warning">${propertyStatusMessage}</p></div>`;
+Object.keys(PROPERTY_DATA).forEach(name=>{const d=PROPERTY_DATA[name],owned=!!ownedProperty(name);let extra="";
+if(name==="Condo")extra='<p>Private Security: $1,000 / 24h when activated.</p>';
+if(name==="Ranch")extra='<p>Revenue: $700 / 24h · Animal upkeep: $500 / 72h · Tax: $5,000 / 365 days.</p>';
+if(name==="Estate")extra='<p>Income: $0 · Repairs can cost up to $2,500, with 100 in-game hours between mishaps.</p>';
+html+=`<div class="property-card"><strong>${name}</strong><p>$${d.price.toLocaleString()}</p><p>${d.info}</p>${extra}<p>Capacity: ${d.capacity} crew · Vehicle storage: ${d.vehicles}</p>${owned?`<p class="good">OWNED</p>${name==="Condo"?`<button onclick="toggleCondoSecurity()">${ownedProperty(name).securityActive?"DISABLE":"ACTIVATE"} PRIVATE SECURITY — $1,000 / 24H</button>`:""}`:`<button onclick="buyPropertyByName('${name}')">BUY — $${d.price.toLocaleString()}</button>`}</div>`;
+});box.innerHTML=html;
 }
-function buyProperty(i){
-const props=[{name:"Trailer Park",price:15000},{name:"Condo",price:25000},{name:"Ranch",price:75000},{name:"Estate",price:250000}];
-const s=props[i];if(!s)return;
-if(ownedProperties.some(p=>p.name===s.name)){log("[PROPERTY] Already own "+s.name);return}
-if(cash<s.price){log("[PROPERTY] Need $"+s.price);return}
-cash-=s.price;ownedProperties.push({name:s.name,price:s.price,purchasedDay:gameDay});
-log("[PROPERTY] Bought "+s.name);saveGame();updateScreen();
-}
+function buyPropertyByName(name){const d=PROPERTY_DATA[name];if(!d)return;if(ownedProperty(name)){log("[PROPERTY] Already own "+name);return}if(cash<d.price){log("[PROPERTY] Need $"+d.price.toLocaleString());return}cash-=d.price;ownedProperties.push({name,price:d.price,purchasedDay:gameDay,securityActive:false});log("[PROPERTY] Bought "+name+".");markTabAttention("propertyTab");saveGame();updateScreen()}
+function buyProperty(i){const names=Object.keys(PROPERTY_DATA);buyPropertyByName(names[i])}
+function toggleCondoSecurity(){const p=ownedProperty("Condo");if(!p)return;if(p.securityActive){p.securityActive=false;log("[PROPERTY] Condo security switched off.");}else{if(cash<1000){log("[PROPERTY] Need $1,000 for security.");return}cash-=1000;p.securityActive=true;log("[PROPERTY] Private security active for 24 hours.");}saveGame();updateScreen()}
 
 function renderBusinesses(){
 const box=document.getElementById("businessPanel"),sec=document.getElementById("businessSection");if(!box)return;
-if(playerLevel<3){box.innerHTML="";if(sec)sec.style.display="none";return}
-if(sec)sec.style.display="block";
+if(playerLevel<7){box.innerHTML="";if(sec)sec.style.display="none";return} if(sec)sec.style.display="block";
 let html="";
-if(borisNightclubForSale&&!ownsBorisNightclub()){
-html+=`<div class="business-card"><strong>Boris's Run-Down Nightclub</strong><p class="warning">FOR SALE</p>
-<p>Price: $${BORIS_CLUB_PRICE.toLocaleString()}</p><p>Gross: $${BORIS_CLUB_GROSS}/24h · Op: $${BORIS_CLUB_OPERATING} · Net: $${BORIS_CLUB_NET}</p>
-<button onclick="buyBorisNightclub()">BUY — $${BORIS_CLUB_PRICE.toLocaleString()}</button></div>`;
-}
+if(!hasBusiness("Strip Club"))html+=`<div class="business-card"><strong>Strip Club</strong><p>$5,000</p><p>Income: $1,000 / 24h</p><p>Can attract new recruits.</p><button onclick="buyBusiness('Strip Club')">BUY — $5,000</button></div>`;
+if(!hasBusiness("Auto Repair Shop"))html+=`<div class="business-card"><strong>Auto Repair Shop</strong><p>Central vehicle-management location.</p><p>Income: $700 / 24h</p><p>Buying price is not specified in the current design notes, so this facility unlocks at Level 7 without an additional purchase charge.</p><button onclick="openAutoShop()">OPEN AUTO REPAIR SHOP</button></div>`;
+if(borisNightclubForSale&&!ownsBorisNightclub())html+=`<div class="business-card"><strong>Boris's Run-Down Nightclub</strong><p class="warning">FOR SALE — $${BORIS_CLUB_PRICE.toLocaleString()}</p><p>Gross: $${BORIS_CLUB_GROSS}/24h · Op: $${BORIS_CLUB_OPERATING} · Net: $${BORIS_CLUB_NET}</p><button onclick="buyBorisNightclub()">BUY</button></div>`;
 if(!businesses.length&&!html){box.innerHTML='<div class="locked">No businesses.</div>';return}
-businesses.forEach((b,i)=>{
-const op=Number.isFinite(Number(b.operatingCost))?Number(b.operatingCost):Math.round(Number(b.gross)*Number(b.operatingRate));
-html+=`<div class="business-card"><strong>${b.name}</strong>
-${b.name==="Massage Parlor / Nail Salon"?'<p class="good">ROANOKE REWARD</p>':''}
-${b.staff?`<p>Staff: ${b.staff}</p>`:''}
-<p>Gross $${b.gross} · Op $${op} · Net <span class="good">$${b.net}</span></p>
-<p>${Number(b.lastCollectionDay)===Number(gameDay)?"COLLECTED":"READY"}</p>
-<button onclick="collectBusiness(${i})" ${Number(b.lastCollectionDay)===Number(gameDay)?"disabled":""}>COLLECT $${b.net}</button></div>`;
-});
-box.innerHTML=html;
+businesses.forEach((b,i)=>{const op=Number.isFinite(Number(b.operatingCost))?Number(b.operatingCost):Math.round(Number(b.gross)*Number(b.operatingRate||0));const label=Number(b.lastCollectionDay)===Number(gameDay)?"COLLECTED":"COLLECT";html+=`<div class="business-card"><strong>${b.name}</strong>${b.name==="Massage Parlor / Nail Salon"?'<p class="good">ROANOKE REWARD · $500 GROSS / $425 NET</p>':''}${b.name==="Strip Club"?'<p>Recruitment location.</p>':''}${b.name==="Auto Repair Shop"?'<p>Vehicle management unlocked.</p>':''}${b.staff?`<p>Staff: ${b.staff}</p>`:""}<p>Gross $${b.gross} · Op $${op} · Net <span class="good">$${b.net}</span></p><p>${label}</p><button onclick="collectBusiness(${i})" ${label==="COLLECTED"?"disabled":""}>${label==="COLLECTED"?"COLLECTED":"COLLECT $"+b.net}</button></div>`});box.innerHTML=html;
 }
-function collectBusiness(i){
-const b=businesses[i];if(!b)return;
-if(Number(b.lastCollectionDay)===Number(gameDay)){log("[BUSINESS] Already collected.");return}
-const p=Number(b.net);if(!Number.isFinite(p)||p<=0)return;
-cash+=p;b.lastCollectionDay=gameDay;log("[BUSINESS] "+b.name+" paid $"+p);addXP(25);saveGame();updateScreen();
-}
+function buyBusiness(name){if(name!=="Strip Club")return;if(hasBusiness(name))return;if(cash<5000){log("[BUSINESS] Need $5,000.");return}cash-=5000;businesses.push({name:"Strip Club",gross:1000,operatingRate:0,operatingCost:0,net:1000,ready:true,lastCollectionDay:gameDay-1,staff:0});log("[BUSINESS] Strip Club opened for $5,000.");saveGame();updateScreen()}
+function openAutoShop(){if(hasBusiness("Auto Repair Shop"))return;businesses.push({name:"Auto Repair Shop",gross:700,operatingRate:0,operatingCost:0,net:700,ready:true,lastCollectionDay:gameDay-1});log("[BUSINESS] Auto Repair Shop is now operational.");saveGame();updateScreen()}
+function collectBusiness(i){const b=businesses[i];if(!b)return;if(Number(b.lastCollectionDay)===Number(gameDay)){log("[BUSINESS] Already collected.");return}const p=Number(b.net);if(!Number.isFinite(p)||p<=0)return;cash+=p;b.lastCollectionDay=gameDay;log("[BUSINESS] "+b.name+" paid $"+p);addXP(20);saveGame();updateScreen()}
 
 function renderArmsDealer(){
 const box=document.getElementById("marketArmsPanel"),sec=document.getElementById("marketArmsSection");if(!box)return;
@@ -747,29 +776,18 @@ box.innerHTML=items.map(it=>`<div class="market-card"><strong>${it.label}</stron
 function buyTurnUpgrade(){if(cash<3000){log("[MARKET] Not enough cash.");return}cash-=3000;maxTurns+=10;log("[MARKET] Max turns +10.");saveGame();updateScreen()}
 function useToken(){if(tokens<=0){log("[TOKEN] None left.");return}if(turns>=maxTurns){log("[TOKEN] Turns full.");return}tokens--;turns=Math.min(maxTurns,turns+5);log("[TOKEN] +5 turns.");saveGame();updateScreen()}
 
+function weatherLabel(){return currentWeather==="rain"?"RAIN":currentWeather==="storm"?"STORM":"CLEAR"}
+function rollWeather(){if(weatherDay===gameDay)return;weatherDay=gameDay;const r=Math.random();currentWeather=r<0.18?"rain":r<0.23?"storm":"clear";log("[WEATHER] Conditions changed: "+weatherLabel()+".")}
+function activeVehicleCanTravel(){const v=vehicles[activeVehicle];if(!v||!v.owned||v.condition<=0)return false;if(v.weather==="dry"&&currentWeather!=="clear")return false;return true}
 function renderVehicles(){
-const box=document.getElementById("vehiclesPanel");if(!box)return;
-const active=vehicles[activeVehicle];
-let html=`<div class="vehicle-card"><strong>Active: ${active.name}</strong><p>Capacity ${active.capacity} · Condition ${active.condition}%</p>
-${active.condition<=0?'<p class="warning">TOTALED — needs repair or switch vehicles</p>':''}</div>`;
-if(playerLevel>=4&&!level4RivalResolved)html+=`<div class="vehicle-card warning"><strong>ROANOKE</strong><p>Bring SUVs if you plan to move people as a unit.</p></div>`;
-vehicles.forEach((v,i)=>{
-html+=`<div class="vehicle-card"><strong>${v.name}</strong><br>Tier ${v.tier} · $${v.cost} · Cap ${v.capacity} · Cond ${v.condition}%
-<button onclick="selectVehicle(${i})" ${!v.owned||v.condition<=0?"disabled":""}>${activeVehicle===i?"ACTIVE":"SELECT"}</button>
-${v.owned?"":`<button onclick="buyVehicle(${i})">BUY $${v.cost}</button>`}
-${v.owned?`<button onclick="repairVehicle(${i})">${v.condition<=0?"REBUILD — $2500":"REPAIR — $750"}</button>`:""}</div>`;
-});
-box.innerHTML=html;
+const box=document.getElementById("vehiclesPanel");if(!box)return;rollWeather();const active=vehicles[activeVehicle];
+let html=`<div class="vehicle-card"><strong>ACTIVE: ${active?active.name:"None"}</strong><p>Weather: ${weatherLabel()}</p><p>Capacity ${active?active.capacity:0} · Speed ${active?(active.speed||0):0} · Toughness ${active?(active.toughness||0):0} · Reliability ${active?(active.reliability||0):0}</p><p>Condition ${active?active.condition:0}% · Attention ${active?(active.attention||0):0}%</p>${active&&!activeVehicleCanTravel()?'<p class="warning">This vehicle cannot travel in the current condition/weather.</p>':''}</div>`;
+if(!hasBusiness("Auto Repair Shop"))html+=`<div class="vehicle-card"><strong>STORAGE</strong><p>${vehicles.filter(v=>v&&v.owned).length} / ${vehicleStorageLimit()} vehicles stored.</p><p class="tab-note">An Auto Repair Shop expands storage and unlocks full vehicle management.</p></div>`;
+vehicles.forEach((v,i)=>{if(!v)return;const stored=v.owned, full=vehicles.filter(x=>x&&x.owned).length>=vehicleStorageLimit();html+=`<div class="vehicle-card"><strong>${v.name}</strong><p>Tier ${v.tier} · $${Number(v.cost||0).toLocaleString()} · ${v.capacity} passengers</p><p>Speed ${v.speed||0} · Tough ${v.toughness||0} · Reliability ${v.reliability||0} · Attention ${v.attention||0}</p><p>Condition ${v.condition}% · Weather: ${v.weather==="dry"?"DRY ONLY":"ALL"}</p>${v.name==="Used Porsche 911"&&v.upgradeLevel>=3?'<p class="good">Something about this Porsche seems different now.</p>':''}${stored?`<button onclick="selectVehicle(${i})" ${v.condition<=0|| (v.weather==="dry"&&currentWeather!=="clear")?"disabled":""}>${activeVehicle===i?"ACTIVE":"SELECT"}</button><button onclick="repairVehicle(${i})">${v.condition>=100?"UPGRADE / TUNE":"REPAIR"}</button>`:`<button onclick="buyVehicle(${i})" ${full?"disabled":""}>BUY $${Number(v.cost||0).toLocaleString()}</button>`}</div>`});box.innerHTML=html;
 }
-function selectVehicle(i){if(!vehicles[i].owned){log("[VEHICLE] Not owned.");return}if(vehicles[i].condition<=0){log("[VEHICLE] Totaled. Repair it first.");return}activeVehicle=i;log("[VEHICLE] "+vehicles[i].name+" selected.");saveGame();updateScreen()}
-function buyVehicle(i){const v=vehicles[i];if(v.owned)return;if(cash<v.cost){log("[VEHICLE] Not enough cash.");return}cash-=v.cost;v.owned=true;log("[VEHICLE] Bought "+v.name);saveGame();updateScreen()}
-function repairVehicle(i){
-const v=vehicles[i];if(!v.owned)return;
-const totaled=v.condition<=0;const cost=totaled?2500:750;
-if(v.condition>=100){log("[VEHICLE] Already excellent.");return}
-if(cash<cost){log("[VEHICLE] Need $"+cost);return}
-cash-=cost;v.condition=100;log("[VEHICLE] "+v.name+(totaled?" rebuilt.":" repaired."));saveGame();updateScreen();
-}
+function selectVehicle(i){const v=vehicles[i];if(!v||!v.owned)return;if(v.condition<=0){log("[VEHICLE] Damaged vehicle needs repair.");return}if(v.weather==="dry"&&currentWeather!=="clear"){log("[VEHICLE] The Shelby cannot be driven in this weather.");return}activeVehicle=i;log("[VEHICLE] "+v.name+" selected.");saveGame();updateScreen()}
+function buyVehicle(i){const v=vehicles[i];if(!v||v.owned)return;if(vehicles.filter(x=>x&&x.owned).length>=vehicleStorageLimit()){log("[VEHICLE] Storage full.");return}if(cash<v.cost){log("[VEHICLE] Not enough cash.");return}cash-=v.cost;v.owned=true;v.condition=100;log("[VEHICLE] Bought "+v.name+" for $"+v.cost+".");saveGame();updateScreen()}
+function repairVehicle(i){const v=vehicles[i];if(!v||!v.owned)return;const base=Math.max(150,Math.floor((100-v.condition)*18));const cost=v.condition>=100?Math.max(300,Math.floor((v.cost||1000)*0.08)):base;if(v.condition>=100){if(cash<cost){log("[VEHICLE] Need $"+cost+" for tuning.");return}cash-=cost;v.upgradeLevel=(Number(v.upgradeLevel)||0)+1;v.speed=Math.min(110,(v.speed||50)+3);v.reliability=Math.min(100,(v.reliability||50)+4);if(v.name==="Used Porsche 911"&&v.upgradeLevel>=3)v.reliability=100;log("[VEHICLE] "+v.name+" received a tune.");}else{if(cash<cost){log("[VEHICLE] Need $"+cost+" to repair.");return}cash-=cost;v.condition=100;log("[VEHICLE] "+v.name+" repaired.");}saveGame();updateScreen()}
 
 function renderOperations(){
 const box=document.getElementById("operationsPanel");if(!box)return;
@@ -819,9 +837,11 @@ if(!workers||!workers.length){log("[TRIP] No workers ready.");return}
 const protection=getTripProtection(individual);if(protection.count<1){log("[TRIP] No protection.");return}
 let total=0,fat=0,results=[];
 workers.forEach(w=>{const earn=Math.floor(Math.random()*(individual?131:101))+(individual?120:100);const f=Math.floor(Math.random()*16)+10;w.condition=Math.max(0,w.condition-f);total+=earn;fat+=f;results.push(w.name+" +$"+earn+" ("+w.condition+")")});
+const tripVehicle=vehicles[activeVehicle];
+if(tripVehicle){const wearChance=Math.max(0.01,0.10-(tripVehicle.reliability||50)/1000+(tripVehicle.attention||0)/900);if(Math.random()<wearChance){const wear=Math.max(1,Math.floor(Math.random()*8)+Math.floor((100-(tripVehicle.toughness||50))/30));tripVehicle.condition=Math.max(0,(tripVehicle.condition||100)-wear);log("[VEHICLE] "+tripVehicle.name+" took some wear on the trip.");if(tripVehicle.condition===0)log("[VEHICLE] "+tripVehicle.name+" is badly damaged and cannot travel.");}}
 cash+=total;
 document.getElementById("encounter").innerHTML=`<strong>${individual?"INDIVIDUAL":"GROUP"} — ${place}</strong><br>Workers: ${workers.length}<br>Protection: ${protection.names.join(", ")} (${protection.count})<br>Cash: $${total}<br>Fatigue: ${fat}<br><br>${results.join("<br>")}`;
-log("[TRIP] "+place+": "+workers.length+" workers, +$"+total+".");
+log("[TRIP] "+(individual?"Individual":"Group")+" run to "+place+": "+workers.length+" workers, +$"+total+". Protection: "+protection.names.join(", ")+".");
 addXP(25*workers.length);
 const roll=Math.random();
 if(place==="Strip Club"){if(roll<0.40)recruitWorker(place);else if(roll<0.68)crewEncounter(place);else if(roll<0.82)randomEvent(place)}
@@ -848,6 +868,7 @@ if(item==="cocaine")recordCocaineUse(m,"crew");else cocaineConsecutiveUseCount=0
 m.morale=Math.min(100,(m.morale||0)+r);log("[CREW] "+m.name+" morale +"+r);syncCrewState();saveGame();updateScreen();
 }
 function visitLocation(place){
+if(!activeVehicleCanTravel()){log("[TRIP] Your active vehicle cannot make the trip.");return}
 if(!useTurn())return;
 const workers=getReadyWorkers(vehicles[activeVehicle].capacity);
 if(!workers.length){log("[TRIP] Nobody ready.");saveGame();updateScreen();return}
@@ -923,29 +944,49 @@ box.innerHTML=`<div class="battle-status"><strong>${battleState.name}</strong><b
 box.innerHTML=battleTypes.map((t,i)=>`<div class="battle-card"><strong>${t.name}</strong><p class="tab-note">${t.enemy} · $${t.reward} · ${t.xp} XP</p><button onclick="startBattle(${i})">START</button></div>`).join("");
 }
 function startBattle(i){if(!useTurn())return;const t=battleTypes[i];if(!t)return;
-battleState={name:t.name,enemy:t.enemy,enemyPower:Math.floor(t.power*difficultyMultiplier())+(playerLevel-1)*5,reward:Math.floor(t.reward*(1+(playerLevel-1)*0.06)),penalty:t.penalty,xp:t.xp};
+const rigged=firstThreeBattles<3; battleState={name:t.name,enemy:t.enemy,enemyPower:Math.floor(t.power*difficultyMultiplier())+(playerLevel-1)*5,reward:Math.floor(t.reward*(1+(playerLevel-1)*0.06)),penalty:Math.min(t.penalty,Math.max(1,Math.floor(cash*0.20))),xp:t.xp,rigged};
 log("[BATTLE] "+t.name+" started.");saveGame();updateScreen();
 }
 function finishBattle(win){
 if(!battleState)return;const r=battleState;battleState=null;
-if(win){cash+=r.reward;addXP(r.xp);crew.forEach(m=>m.morale=Math.min(100,(m.morale||50)+5));log("[BATTLE] Victory +$"+r.reward)}
-else{cash=Math.max(0,cash-r.penalty);crew.forEach(m=>m.morale=Math.max(0,(m.morale||50)-8));log("[BATTLE] Lost -$"+r.penalty)}
+if(win){cash+=r.reward;addXP(r.xp);firstThreeBattles++;crew.forEach(m=>m.morale=Math.min(100,(m.morale||50)+5));log("[BATTLE] Victory +$"+r.reward);if(Math.random()<0.22)awardBattleVehicle()}
+else{cash=Math.max(0,cash-r.penalty);firstThreeBattles++;crew.forEach(m=>m.morale=Math.max(0,(m.morale||50)-8));log("[BATTLE] Lost -$"+r.penalty)}
 saveGame();updateScreen();
 }
-function battleAttack(){if(!battleState)return;if(battlePower()+Math.floor(Math.random()*31)>=battleState.enemyPower){finishBattle(true);return}battleState.enemyPower=Math.max(10,battleState.enemyPower-10);log("[BATTLE] Missed.");saveGame();updateScreen()}
-function battleDefend(){if(!battleState)return;if(battlePower()+25+Math.floor(Math.random()*21)>=battleState.enemyPower+20){finishBattle(true);return}battleState.enemyPower=Math.max(10,battleState.enemyPower-18);log("[BATTLE] Held ground.");saveGame();updateScreen()}
-function battleUseWeapon(){if(!battleState)return;const w=Object.keys(weapons).find(n=>(weapons[n]||0)>0);if(!w){log("[BATTLE] No weapon.");return}weapons[w]--;if(battlePower()+45+Math.floor(Math.random()*31)>=battleState.enemyPower){finishBattle(true);return}battleState.enemyPower=Math.max(10,battleState.enemyPower-25);log("[BATTLE] "+w+" used.");saveGame();updateScreen()}
+function awardBattleVehicle(){
+const pool=vehicles.filter(v=>v&&!v.owned&&v.cost>0);if(!pool.length)return;const v=pool[Math.floor(Math.random()*pool.length)];v.owned=true;v.condition=Math.floor(Math.random()*41)+35;log("[BATTLE] A damaged vehicle came with the win: "+v.name+" ("+v.condition+"% condition).");markTabAttention("vehiclesTab");
+}
+function battleAttack(){if(!battleState)return;if(battleState.rigged&&firstThreeBattles<3){finishBattle(true);return}if(battlePower()+Math.floor(Math.random()*31)>=battleState.enemyPower){finishBattle(true);return}battleState.enemyPower=Math.max(10,battleState.enemyPower-10);log("[BATTLE] Missed.");saveGame();updateScreen()}
+function battleDefend(){if(!battleState)return;if(battleState.rigged&&firstThreeBattles<3){finishBattle(true);return}if(battlePower()+25+Math.floor(Math.random()*21)>=battleState.enemyPower+20){finishBattle(true);return}battleState.enemyPower=Math.max(10,battleState.enemyPower-18);log("[BATTLE] Held ground.");saveGame();updateScreen()}
+function battleUseWeapon(){if(!battleState)return;const w=Object.keys(weapons).find(n=>(weapons[n]||0)>0);if(!w){log("[BATTLE] No weapon.");return}weapons[w]--;if(battleState.rigged&&firstThreeBattles<3){finishBattle(true);return}if(battlePower()+45+Math.floor(Math.random()*31)>=battleState.enemyPower){finishBattle(true);return}battleState.enemyPower=Math.max(10,battleState.enemyPower-25);log("[BATTLE] "+w+" used.");saveGame();updateScreen()}
 function battleEscape(){if(!battleState)return;if(Math.random()<0.65){battleState=null;log("[BATTLE] Escaped.");saveGame();updateScreen();return}battleState.enemyPower=Math.max(10,battleState.enemyPower-8);log("[BATTLE] Escape failed.");saveGame();updateScreen()}
 
-function payDailyExpenses(){
-cocaineUseCountToday=0;cocaineConsecutiveUseCount=0;cocaineUsersToday=[];
-cocainePoliceEventTriggeredToday=false;cocaineBribeEventTriggeredToday=false;
-let total=0;for(let k in expenses)total+=Math.ceil(expenses[k]*(1+(playerLevel-1)*0.04));
-cash-=total;log("[EXPENSES] -$"+total);
-businesses.forEach(b=>{if(b.name==="Massage Parlor / Nail Salon"){b.ready=true;b.lastCollectionDay=gameDay-1}});
-if(cash<0){cash=0;log("[WARNING] Broke.")}
-saveGame();updateScreen();
+function processPropertyEconomy(){
+const ranch=ownedProperty("Ranch");
+if(ranch){cash+=700;log("[PROPERTY] Ranch revenue +$700.");}
+if(ranch&&gameDay-lastRanchUpkeepDay>=3){cash-=500;lastRanchUpkeepDay=gameDay;log("[PROPERTY] Ranch animal upkeep -$500.");}
+if(ranch&&gameDay-(ranch.purchasedDay||gameDay)>=365&&gameDay-lastPropertyTaxDay>=365){cash-=5000;lastPropertyTaxDay=gameDay;log("[PROPERTY] Ranch annual tax -$5,000.");}
+const estate=ownedProperty("Estate");
+if(estate&&((gameDay*1440+gameMinutes)-(lastEstateMishapDay*1440)>=6000)&&Math.random()<0.10){const cost=Math.floor(Math.random()*2501);cash-=cost;lastEstateMishapDay=gameDay;log("[PROPERTY] Something old broke at the Estate. Repair bill: $"+cost+".");}
+const condo=ownedProperty("Condo");if(condo&&condo.securityActive){condo.securityActive=false;log("[PROPERTY] Condo private security expired.");}
 }
+function processOfflineAttack(){
+if(playerLevel<5)return;
+const p=ownedProperties.length?ownedProperties[ownedProperties.length-1]:null;
+let chance=0.06;if(p){if(p.name==="Trailer Park")chance=0.18;if(p.name==="Condo")chance=p.securityActive?0.05:0.14;if(p.name==="Ranch")chance=0.01;if(p.name==="Estate")chance=0;}
+if(Math.random()>=chance)return;globalAttackCounter++;
+let favorable=playerLevel<25?Math.random()<0.55:Math.random()<0.50;
+if(favorable){cash+=250;crew.forEach(m=>m.morale=Math.min(100,(m.morale||50)+3));log("[ATTACK] Something came looking while you were away. Your people held it down.");}
+else{const loss=Math.min(Math.max(1,Math.floor(Math.max(cash,1)*0.20)),Math.floor(Math.random()*Math.max(1,Math.floor(Math.max(cash,1)*0.12)))+1);cash=Math.max(0,cash-loss);crew.forEach(m=>m.morale=Math.max(0,(m.morale||50)-5));log("[ATTACK] Trouble found the operation while you were away. Loss: $"+loss+".");}
+}
+function processPassiveBusinessIncome(){businesses.forEach(b=>{if(!b||!b.net)return;if(Number(b.lastPassiveDay||0)>=gameDay)return;if(b.name==="Ranch")return;});}
+function payDailyExpenses(){
+cocaineUseCountToday=0;cocaineConsecutiveUseCount=0;cocaineUsersToday=[];cocainePoliceEventTriggeredToday=false;cocaineBribeEventTriggeredToday=false;
+let total=0;for(let k in expenses)total+=Math.ceil(expenses[k]*(1+(playerLevel-1)*0.04));cash-=total;log("[EXPENSES] -$"+total);
+businesses.forEach(b=>{if(b.name==="Massage Parlor / Nail Salon"){b.ready=true;b.lastCollectionDay=gameDay-1;}});
+processPropertyEconomy();processOfflineAttack();rollWeather();if(cash<0){cash=0;log("[WARNING] Broke.")}saveGame();updateScreen();
+}
+
 
 const loaded=loadGame();
 if(loaded)log("[SAVE] Previous game loaded.");else startOpeningStory();
