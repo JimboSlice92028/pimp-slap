@@ -20,8 +20,8 @@ button{width:100%;padding:13px;margin-top:8px;border:none;border-radius:7px;back
 button:hover{background:#ff72b8}
 button:disabled{background:#555;cursor:not-allowed}
 /* Clear action feedback: success gets a money burst; failures explain the reason. */
-.action-feedback-success{animation:moneyButtonFlash .75s ease-out!important;box-shadow:0 0 0 3px rgba(124,255,124,.55),0 0 22px rgba(124,255,124,.45)!important}
-.action-feedback-fail{animation:failedButtonFlash .55s ease-out!important;box-shadow:0 0 0 3px rgba(255,90,90,.65),0 0 18px rgba(255,90,90,.35)!important}
+.action-feedback-success{animation:moneyButtonFlash .85s ease-out!important;box-shadow:0 0 0 4px rgba(124,255,124,.9),0 0 30px rgba(124,255,124,.75)!important;outline:2px solid rgba(255,255,255,.8)!important}
+.action-feedback-fail{animation:failedButtonFlash .65s ease-out!important;box-shadow:0 0 0 4px rgba(255,90,90,.9),0 0 28px rgba(255,90,90,.65)!important;outline:2px solid rgba(255,120,120,.8)!important}
 .action-feedback-label{position:absolute;z-index:10001;pointer-events:none;font-size:18px;font-weight:900;white-space:nowrap;text-shadow:0 2px 4px #000;animation:feedbackFloat 1.05s ease-out forwards}
 .action-feedback-label.success{color:#7cff7c}
 .action-feedback-label.fail{color:#ff7777;background:rgba(20,0,0,.92);padding:7px 10px;border-radius:7px;border:1px solid #ff5555;max-width:360px;white-space:normal;text-align:center}
@@ -554,31 +554,51 @@ const rect=button.getBoundingClientRect();
 const label=document.createElement("div");
 label.className="action-feedback-label "+(success?"success":"fail");
 label.textContent=success?"💵💵💵💵💵 SUCCESS! 💵💵💵💵💵":"❌ FAILED — "+(reason||"Action could not be completed.");
-label.style.left=Math.max(8,rect.left+rect.width/2-170)+"px";
-label.style.top=Math.max(8,rect.top-8)+"px";
+label.style.left=Math.max(8,Math.min(window.innerWidth-390,rect.left+rect.width/2-195))+"px";
+label.style.top=Math.max(8,rect.top-6)+"px";
 document.body.appendChild(label);
-setTimeout(()=>label.remove(),1150);
+setTimeout(()=>label.remove(),success?1250:1800);
 }
 
-// All gameplay/action buttons automatically get obvious success/failure feedback.
-// Tab navigation is deliberately excluded.
+function flashActionButton(button,success){
+if(!button)return;
+// The original button may be replaced by updateScreen(), so flash it immediately when possible.
+button.classList.remove("action-feedback-success","action-feedback-fail");
+void button.offsetWidth;
+button.classList.add(success?"action-feedback-success":"action-feedback-fail");
+setTimeout(()=>button.classList.remove("action-feedback-success","action-feedback-fail"),success?900:700);
+}
+
+function finishClickedAction(button,beforeSeq,beforeMessage){
+if(!button||button.classList.contains("tab-button")||button.disabled)return;
+// Gameplay handlers normally log synchronously. Give handlers that redraw the screen a little extra time.
+setTimeout(function(){
+let changed=actionLogSeq>beforeSeq || lastActionMessage!==beforeMessage;
+if(!changed){
+  // A button that produced no log is not treated as a success. Make the reason explicit instead of silently doing nothing.
+  showActionFeedback(button,false,"No result was reported — the action was not completed.");
+  flashActionButton(button,false);
+  return;
+}
+const failure=actionFailureReason(lastActionMessage);
+if(failure){
+showActionFeedback(button,false,lastActionMessage);
+flashActionButton(button,false);
+}else{
+showActionFeedback(button,true);
+flashActionButton(button,true);
+}
+},160);
+}
+
+// Reliable global action feedback. Capture the exact button before its handler can call updateScreen()
+// and replace the DOM node. Tab buttons are excluded.
 document.addEventListener("click",function(e){
 const button=e.target.closest("button");
 if(!button||button.classList.contains("tab-button")||button.disabled)return;
 const beforeSeq=actionLogSeq;
 const beforeMessage=lastActionMessage;
-const rectButton=button;
-setTimeout(function(){
-if(actionLogSeq<=beforeSeq||lastActionMessage===beforeMessage)return;
-const failure=actionFailureReason(lastActionMessage);
-if(failure){
-showActionFeedback(rectButton,false,lastActionMessage);
-if(rectButton.isConnected){rectButton.classList.add("action-feedback-fail");setTimeout(()=>rectButton.classList.remove("action-feedback-fail"),650)}
-}else{
-showActionFeedback(rectButton,true);
-if(rectButton.isConnected){rectButton.classList.add("action-feedback-success");setTimeout(()=>rectButton.classList.remove("action-feedback-success"),850)}
-}
-},80);
+finishClickedAction(button,beforeSeq,beforeMessage);
 },true);
 function clearActivityLog(){activityLog=[];const b=document.getElementById("log");if(b){b.innerHTML="[GAME] Activity log cleared.";b.scrollTop=b.scrollHeight}saveGame()}
 function renderActivityLog(){const b=document.getElementById("log");if(!b||!activityLog.length)return;b.innerHTML="";activityLog.forEach(m=>{b.innerHTML+="<br>"+logIcon(String(m))+m});b.scrollTop=b.scrollHeight}
