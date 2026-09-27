@@ -1023,9 +1023,9 @@ const owned=rec?rec.owned:0;
 if(t.unique&&owned<=0)return; // Cadillac stays hidden until you actually earn one
 const speed=owned>0?effectiveVehicleStat(t.name,"speed"):(t.speed||0);
 const reliability=owned>0?effectiveVehicleStat(t.name,"reliability"):(t.reliability||0);
-const cannotSelect=owned<=0||rec.condition<=0||(t.weather==="dry"&&currentWeather!=="clear");
+const cannotSelect=owned<=0||rec.condition<=0;
 const sellValue=rec?Math.max(50,Math.floor((t.cost||0)*0.35*Math.max(0.2,(Number(rec.condition)||0)/100))):0;
-html+=`<div class="vehicle-card"><strong>${t.name}</strong>${owned?` <span class="good">OWNED ×${owned}</span>`:''}<p>Tier ${t.tier||"?"} · ${t.capacity||0} passengers</p><p>Speed ${speed} · Tough ${t.toughness||0} · Reliability ${reliability} · Attention ${t.attention||0}</p><p>${owned>0?`Condition ${rec.condition}% (shared across all owned) · `:''}Weather: ${t.weather==="dry"?"DRY ONLY":"ALL"}</p>${t.name==="Used Porsche 911"&&rec&&rec.upgradeLevel>=3?'<p class="good">Something about this Porsche seems different now.</p>':''}${owned>0?`<button onclick="selectVehicle('${t.name}')" ${cannotSelect?"disabled":""}>${activeVehicleType===t.name?"ACTIVE":"SELECT"}</button><button onclick="repairVehicle('${t.name}')">${rec.condition>=100?"UPGRADE / TUNE":"REPAIR"}</button><button onclick="sellVehicle('${t.name}')">SELL 1 — $${sellValue.toLocaleString()}</button>`:''}${!t.unique?`<button onclick="buyVehicle('${t.name}')" ${full?"disabled":""}>BUY $${Number(t.cost||0).toLocaleString()} ${owned?"— BUY ANOTHER":""}</button>`:''}</div>`;
+html+=`<div class="vehicle-card"><strong>${t.name}</strong>${owned?` <span class="good">OWNED ×${owned}</span>`:''}<p>Tier ${t.tier||"?"} · ${t.capacity||0} passengers</p><p>Speed ${speed} · Tough ${t.toughness||0} · Reliability ${reliability} · Attention ${t.attention||0}</p><p>${owned>0?`Condition ${rec.condition}% (shared across all owned) · `:''}Weather: ${t.weather==="dry"?"DRY ONLY":"ALL"}</p>${t.weather==="dry"?'<p class="warning"><strong>⚠️ WEATHER RESTRICTION:</strong> Dry weather only — this vehicle cannot be driven while it is raining or storming. You can still keep it ACTIVE.</p>':''}${t.name==="Used Porsche 911"&&rec&&rec.upgradeLevel>=3?'<p class="good">Something about this Porsche seems different now.</p>':''}${owned>0?`<button onclick="selectVehicle('${t.name}')" ${cannotSelect?"disabled":""}>${activeVehicleType===t.name?"ACTIVE":"SELECT"}</button><button onclick="repairVehicle('${t.name}')">${rec.condition>=100?"UPGRADE / TUNE":"REPAIR"}</button><button onclick="sellVehicle('${t.name}')">SELL 1 — $${sellValue.toLocaleString()}</button>`:''}${!t.unique?`<button onclick="buyVehicle('${t.name}')" ${full?"disabled":""}>BUY $${Number(t.cost||0).toLocaleString()} ${owned?"— BUY ANOTHER":""}</button>`:''}</div>`;
 });
 box.innerHTML=html;
 }
@@ -1051,7 +1051,6 @@ function selectVehicle(name){
 const rec=vehicleOwnership[name];if(!rec||rec.owned<=0)return;
 const t=vehicleType(name)||{};
 if(rec.condition<=0){log("[VEHICLE] Damaged vehicle needs repair.");return}
-if(t.weather==="dry"&&currentWeather!=="clear"){log("[VEHICLE] "+name+" cannot be driven in this weather.");return}
 activeVehicleType=name;log("[VEHICLE] "+name+" selected.");saveGame();updateScreen();
 }
 function buyVehicle(typeName){
