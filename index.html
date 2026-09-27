@@ -227,18 +227,35 @@ const armsDealerItems=[
 {name:"Revolver",price:150,type:"Weapon"},{name:".420 Semi-Auto",price:600,type:"Weapon"},
 {name:"Sawed-Off Shotgun",price:400,type:"Weapon"},{name:"Body Armor",price:3000,type:"Armor"}
 ];
-let vehicles=[
-{name:"Honda Civic",tier:1,cost:1000,capacity:4,speed:55,toughness:30,reliability:50,attention:5,condition:85,owned:true,weather:"all",upgradeLevel:0},
-{name:"Honda Civic (Spare)",tier:1,cost:1000,capacity:4,speed:55,toughness:30,reliability:50,attention:5,condition:100,owned:false,weather:"all",upgradeLevel:0},
-{name:"Altima",tier:1,cost:1000,capacity:5,speed:80,toughness:40,reliability:77,attention:10,condition:100,owned:false,weather:"all",upgradeLevel:0},
-{name:"Yukon",tier:2,cost:3500,capacity:7,speed:55,toughness:60,reliability:80,attention:20,condition:100,owned:false,weather:"all",upgradeLevel:0},
-{name:"Escalade",tier:2,cost:3500,capacity:7,speed:70,toughness:65,reliability:80,attention:25,condition:100,owned:false,weather:"all",upgradeLevel:0},
-{name:"Used Corvette",tier:2,cost:3500,capacity:2,speed:92,toughness:30,reliability:58,attention:85,condition:100,owned:false,weather:"dry",upgradeLevel:0},
-{name:"Humvee",tier:3,cost:10000,capacity:8,speed:35,toughness:98,reliability:88,attention:70,condition:100,owned:false,weather:"all",upgradeLevel:0},
-{name:"Used Porsche 911",tier:3,cost:10000,capacity:2,speed:100,toughness:15,reliability:45,attention:90,condition:100,owned:false,weather:"dry",upgradeLevel:0},
-{name:"Shelby Mustang",tier:3,cost:10000,capacity:4,speed:88,toughness:78,reliability:80,attention:95,condition:100,owned:false,weather:"dry",upgradeLevel:0}
+// VEHICLE_TYPES is the purchasable catalog — one entry per model, no owned/condition on it.
+// Ownership lives in `fleet` below, so buying the same model twice just adds another fleet
+// instance instead of needing a fake "(Spare)" duplicate catalog entry.
+const VEHICLE_TYPES=[
+{name:"Honda Civic",tier:1,cost:1000,capacity:4,speed:55,toughness:30,reliability:50,attention:5,weather:"all",unique:false},
+{name:"Altima",tier:1,cost:1000,capacity:5,speed:80,toughness:40,reliability:77,attention:10,weather:"all",unique:false},
+{name:"Yukon",tier:2,cost:3500,capacity:7,speed:55,toughness:60,reliability:80,attention:20,weather:"all",unique:false},
+{name:"Escalade",tier:2,cost:3500,capacity:7,speed:70,toughness:65,reliability:80,attention:25,weather:"all",unique:false},
+{name:"Used Corvette",tier:2,cost:3500,capacity:2,speed:92,toughness:30,reliability:58,attention:85,weather:"dry",unique:false},
+{name:"Humvee",tier:3,cost:10000,capacity:8,speed:35,toughness:98,reliability:88,attention:70,weather:"all",unique:false},
+{name:"Used Porsche 911",tier:3,cost:10000,capacity:2,speed:100,toughness:15,reliability:45,attention:90,weather:"dry",unique:false},
+{name:"Shelby Mustang",tier:3,cost:10000,capacity:4,speed:88,toughness:78,reliability:80,attention:95,weather:"dry",unique:false},
+// Reward vehicle from the Level 4 rival battle — one-of-a-kind. Never sold, never duplicated.
+{name:"Cadillac",tier:2,cost:0,capacity:6,speed:60,toughness:50,reliability:50,attention:30,weather:"all",unique:true}
 ];
-let activeVehicle=0;
+function vehicleType(name){return VEHICLE_TYPES.find(t=>t&&t.name===name)||null}
+// `fleet` holds one entry per OWNED vehicle instance: {type, condition, upgradeLevel, speedBonus,
+// reliabilityBonus}. Several entries can share the same `type` (e.g. two Honda Civics) — each
+// instance keeps its own condition and tune-ups independently of the shared catalog stats.
+let fleet=[{type:"Honda Civic",condition:85,upgradeLevel:0,speedBonus:0,reliabilityBonus:0}];
+let activeVehicle=0; // index into `fleet`, not VEHICLE_TYPES
+function fleetCountOf(typeName){return fleet.filter(v=>v&&v.type===typeName).length}
+function effectiveVehicleStat(instance,statName){
+const t=vehicleType(instance&&instance.type);if(!t)return 0;
+const base=Number(t[statName])||0;
+if(statName==="speed")return Math.min(110,base+(Number(instance.speedBonus)||0));
+if(statName==="reliability")return Math.min(100,base+(Number(instance.reliabilityBonus)||0));
+return base;
+}
 let currentWeather="clear";
 let weatherDay=0;
 let firstThreeBattles=0;
@@ -341,7 +358,7 @@ syncCrewState();
 localStorage.setItem(SAVE_KEY,JSON.stringify({
 cash,turns,maxTurns,playerLevel,playerXP,gameMinutes,gameDay,playerName,operationName,lastTurnRegenAt,
 expenses,supplies,stable,crew,namedThugs,randomThugs,thugs:crew,ownedProperties,businesses,upgrades,tokens,
-vehicles,activeVehicle,weapons,armorOwned,armsDealerUnlocked,roanokeGiftReceived,borisGiftResolved,
+fleet,activeVehicle,weapons,armorOwned,armsDealerUnlocked,roanokeGiftReceived,borisGiftResolved,
 borisAttackPending,borisNightclubForSale,level4RivalResolved,storyStage,roanokeLessons,tabAttention,battleState,
 cocaineUseCountToday,cocaineConsecutiveUseCount,cocaineUsersToday,cocainePoliceEventTriggeredToday,
 cocaineBribeEventTriggeredToday,unassignedThugMaintenance,activityLog,currentWeather,weatherDay,firstThreeBattles,globalAttackCounter,lastEstateMishapDay,lastRanchUpkeepDay,lastPropertyTaxDay,activePropertyName,activeRoanokeJob
@@ -371,7 +388,29 @@ if(!activePropertyName||!ownedProperties.some(p=>p&&p.name===activePropertyName)
 activePropertyName=ownedProperties.length?ownedProperties[ownedProperties.length-1].name:null;
 }
 businesses=d.businesses??businesses;upgrades=d.upgrades??upgrades;tokens=d.tokens??tokens;
-vehicles=d.vehicles??vehicles;activeVehicle=d.activeVehicle??activeVehicle;
+if(Array.isArray(d.fleet)){
+fleet=d.fleet.filter(v=>v&&typeof v.type==="string"&&vehicleType(v.type)).map(v=>({
+type:v.type,
+condition:Number.isFinite(Number(v.condition))?Number(v.condition):100,
+upgradeLevel:Number.isFinite(Number(v.upgradeLevel))?Number(v.upgradeLevel):0,
+speedBonus:Number.isFinite(Number(v.speedBonus))?Number(v.speedBonus):0,
+reliabilityBonus:Number.isFinite(Number(v.reliabilityBonus))?Number(v.reliabilityBonus):0
+}));
+}else if(Array.isArray(d.vehicles)){
+// Legacy save from before multi-ownership: one catalog entry per model with owned:true/false.
+// Legacy/generic names land on the current catalog names before converting to fleet instances.
+const legacyRenames={"Chevrolet Blazer":"Yukon","Used Cadillac Escalade":"Escalade","Honda Civic (Spare)":"Honda Civic","Rival Cadillac":"Cadillac"};
+fleet=[];
+d.vehicles.forEach(v=>{
+if(!v||!v.owned)return;
+const name=legacyRenames[v.name]||v.name;
+if(!vehicleType(name))return;
+fleet.push({type:name,condition:Number.isFinite(Number(v.condition))?Number(v.condition):100,upgradeLevel:Number.isFinite(Number(v.upgradeLevel))?Number(v.upgradeLevel):0,speedBonus:0,reliabilityBonus:0});
+});
+}
+if(!fleet.length) fleet=[{type:"Honda Civic",condition:85,upgradeLevel:0,speedBonus:0,reliabilityBonus:0}];
+activeVehicle=Number.isInteger(d.activeVehicle)?d.activeVehicle:0;
+if(activeVehicle<0||activeVehicle>=fleet.length) activeVehicle=0;
 weapons=d.weapons??weapons;armorOwned=d.armorOwned??armorOwned;
 armsDealerUnlocked=d.armsDealerUnlocked??armsDealerUnlocked;
 roanokeGiftReceived=d.roanokeGiftReceived??roanokeGiftReceived;
@@ -405,18 +444,8 @@ if(!businesses.find(b=>b&&b.name==="Massage Parlor / Nail Salon"))
 businesses.push({name:"Massage Parlor / Nail Salon",gross:500,operatingRate:0.15,net:425,ready:true,lastCollectionDay:gameDay-1});
 else { const mp=businesses.find(b=>b&&b.name==="Massage Parlor / Nail Salon"); mp.gross=500;mp.operatingRate=0.15;mp.net=425; }
 }
-// Rename legacy vehicle names from older saves onto the current lineup, so an owned
-// vehicle keeps its condition/ownership instead of showing up as a stray duplicate.
-const vehicleRenames={"Chevrolet Blazer":"Yukon","Used Cadillac Escalade":"Escalade"};
-vehicles.forEach(v=>{if(v&&vehicleRenames[v.name])v.name=vehicleRenames[v.name];});
-// Migrate older vehicle saves without deleting owned vehicles.
-const vehicleDefaults=[
-["Honda Civic",1,1000,4,55,30,50,5,"all"],["Honda Civic (Spare)",1,1000,4,55,30,50,5,"all"],["Altima",1,1000,5,80,40,77,10,"all"],["Yukon",2,3500,7,55,60,80,20,"all"],["Escalade",2,3500,7,70,65,80,25,"all"],["Used Corvette",2,3500,2,92,30,58,85,"dry"],["Humvee",3,10000,8,35,98,88,70,"all"],["Used Porsche 911",3,10000,2,100,15,45,90,"dry"],["Shelby Mustang",3,10000,4,88,78,80,95,"dry"]
-];
-vehicleDefaults.forEach(dv=>{let v=vehicles.find(x=>x&&x.name===dv[0]);if(!v){vehicles.push({name:dv[0],tier:dv[1],cost:dv[2],capacity:dv[3],speed:dv[4],toughness:dv[5],reliability:dv[6],attention:dv[7],condition:100,owned:false,weather:dv[8],upgradeLevel:0});}else{v.tier=dv[1];v.cost=dv[2];v.capacity=dv[3];v.speed=dv[4];v.toughness=dv[5];v.reliability=dv[6];v.attention=dv[7];v.weather=dv[8];v.upgradeLevel=Number(v.upgradeLevel)||0;}});
-if(!Array.isArray(vehicles)||!vehicles.length)
-vehicles=[{name:"Honda Civic",tier:1,cost:0,capacity:4,condition:100,owned:true}];
-if(!Number.isInteger(activeVehicle)||activeVehicle<0||activeVehicle>=vehicles.length) activeVehicle=0;
+if(!fleet.length) fleet=[{type:"Honda Civic",condition:85,upgradeLevel:0,speedBonus:0,reliabilityBonus:0}];
+if(!Number.isInteger(activeVehicle)||activeVehicle<0||activeVehicle>=fleet.length) activeVehicle=0;
 return true;
 }catch(e){console.log(e);return false}
 }
@@ -521,7 +550,7 @@ function closeLevel4RivalPopup(){const o=document.getElementById("level4RivalOve
 
 function countOwnedSUVs(){
 const suvNames=["Yukon","Escalade","Humvee"];
-return vehicles.filter(v=>v&&v.owned&&suvNames.includes(v.name)&&Number(v.condition)>0).length;
+return fleet.filter(v=>v&&suvNames.includes(v.type)&&Number(v.condition)>0).length;
 }
 function countPistols(){return weapons["Revolver"]||0}
 function countLongGuns(){return (weapons["AR-69"]||0)+(weapons["AK-67"]||0)+(weapons[".420 Semi-Auto"]||0)+(weapons["Sawed-Off Shotgun"]||0)}
@@ -532,21 +561,21 @@ return countOwnedSUVs()>=1 && countPistols()>=1 && countLongGuns()>=1 && armorOw
 function applyLevel4WarDamage(action){
 const ready=isWarReady();
 // Active vehicle totaled, unless the player prepped with an SUV and it wasn't already wrecked
-const v=vehicles[activeVehicle];
-if(v&&v.owned){
+const v=fleet[activeVehicle];
+if(v){
 if(ready && Number(v.condition)>30){
 const dmg=Math.floor(Math.random()*30)+20;
 v.condition=Math.max(0,v.condition-dmg);
-log("[VEHICLE] "+v.name+" took heavy fire but held together — the extra armor plating paid off.");
+log("[VEHICLE] "+v.type+" took heavy fire but held together — the extra armor plating paid off.");
 }else{
 v.condition=0;
-log("[VEHICLE] "+v.name+" was totaled in the fight.");
+log("[VEHICLE] "+v.type+" was totaled in the fight.");
 }
 }
 
 // Switch to another working owned vehicle if possible
-const alt=vehicles.findIndex((x,i)=>i!==activeVehicle&&x.owned&&Number(x.condition)>0);
-if(v&&v.condition<=0&&alt>=0){activeVehicle=alt;log("[VEHICLE] You switched to the "+vehicles[alt].name+".")}
+const alt=fleet.findIndex((x,i)=>i!==activeVehicle&&Number(x.condition)>0);
+if(v&&v.condition<=0&&alt>=0){activeVehicle=alt;log("[VEHICLE] You switched to the "+fleet[alt].type+".")}
 else if(v&&v.condition<=0){log("[VEHICLE] No other working vehicle available.")}
 
 // Crew injured (24h). Being armed and prepared reduces the casualties; moving first vs. waiting also matters.
@@ -591,14 +620,9 @@ if(nightclub)nightclub.staff=Math.max(Number(nightclub.staff)||0,2);
 if(totalOrganizationSize()+3<=CREW_CAPACITY)randomThugs+=3;
 else randomThugs+=Math.max(0,CREW_CAPACITY-totalOrganizationSize());
 
-const cadillac=vehicles.find(v=>v.name==="Cadillac"||v.name==="Rival Cadillac");
-if(!cadillac){
-vehicles.push({name:"Cadillac",tier:2,cost:0,capacity:6,speed:60,toughness:50,reliability:50,attention:30,condition:62,owned:true,weather:"all",upgradeLevel:0});
-}else{
-cadillac.owned=true;cadillac.condition=Math.min(Number(cadillac.condition)||62,62);
-cadillac.speed=60;cadillac.toughness=50;cadillac.reliability=50;cadillac.attention=30;
-if(!cadillac.capacity)cadillac.capacity=6;
-if(!cadillac.weather)cadillac.weather="all";
+// Cadillac is the unique Level 4 rival reward — one fleet instance only, ever.
+if(!fleet.some(v=>v&&v.type==="Cadillac")){
+fleet.push({type:"Cadillac",condition:62,upgradeLevel:0,speedBonus:0,reliabilityBonus:0});
 }
 
 log("[RIVAL] His girls chose to leave with you. Four joined the stable.");
@@ -931,32 +955,79 @@ function useToken(){if(tokens<=0){log("[TOKEN] None left.");return}if(turns>=max
 
 function weatherLabel(){return currentWeather==="rain"?"RAIN":currentWeather==="storm"?"STORM":"CLEAR"}
 function rollWeather(){if(weatherDay===gameDay)return;weatherDay=gameDay;const r=Math.random();currentWeather=r<0.18?"rain":r<0.23?"storm":"clear";log("[WEATHER] Conditions changed: "+weatherLabel()+".")}
-function activeVehicleCanTravel(){const v=vehicles[activeVehicle];if(!v||!v.owned||v.condition<=0)return false;if(v.weather==="dry"&&currentWeather!=="clear")return false;return true}
+function activeVehicleCanTravel(){const v=fleet[activeVehicle];if(!v||v.condition<=0)return false;const t=vehicleType(v.type);if(t&&t.weather==="dry"&&currentWeather!=="clear")return false;return true}
 function renderVehicles(){
-const box=document.getElementById("vehiclesPanel");if(!box)return;rollWeather();const active=vehicles[activeVehicle];
-const ownedCount=vehicles.filter(v=>v&&v.owned).length,limit=vehicleStorageLimit(),over=ownedCount-limit;
-let html=`<div class="vehicle-card"><strong>ACTIVE: ${active?active.name:"None"}</strong><p>Weather: ${weatherLabel()}</p><p>Capacity ${active?active.capacity:0} · Speed ${active?(active.speed||0):0} · Toughness ${active?(active.toughness||0):0} · Reliability ${active?(active.reliability||0):0}</p><p>Condition ${active?active.condition:0}% · Attention ${active?(active.attention||0):0}%</p>${active&&!activeVehicleCanTravel()?'<p class="warning">This vehicle cannot travel in the current condition/weather.</p>':''}</div>`;
+const box=document.getElementById("vehiclesPanel");if(!box)return;rollWeather();
+const activeInstance=fleet[activeVehicle];const activeType=activeInstance?vehicleType(activeInstance.type):null;
+const ownedCount=fleet.length,limit=vehicleStorageLimit(),over=ownedCount-limit;
+let html=`<div class="vehicle-card"><strong>ACTIVE: ${activeInstance?activeInstance.type:"None"}</strong><p>Weather: ${weatherLabel()}</p><p>Capacity ${activeType?activeType.capacity:0} · Speed ${activeInstance?effectiveVehicleStat(activeInstance,"speed"):0} · Toughness ${activeType?(activeType.toughness||0):0} · Reliability ${activeInstance?effectiveVehicleStat(activeInstance,"reliability"):0}</p><p>Condition ${activeInstance?activeInstance.condition:0}% · Attention ${activeType?(activeType.attention||0):0}%</p>${activeInstance&&!activeVehicleCanTravel()?'<p class="warning">This vehicle cannot travel in the current condition/weather.</p>':''}</div>`;
 const propName=activeProperty()?activeProperty().name:null;
 html+=`<div class="vehicle-card"><strong>STORAGE</strong><p>${ownedCount} / ${limit} vehicles stored${propName?" — set by "+propName:""}${hasBusiness("Auto Repair Shop")?" (includes Auto Repair Shop bonus)":""}.</p>${!propName&&!hasBusiness("Auto Repair Shop")?'<p class="tab-note">Owning a property (or the Auto Repair Shop) raises this limit.</p>':''}</div>`;
 if(over>0){
 html+=`<div class="vehicle-card"><p class="warning"><strong>OVER CAPACITY by ${over} vehicle${over===1?"":"s"}.</strong> Nothing gets confiscated automatically — but you can't buy more until you're back under the limit. Sell a vehicle below, or switch to a property with more storage.</p></div>`;
 }
-vehicles.forEach((v,i)=>{if(!v)return;const stored=v.owned, full=vehicles.filter(x=>x&&x.owned).length>=vehicleStorageLimit();const sellValue=Math.max(50,Math.floor((v.cost||0)*0.35*Math.max(0.2,(Number(v.condition)||0)/100)));html+=`<div class="vehicle-card"><strong>${v.name}</strong><p>Tier ${v.tier} · $${Number(v.cost||0).toLocaleString()} · ${v.capacity} passengers</p><p>Speed ${v.speed||0} · Tough ${v.toughness||0} · Reliability ${v.reliability||0} · Attention ${v.attention||0}</p><p>Condition ${v.condition}% · Weather: ${v.weather==="dry"?"DRY ONLY":"ALL"}</p>${v.name==="Used Porsche 911"&&v.upgradeLevel>=3?'<p class="good">Something about this Porsche seems different now.</p>':''}${stored?`<button onclick="selectVehicle(${i})" ${v.condition<=0|| (v.weather==="dry"&&currentWeather!=="clear")?"disabled":""}>${activeVehicle===i?"ACTIVE":"SELECT"}</button><button onclick="repairVehicle(${i})">${v.condition>=100?"UPGRADE / TUNE":"REPAIR"}</button><button onclick="sellVehicle(${i})">SELL — $${sellValue.toLocaleString()}</button>`:`<button onclick="buyVehicle(${i})" ${full?"disabled":""}>BUY $${Number(v.cost||0).toLocaleString()}</button>`}</div>`});box.innerHTML=html;
+html+="<h3>YOUR FLEET</h3>";
+if(!fleet.length)html+='<div class="locked">No vehicles owned.</div>';
+fleet.forEach((v,i)=>{
+if(!v)return;
+const t=vehicleType(v.type)||{};
+const sellValue=Math.max(50,Math.floor((t.cost||0)*0.35*Math.max(0.2,(Number(v.condition)||0)/100)));
+const cannotSelect=v.condition<=0||(t.weather==="dry"&&currentWeather!=="clear");
+html+=`<div class="vehicle-card"><strong>${v.type}</strong><p>Tier ${t.tier||"?"} · ${t.capacity||0} passengers</p><p>Speed ${effectiveVehicleStat(v,"speed")} · Tough ${t.toughness||0} · Reliability ${effectiveVehicleStat(v,"reliability")} · Attention ${t.attention||0}</p><p>Condition ${v.condition}% · Weather: ${t.weather==="dry"?"DRY ONLY":"ALL"}</p>${v.type==="Used Porsche 911"&&v.upgradeLevel>=3?'<p class="good">Something about this Porsche seems different now.</p>':''}<button onclick="selectVehicle(${i})" ${cannotSelect?"disabled":""}>${activeVehicle===i?"ACTIVE":"SELECT"}</button><button onclick="repairVehicle(${i})">${v.condition>=100?"UPGRADE / TUNE":"REPAIR"}</button><button onclick="sellVehicle(${i})">SELL — $${sellValue.toLocaleString()}</button></div>`;
+});
+html+="<h3>DEALERSHIP</h3>";
+const full=fleet.length>=vehicleStorageLimit();
+VEHICLE_TYPES.forEach(t=>{
+if(!t||t.unique)return; // unique reward vehicles (e.g. Cadillac) are never sold here
+const owned=fleetCountOf(t.name);
+html+=`<div class="vehicle-card"><strong>${t.name}</strong>${owned?` <span class="good">OWNED ×${owned}</span>`:''}<p>Tier ${t.tier} · $${Number(t.cost||0).toLocaleString()} · ${t.capacity} passengers</p><p>Speed ${t.speed||0} · Tough ${t.toughness||0} · Reliability ${t.reliability||0} · Attention ${t.attention||0}</p><p>Weather: ${t.weather==="dry"?"DRY ONLY":"ALL"}</p><button onclick="buyVehicle('${t.name}')" ${full?"disabled":""}>BUY $${Number(t.cost||0).toLocaleString()}</button></div>`;
+});
+box.innerHTML=html;
 }
 function sellVehicle(i){
-const v=vehicles[i];if(!v||!v.owned)return;
-if(vehicles.filter(x=>x&&x.owned).length<=1){log("[VEHICLE] You need at least one vehicle to move people. Buy another before selling your last one.");return}
-const sellValue=Math.max(50,Math.floor((v.cost||0)*0.35*Math.max(0.2,(Number(v.condition)||0)/100)));
+const v=fleet[i];if(!v)return;
+if(fleet.length<=1){log("[VEHICLE] You need at least one vehicle to move people. Buy another before selling your last one.");return}
+const t=vehicleType(v.type)||{};
+const sellValue=Math.max(50,Math.floor((t.cost||0)*0.35*Math.max(0.2,(Number(v.condition)||0)/100)));
 cash+=sellValue;
-const wasActive=activeVehicle===i;
-v.owned=false;v.condition=0;v.upgradeLevel=0;
-if(wasActive){const alt=vehicles.findIndex((x,idx)=>idx!==i&&x.owned);activeVehicle=alt>=0?alt:0}
-log("[VEHICLE] Sold "+v.name+" for $"+sellValue.toLocaleString()+".");
+const name=v.type;
+fleet.splice(i,1);
+if(activeVehicle===i)activeVehicle=0;
+else if(activeVehicle>i)activeVehicle--;
+if(activeVehicle>=fleet.length)activeVehicle=Math.max(0,fleet.length-1);
+log("[VEHICLE] Sold "+name+" for $"+sellValue.toLocaleString()+".");
 saveGame();updateScreen();
 }
-function selectVehicle(i){const v=vehicles[i];if(!v||!v.owned)return;if(v.condition<=0){log("[VEHICLE] Damaged vehicle needs repair.");return}if(v.weather==="dry"&&currentWeather!=="clear"){log("[VEHICLE] The Shelby cannot be driven in this weather.");return}activeVehicle=i;log("[VEHICLE] "+v.name+" selected.");saveGame();updateScreen()}
-function buyVehicle(i){const v=vehicles[i];if(!v||v.owned)return;if(vehicles.filter(x=>x&&x.owned).length>=vehicleStorageLimit()){log("[VEHICLE] Storage full.");return}if(cash<v.cost){log("[VEHICLE] Not enough cash.");return}cash-=v.cost;v.owned=true;v.condition=100;log("[VEHICLE] Bought "+v.name+" for $"+v.cost+".");saveGame();updateScreen()}
-function repairVehicle(i){const v=vehicles[i];if(!v||!v.owned)return;const base=Math.max(150,Math.floor((100-v.condition)*18));const cost=v.condition>=100?Math.max(300,Math.floor((v.cost||1000)*0.08)):base;if(v.condition>=100){if(cash<cost){log("[VEHICLE] Need $"+cost+" for tuning.");return}cash-=cost;v.upgradeLevel=(Number(v.upgradeLevel)||0)+1;v.speed=Math.min(110,(v.speed||50)+3);v.reliability=Math.min(100,(v.reliability||50)+4);if(v.name==="Used Porsche 911"&&v.upgradeLevel>=3)v.reliability=100;log("[VEHICLE] "+v.name+" received a tune.");}else{if(cash<cost){log("[VEHICLE] Need $"+cost+" to repair.");return}cash-=cost;v.condition=100;log("[VEHICLE] "+v.name+" repaired.");}saveGame();updateScreen()}
+function selectVehicle(i){const v=fleet[i];if(!v)return;const t=vehicleType(v.type)||{};if(v.condition<=0){log("[VEHICLE] Damaged vehicle needs repair.");return}if(t.weather==="dry"&&currentWeather!=="clear"){log("[VEHICLE] "+v.type+" cannot be driven in this weather.");return}activeVehicle=i;log("[VEHICLE] "+v.type+" selected.");saveGame();updateScreen()}
+function buyVehicle(typeName){
+const t=vehicleType(typeName);if(!t)return;
+if(t.unique){log("[VEHICLE] "+t.name+" isn't sold here.");return}
+if(fleet.length>=vehicleStorageLimit()){log("[VEHICLE] Storage full.");return}
+if(cash<t.cost){log("[VEHICLE] Not enough cash.");return}
+cash-=t.cost;
+fleet.push({type:t.name,condition:100,upgradeLevel:0,speedBonus:0,reliabilityBonus:0});
+log("[VEHICLE] Bought "+t.name+" for $"+t.cost+". Owned: "+fleetCountOf(t.name)+".");
+saveGame();updateScreen();
+}
+function repairVehicle(i){
+const v=fleet[i];if(!v)return;
+const t=vehicleType(v.type);if(!t)return;
+const base=Math.max(150,Math.floor((100-v.condition)*18));
+const cost=v.condition>=100?Math.max(300,Math.floor((t.cost||1000)*0.08)):base;
+if(v.condition>=100){
+if(cash<cost){log("[VEHICLE] Need $"+cost+" for tuning.");return}
+cash-=cost;
+v.upgradeLevel=(Number(v.upgradeLevel)||0)+1;
+v.speedBonus=Math.min(30,(Number(v.speedBonus)||0)+3);
+v.reliabilityBonus=Math.min(40,(Number(v.reliabilityBonus)||0)+4);
+if(v.type==="Used Porsche 911"&&v.upgradeLevel>=3)v.reliabilityBonus=Math.max(v.reliabilityBonus,100-(t.reliability||45));
+log("[VEHICLE] "+v.type+" received a tune.");
+}else{
+if(cash<cost){log("[VEHICLE] Need $"+cost+" to repair.");return}
+cash-=cost;v.condition=100;log("[VEHICLE] "+v.type+" repaired.");
+}
+saveGame();updateScreen();
+}
 
 function getTripProtection(individual=false){
 const available=Array.isArray(crew)?crew.filter(m=>m&&!isJailActive(m)&&!isInjured(m)):[];
@@ -1004,8 +1075,8 @@ if(!workers||!workers.length){log("[TRIP] No workers ready.");return}
 const protection=getTripProtection(individual);if(protection.count<1){log("[TRIP] No protection.");return}
 let total=0,fat=0,results=[];
 workers.forEach(w=>{const earn=Math.floor(Math.random()*(individual?81:101))+(individual?60:100);const f=Math.floor(Math.random()*16)+10;w.condition=Math.max(0,w.condition-f);total+=earn;fat+=f;results.push(w.name+" +$"+earn+" ("+w.condition+")")});
-const tripVehicle=vehicles[activeVehicle];
-if(tripVehicle){const wearChance=Math.max(0.01,0.10-(tripVehicle.reliability||50)/1000+(tripVehicle.attention||0)/900);if(Math.random()<wearChance){const wear=Math.max(1,Math.floor(Math.random()*8)+Math.floor((100-(tripVehicle.toughness||50))/30));tripVehicle.condition=Math.max(0,(tripVehicle.condition||100)-wear);log("[VEHICLE] "+tripVehicle.name+" took some wear on the trip.");if(tripVehicle.condition===0)log("[VEHICLE] "+tripVehicle.name+" is badly damaged and cannot travel.");}}
+const tripVehicle=fleet[activeVehicle];
+if(tripVehicle){const tt=vehicleType(tripVehicle.type)||{};const reliability=effectiveVehicleStat(tripVehicle,"reliability");const wearChance=Math.max(0.01,0.10-reliability/1000+(tt.attention||0)/900);if(Math.random()<wearChance){const wear=Math.max(1,Math.floor(Math.random()*8)+Math.floor((100-(tt.toughness||50))/30));tripVehicle.condition=Math.max(0,(tripVehicle.condition||100)-wear);log("[VEHICLE] "+tripVehicle.type+" took some wear on the trip.");if(tripVehicle.condition===0)log("[VEHICLE] "+tripVehicle.type+" is badly damaged and cannot travel.");}}
 cash+=total;
 document.getElementById("encounter").innerHTML=`<strong>${individual?"INDIVIDUAL":"GROUP"} — ${place}</strong><br>Workers: ${workers.length}<br>Protection: ${protection.names.join(", ")} (${protection.count})<br>Cash: $${total}<br>Fatigue: ${fat}<br><br>${results.join("<br>")}`;
 log("[TRIP] "+(individual?"Individual":"Group")+" run to "+place+": "+workers.length+" workers, +$"+total+". Protection: "+protection.names.join(", ")+".");
@@ -1037,7 +1108,8 @@ m.morale=Math.min(100,(m.morale||0)+r);log("[CREW] "+m.name+" morale +"+r);syncC
 }
 function visitLocation(place){
 if(!activeVehicleCanTravel()){log("[TRIP] Your active vehicle cannot make the trip.");return}
-const workers=getReadyWorkers(vehicles[activeVehicle].capacity);
+const activeType=vehicleType((fleet[activeVehicle]||{}).type);
+const workers=getReadyWorkers(activeType?activeType.capacity:4);
 if(!workers.length){log("[TRIP] Nobody ready. No turn used.");saveGame();updateScreen();return}
 if(!useTurn())return;
 processLocationTrip(place,workers,false);
@@ -1196,9 +1268,12 @@ if(win){
 saveGame();updateScreen();
 }
 function awardBattleVehicle(){
-const pool=vehicles.filter(v=>v&&!v.owned&&v.cost>0);if(!pool.length)return;
-const v=pool[Math.floor(Math.random()*pool.length)];v.owned=true;v.condition=Math.floor(Math.random()*41)+35;
-log("🎯 [BATTLE] A damaged vehicle came with the win: "+v.name+" ("+v.condition+"% condition).");markTabAttention("vehiclesTab");
+if(fleet.length>=vehicleStorageLimit())return;
+const pool=VEHICLE_TYPES.filter(t=>t&&!t.unique&&t.cost>0);if(!pool.length)return;
+const t=pool[Math.floor(Math.random()*pool.length)];
+const condition=Math.floor(Math.random()*41)+35;
+fleet.push({type:t.name,condition,upgradeLevel:0,speedBonus:0,reliabilityBonus:0});
+log("🎯 [BATTLE] A damaged vehicle came with the win: "+t.name+" ("+condition+"% condition).");markTabAttention("vehiclesTab");
 }
 function battleAttack(){
 if(!battleState)return;
@@ -1271,11 +1346,11 @@ log("[ATTACK] Trouble found the operation while you were away. "+hit.name+" got 
 log("[ATTACK] Trouble found the operation while you were away. Your people held on, barely. Loss: $"+loss+".");
 }
 }else{
-const v=vehicles[activeVehicle];
-if(v&&v.owned&&Number(v.condition)>0){
+const v=fleet[activeVehicle];
+if(v&&Number(v.condition)>0){
 const dmg=Math.floor(Math.random()*15)+5;
 v.condition=Math.max(0,v.condition-dmg);
-log("[ATTACK] Trouble found the operation while you were away — with nobody on guard, they got rough with the "+v.name+" too. Loss: $"+loss+".");
+log("[ATTACK] Trouble found the operation while you were away — with nobody on guard, they got rough with the "+v.type+" too. Loss: $"+loss+".");
 }else{
 log("[ATTACK] Trouble found the operation while you were away, with nobody there to stop it. Loss: $"+loss+".");
 }
