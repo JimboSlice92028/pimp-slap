@@ -214,7 +214,8 @@ let storyStage=0,roanokeLessons=0,tabAttention={},armsDealerUnlocked=false;
 // Active Roanoke job: {destination} or null. One job at a time; cleared on completion.
 let activeRoanokeJob=null;
 let weapons={"AR-69":0,"AK-67":0,"Revolver":0,".420 Semi-Auto":0,"Sawed-Off Shotgun":0};
-let armorOwned=0,battleState=null,activityLog=[];
+const BODY_ARMOR_MAX_TURNS=5;
+let armorOwned=0,armorDurability=0,battleState=null,activityLog=[];
 let cocaineUseCountToday=0,cocaineConsecutiveUseCount=0,cocaineUsersToday=[],cocainePoliceEventTriggeredToday=false,cocaineBribeEventTriggeredToday=false;
 let unassignedThugMaintenance={beer:0,weed:0,cigarettes:0,cocaine:0};
 const battleTypes=[
@@ -364,7 +365,7 @@ syncCrewState();
 localStorage.setItem(SAVE_KEY,JSON.stringify({
 cash,turns,maxTurns,playerLevel,playerXP,gameMinutes,gameDay,playerName,operationName,lastTurnRegenAt,
 expenses,supplies,stable,crew,namedThugs,randomThugs,thugs:crew,ownedProperties,businesses,upgrades,tokens,
-vehicleOwnership,activeVehicleType,weapons,armorOwned,armsDealerUnlocked,roanokeGiftReceived,borisGiftResolved,
+vehicleOwnership,activeVehicleType,weapons,armorOwned,armorDurability,armsDealerUnlocked,roanokeGiftReceived,borisGiftResolved,
 borisAttackPending,borisNightclubForSale,level4RivalResolved,storyStage,roanokeLessons,tabAttention,battleState,
 cocaineUseCountToday,cocaineConsecutiveUseCount,cocaineUsersToday,cocainePoliceEventTriggeredToday,
 cocaineBribeEventTriggeredToday,unassignedThugMaintenance,activityLog,currentWeather,weatherDay,firstThreeBattles,globalAttackCounter,lastEstateMishapDay,lastRanchUpkeepDay,lastPropertyTaxDay,activePropertyName,activeRoanokeJob
@@ -461,6 +462,8 @@ speedBonus:0,reliabilityBonus:0
 if(!totalOwnedVehicles()) vehicleOwnership={"Honda Civic":{owned:1,condition:85,upgradeLevel:0,speedBonus:0,reliabilityBonus:0}};
 activeVehicleType=(typeof d.activeVehicleType==="string"&&ownedCountOf(d.activeVehicleType)>0)?d.activeVehicleType:(Object.keys(vehicleOwnership).find(n=>ownedCountOf(n)>0)||"Honda Civic");
 weapons=d.weapons??weapons;armorOwned=d.armorOwned??armorOwned;
+armorDurability=Number.isFinite(Number(d.armorDurability))?Math.max(0,Math.min(BODY_ARMOR_MAX_TURNS,Math.floor(Number(d.armorDurability)))):(armorOwned>0?BODY_ARMOR_MAX_TURNS:0);
+if(armorOwned<=0)armorDurability=0;
 armsDealerUnlocked=d.armsDealerUnlocked??armsDealerUnlocked;
 roanokeGiftReceived=d.roanokeGiftReceived??roanokeGiftReceived;
 borisGiftResolved=Boolean(d.borisGiftResolved);
@@ -844,7 +847,8 @@ box.appendChild(div);
 function renderCrew(){
 syncCrewState();const box=document.getElementById("crew");if(!box)return;
 const guardCount=offlineProtectionThugs().length;
-let html=`<div class="vehicle-card"><strong>CREW ORGANIZATION</strong><p><strong>Total: ${totalOrganizationSize()} / ${CREW_CAPACITY}</strong></p><p>Active Crew: ${crew.length}</p><p>Named Available: ${namedThugs.length}</p><p>Unassigned Thugs: ${randomThugs}</p><p>Battle-Ready: ${battleReadyThugCount()}</p><p>🛡 Offline Protection: ${guardCount} ${guardCount?`(defense rating ${offlineDefenseRating().toFixed(1)})`:"— nobody is watching the door while you're away"}</p></div>`;
+const armorWarning=armorOwned<=0?'<div class="warning" style="margin:10px 0;padding:10px;border:1px solid #665522;border-radius:7px;"><strong>⚠️ BODY ARMOR NEEDS ATTENTION</strong><br>No body armor is currently available. Battles will cause normal morale and cash losses.</div>':(armorDurability<=0?'<div class="warning" style="margin:10px 0;padding:10px;border:1px solid #665522;border-radius:7px;"><strong>🚨 BODY ARMOR NEEDS ATTENTION</strong><br>Your armor is exhausted. Until replacement armor is purchased, battle losses increase and crew morale takes heavier hits.</div>':(armorDurability===1?'<div class="warning" style="margin:10px 0;padding:10px;border:1px solid #665522;border-radius:7px;"><strong>⚠️ BODY ARMOR NEEDS ATTENTION</strong><br>Only 1 battle turn of armor protection remains. Replace it at the Arms Dealer soon.</div>':''));
+let html=`<div class="vehicle-card"><strong>CREW ORGANIZATION</strong><p><strong>Total: ${totalOrganizationSize()} / ${CREW_CAPACITY}</strong></p><p>Active Crew: ${crew.length}</p><p>Named Available: ${namedThugs.length}</p><p>Unassigned Thugs: ${randomThugs}</p><p>Battle-Ready: ${battleReadyThugCount()}</p><p>🛡 Offline Protection: ${guardCount} ${guardCount?`(defense rating ${offlineDefenseRating().toFixed(1)})`:"— nobody is watching the door while you're away"}</p>${armorWarning}</div>`;
 if(crew.length){html+="<h3>CREW</h3>";crew.forEach((m,i)=>{
 html+=`<div class="crew-member"><strong>${m.name}</strong>${m.offlineProtection?' <span class="good">🛡 OFFLINE PROTECTION</span>':''}<br>Strength: ${m.strength}<br>Loyalty: ${m.loyalty}<br>Morale: ${m.morale}${m.maintenancePremium?`<br><small>Maintenance premium: +${(m.maintenancePremium*100).toFixed(1)}%</small>`:""}
 ${isJailActive(m)?'<div class="warning">⛓️ JAILED</div>':''}
@@ -1002,7 +1006,7 @@ const item=armsDealerItems.find(x=>x.name===name);if(!item)return;
 if(cash<item.price){log("[ARMS] Not enough cash.");return}
 cash-=item.price;
 if(item.type==="Weapon")weapons[item.name]=(weapons[item.name]||0)+1;
-if(item.type==="Armor")armorOwned++;
+if(item.type==="Armor"){armorOwned++;armorDurability=Math.min(BODY_ARMOR_MAX_TURNS,armorDurability+BODY_ARMOR_MAX_TURNS);log("[ARMOR] Body armor ready. It can protect the crew for up to "+BODY_ARMOR_MAX_TURNS+" battle turns.");}
 log("[ARMS] Bought "+item.name+" for $"+item.price+".");saveGame();updateScreen();
 }
 
@@ -1291,15 +1295,18 @@ let power=35+playerLevel*8;
 crew.forEach(m=>{if(!isJailActive(m)&&!isInjured(m))power+=Math.floor((Number(m.strength)||50)/4)});
 power+=randomThugs*3;
 Object.keys(weapons).forEach(n=>{power+=(weapons[n]||0)*12});
-if(armorOwned>0)power+=20;return power;
+if(armorOwned>0&&armorDurability>0)power+=20;return power;
 }
 function renderBattle(){
 const box=document.getElementById("battlePanel");if(!box)return;
 if(playerLevel<5){box.innerHTML='<div class="locked">Battle unlocks at Level 5.</div>';return}
 if(battleState){
-box.innerHTML=`<div class="battle-status"><strong>${battleState.name}</strong><br>${battleState.enemy} · Enemy ${battleState.enemyPower} · You ${battlePower()}</div>
+const armorLine=armorOwned>0?(armorDurability>0?`<span class="good">🛡 Armor protection: ${armorDurability}/${BODY_ARMOR_MAX_TURNS} battle turns remaining</span>`:`<span class="warning">⚠️ BODY ARMOR NEEDS ATTENTION — no protection remaining</span>`):`<span class="warning">⚠️ No body armor</span>`;
+box.innerHTML=`<div class="battle-status"><strong>${battleState.name}</strong><br>${battleState.enemy} · Enemy ${battleState.enemyPower} · You ${battlePower()}<br>${armorLine}</div>
 <div class="battle-actions"><button onclick="battleAttack()">ATTACK</button><button onclick="battleDefend()">DEFEND</button><button onclick="battleUseWeapon()">WEAPON</button><button onclick="battleEscape()">ESCAPE</button></div>`;return;
 }
+const armorSummary=armorOwned>0?(armorDurability>0?`<div class="battle-card"><strong>BODY ARMOR</strong><p class="good">🛡 Protection remaining: ${armorDurability}/${BODY_ARMOR_MAX_TURNS} battle turns.</p></div>`:`<div class="battle-card"><strong>BODY ARMOR</strong><p class="warning">⚠️ Armor needs attention. Protection is exhausted. Visit the Arms Dealer for replacement armor.</p></div>`):'';
+box.innerHTML=armorSummary+battleTypes.map((t,i)=>`<div class="battle-card"><strong>${t.name}</strong><p class="tab-note">${t.enemy} · $${t.reward} · ${t.xp} XP</p><button onclick="startBattle(${i})">START</button></div>`).join("");
 box.innerHTML=battleTypes.map((t,i)=>`<div class="battle-card"><strong>${t.name}</strong><p class="tab-note">${t.enemy} · $${t.reward} · ${t.xp} XP</p><button onclick="startBattle(${i})">START</button></div>`).join("");
 }
 function clampBattleChance(v){return Math.max(0.30,Math.min(0.76,v))}
@@ -1308,7 +1315,7 @@ if(!battleState)return 0.5;
 const power=battlePower();
 const enemy=Math.max(1,battleState.enemyPower);
 const ratio=(power-enemy)/enemy;
-let chance=0.45 + ratio*0.18;
+let chance=0.42 + ratio*0.18;
 if(action==='defend') chance+=0.03;
 if(action==='weapon') chance+=0.12;
 /* The first three fights are still secretly favorable, but losses are now much more possible. */
@@ -1322,7 +1329,21 @@ const rigged=firstThreeBattles<3;
 const enemyPower=Math.max(10,Math.floor(t.power*difficultyMultiplier())+(playerLevel-1)*5);
 const reward=Math.floor(t.reward*(1+(playerLevel-1)*0.06));
 const penalty=Math.min(Math.max(1,Math.floor(Math.max(cash,1)*0.20)),Math.max(t.penalty,Math.floor(Math.max(cash,1)*0.08)));
-battleState={name:t.name,enemy:t.enemy,enemyPower,reward,penalty,xp:t.xp,rigged};
+const armorProtected=armorOwned>0&&armorDurability>0;
+if(armorProtected){
+armorDurability=Math.max(0,armorDurability-1);
+if(armorDurability===0){
+log("⚠️ [ARMOR] Body armor absorbed this fight but is now exhausted. Replace it before the next battle.");
+markTabAttention("crewTab");
+}else if(armorDurability===1){
+log("⚠️ [ARMOR] Body armor is nearly spent — 1 battle turn of protection remains. Check the Crew tab.");
+markTabAttention("crewTab");
+}
+}else if(armorOwned>0){
+log("⚠️ [ARMOR] Your body armor has no protection left. Battle losses and morale damage will increase until it is replaced.");
+markTabAttention("crewTab");
+}
+battleState={name:t.name,enemy:t.enemy,enemyPower,reward,penalty,xp:t.xp,rigged,armorProtected};
 log("🎯 [BATTLE] "+t.name+" started. Enemy power: "+enemyPower+" | Your power: "+battlePower()+".");
 saveGame();updateScreen();
 }
@@ -1335,11 +1356,18 @@ if(win){
  log("🎯 [BATTLE] VICTORY — "+r.name+" | +$"+r.reward+" | +"+r.xp+" XP | Crew morale +5.");
  if(Math.random()<0.22)awardBattleVehicle();
 }else{
- const loss=Math.min(Math.max(1,Math.floor(Math.max(cash,1)*0.20)),Math.max(r.penalty,1));
+ const baseLoss=Math.min(Math.max(1,Math.floor(Math.max(cash,1)*0.20)),Math.max(r.penalty,1));
+ const loss=r.armorProtected?baseLoss:Math.min(Math.max(1,Math.ceil(Math.max(cash,1)*0.30)),Math.max(baseLoss,Math.ceil(baseLoss*1.5)));
+ const moraleLoss=r.armorProtected?8:14;
  cash=Math.max(0,cash-loss);firstThreeBattles++;
- crew.forEach(m=>m.morale=Math.max(0,(m.morale||50)-8));
+ crew.forEach(m=>m.morale=Math.max(0,(m.morale||50)-moraleLoss));
  const actionText=action?" after "+action:"";
- log("⚠️ [BATTLE] LOSS — "+r.name+actionText+" | -$"+loss+" | Crew morale -8. The crew barely holds the operation together.");
+ if(r.armorProtected){
+ log("⚠️ [BATTLE] LOSS — "+r.name+actionText+" | -$"+loss+" | Crew morale -"+moraleLoss+". Body armor reduced the damage.");
+ }else{
+ log("🚨 [BATTLE] LOSS — "+r.name+actionText+" | -$"+loss+" | Crew morale -"+moraleLoss+". BODY ARMOR IS EXHAUSTED — losses and morale damage increased.");
+ markTabAttention("crewTab");
+ }
 }
 saveGame();updateScreen();
 }
