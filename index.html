@@ -207,6 +207,8 @@ let roanokeGiftReceived=false,borisGiftResolved=false,borisGiftPopupScheduled=fa
 let borisAttackPending=false,borisNightclubForSale=false;
 let level4RivalResolved=false,level4RivalPopupScheduled=false;
 let storyStage=0,roanokeLessons=0,tabAttention={},armsDealerUnlocked=false;
+// Active Roanoke job: {destination} or null. One job at a time; cleared on completion.
+let activeRoanokeJob=null;
 let weapons={"AR-69":0,"AK-67":0,"Revolver":0,".420 Semi-Auto":0,"Sawed-Off Shotgun":0};
 let armorOwned=0,battleState=null,activityLog=[];
 let cocaineUseCountToday=0,cocaineConsecutiveUseCount=0,cocaineUsersToday=[],cocainePoliceEventTriggeredToday=false,cocaineBribeEventTriggeredToday=false;
@@ -247,6 +249,40 @@ const PROPERTY_DATA={
 "Estate":{price:250000,capacity:100,vehicles:50,security:100,police:0,rival:0,info:"Massive capacity and near-absolute security. No passive income. Old-house repairs can hurt."}
 };
 const BORIS_CLUB_PRICE=250000,BORIS_CLUB_GROSS=2500,BORIS_CLUB_OPERATING=700,BORIS_CLUB_NET=1800;
+
+// ROANOKE JOB SYSTEM
+// One small data table, keyed by an existing location/business name from visitLocation().
+// Each entry can later carry its own story beats and payout logic without touching callRoanoke() or
+// checkRoanokeJobCompletion() — just add/edit an entry here.
+const ROANOKE_JOBS_DATA={
+"Strip Club":{
+message:"ROANOKE: Boss, there's a big party at the Strip Club tonight. My client wants some of your best girls. Send them over and see what happens.",
+completionTemplate:"ROANOKE JOB COMPLETE: That party was exactly what I thought it would be. The girls cleaned up. You earned $%AMOUNT%.",
+payoutMin:1200,payoutMax:2200
+},
+"Hotel":{
+message:"ROANOKE: Boss, I've got a well-paying client checked into the Hotel. Send someone over before he changes his mind.",
+completionTemplate:"ROANOKE JOB COMPLETE: The Hotel client paid up without a fuss. You earned $%AMOUNT%.",
+payoutMin:800,payoutMax:1500
+},
+"The Bar":{
+message:"ROANOKE: Boss, there's money moving at The Bar tonight. Get some girls down there.",
+completionTemplate:"ROANOKE JOB COMPLETE: The Bar crowd was generous tonight. You earned $%AMOUNT%.",
+payoutMin:600,payoutMax:1200
+},
+"Downtown":{
+message:"ROANOKE: Boss, I've got a contact Downtown looking to spend big. Send the girls that way.",
+completionTemplate:"ROANOKE JOB COMPLETE: The Downtown contact came through. You earned $%AMOUNT%.",
+payoutMin:900,payoutMax:1700
+}
+};
+// Strip Club only counts as a valid destination once it's actually unlocked and open for business,
+// matching the existing visibility rule for the SEND GROUP TO STRIP CLUB button.
+function getAvailableRoanokeDestinations(){
+const dests=["Hotel","The Bar","Downtown"];
+if(playerLevel>=7&&hasBusiness("Strip Club"))dests.push("Strip Club");
+return dests;
+}
 
 function normalizeCrew(){
 if(!Array.isArray(crew)) crew=[];
@@ -289,7 +325,7 @@ expenses,supplies,stable,crew,namedThugs,randomThugs,thugs:crew,ownedProperties,
 vehicles,activeVehicle,weapons,armorOwned,armsDealerUnlocked,roanokeGiftReceived,borisGiftResolved,
 borisAttackPending,borisNightclubForSale,level4RivalResolved,storyStage,roanokeLessons,tabAttention,battleState,
 cocaineUseCountToday,cocaineConsecutiveUseCount,cocaineUsersToday,cocainePoliceEventTriggeredToday,
-cocaineBribeEventTriggeredToday,unassignedThugMaintenance,activityLog,currentWeather,weatherDay,firstThreeBattles,globalAttackCounter,lastEstateMishapDay,lastRanchUpkeepDay,lastPropertyTaxDay,activePropertyName
+cocaineBribeEventTriggeredToday,unassignedThugMaintenance,activityLog,currentWeather,weatherDay,firstThreeBattles,globalAttackCounter,lastEstateMishapDay,lastRanchUpkeepDay,lastPropertyTaxDay,activePropertyName,activeRoanokeJob
 }));
 const s=document.getElementById("saveStatus");if(s) s.textContent="Game saved.";
 }
@@ -340,6 +376,7 @@ globalAttackCounter=Number.isFinite(Number(d.globalAttackCounter))?Number(d.glob
 lastEstateMishapDay=Number.isFinite(Number(d.lastEstateMishapDay))?Number(d.lastEstateMishapDay):-9999;
 lastRanchUpkeepDay=Number.isFinite(Number(d.lastRanchUpkeepDay))?Number(d.lastRanchUpkeepDay):0;
 lastPropertyTaxDay=Number.isFinite(Number(d.lastPropertyTaxDay))?Number(d.lastPropertyTaxDay):0;
+activeRoanokeJob=(d.activeRoanokeJob&&typeof d.activeRoanokeJob==="object"&&typeof d.activeRoanokeJob.destination==="string"&&ROANOKE_JOBS_DATA[d.activeRoanokeJob.destination])?d.activeRoanokeJob:null;
 if(!Array.isArray(stable)) stable=[];if(!Array.isArray(crew)) crew=[];
 if(crew.length===0){const legacy=Array.isArray(d.thugs)?d.thugs:Array.isArray(d.crewMembers)?d.crewMembers:[];if(legacy.length>0) crew=legacy}
 normalizeCrew();
@@ -982,7 +1019,22 @@ if(!activeVehicleCanTravel()){log("[TRIP] Your active vehicle cannot make the tr
 const workers=getReadyWorkers(vehicles[activeVehicle].capacity);
 if(!workers.length){log("[TRIP] Nobody ready. No turn used.");saveGame();updateScreen();return}
 if(!useTurn())return;
-processLocationTrip(place,workers,false);saveGame();updateScreen();
+processLocationTrip(place,workers,false);
+checkRoanokeJobCompletion(place);
+saveGame();updateScreen();
+}
+// Fires only when the destination visited matches the active Roanoke job. Awards the payout once,
+// logs the completion line into the existing Activity Log, then clears the job so it can't repeat.
+function checkRoanokeJobCompletion(place){
+if(!activeRoanokeJob)return;
+if(activeRoanokeJob.destination!==place)return;
+const jobData=ROANOKE_JOBS_DATA[activeRoanokeJob.destination];
+activeRoanokeJob=null;
+if(!jobData)return;
+const payout=Math.floor(Math.random()*(jobData.payoutMax-jobData.payoutMin+1))+jobData.payoutMin;
+cash+=payout;
+const msg=jobData.completionTemplate.replace("%AMOUNT%",payout.toLocaleString());
+log("[ROANOKE] "+msg);
 }
 function recruitWorkers(place,maxCount,isBar=false){
 const count=Math.max(1,Math.min(isBar?3:2,maxCount));
@@ -1024,6 +1076,10 @@ document.getElementById("encounter").innerHTML="<strong>EVENT</strong><br>"+e;lo
 }
 
 function callRoanoke(){
+if(activeRoanokeJob){
+log("[ROANOKE] Boss, I already put you on something. Handle that job before you call me again.");
+return;
+}
 if(cash<100){log("[ROANOKE] Need $100.");return}cash-=100;roanokeLessons++;
 let messages;
 if(playerLevel>=4&&!level4RivalResolved){
@@ -1045,7 +1101,17 @@ messages=["You are getting noticed. Be wary of rivals.","Keep your people close.
 messages=["More money, more problems.","Make sure people are strapped. Look at the Arms Dealer.","The Strip Club draws different blood."];
 markTabAttention("marketplaceTab");
 }else{
-messages=["Adapt or get buried.","Decide what matters before someone else does."];
+// Generic case: instead of a random flavor line, Roanoke now hands out an actual job
+// pointing at a real destination. Reward comes from ROANOKE_JOBS_DATA once the player
+// visits that destination via the existing visitLocation() flow.
+const dests=getAvailableRoanokeDestinations();
+const destination=dests[Math.floor(Math.random()*dests.length)];
+const jobData=ROANOKE_JOBS_DATA[destination];
+activeRoanokeJob={destination};
+document.getElementById("encounter").innerHTML="<strong>ROANOKE</strong><br>"+jobData.message;
+log("[ROANOKE] "+jobData.message+" -$100.");
+saveGame();updateScreen();
+return;
 }
 const msg=messages[Math.floor(Math.random()*messages.length)];
 document.getElementById("encounter").innerHTML="<strong>ROANOKE</strong><br>"+msg;
