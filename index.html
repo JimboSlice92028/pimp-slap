@@ -195,9 +195,11 @@ let playerName="Pimp",operationName="The Operation",lastTurnRegenAt=Date.now();
 const SAVE_KEY="pimpSlapSave";
 let expenses={condoms:50,medical:75,cigarettes:15,weed:50,beer:20,cocaine:200};
 let supplies={condoms:10,medical:5,cigarettes:10,weed:5,beer:10,cocaine:2};
-let stable=[{name:"Maya",condition:82,charm:72},{name:"Tasha",condition:91,charm:65},{name:"Jenny",condition:74,charm:81}];
+let stable=[{name:"Maya",condition:82,charm:72,assigned:true,assignmentEligible:true},{name:"Tasha",condition:91,charm:65,assigned:true,assignmentEligible:true},{name:"Jenny",condition:74,charm:81,assigned:true,assignmentEligible:true}];
 let crew=[],namedThugs=[],randomThugs=0;
 const CREW_CAPACITY=100;
+const ASSIGNED_THUG_MAINTENANCE_PREMIUM=0.025;
+const UNASSIGNED_THUG_MAINTENANCE_RECOVERY={beer:15,weed:30,cigarettes:10,cocaine:50};
 const recruitNames=["Rico","Dre","Marcus","Tone","Javier","DeShawn","Malik","Andre"];
 const workerNames=["Ava","Nina","Jade","Kayla","Tori","Lexi","Bri","Sasha"];
 let ownedProperties=[],propertyStatusMessage="",businesses=[],upgrades=[],tokens=0;
@@ -207,8 +209,8 @@ let level4RivalResolved=false,level4RivalPopupScheduled=false;
 let storyStage=0,roanokeLessons=0,tabAttention={},armsDealerUnlocked=false;
 let weapons={"AR-69":0,"AK-67":0,"Revolver":0,".420 Semi-Auto":0,"Sawed-Off Shotgun":0};
 let armorOwned=0,battleState=null,activityLog=[];
-let cocaineUseCountToday=0,cocaineConsecutiveUseCount=0,cocaineUsersToday=[];
-let cocainePoliceEventTriggeredToday=false,cocaineBribeEventTriggeredToday=false;
+let cocaineUseCountToday=0,cocaineConsecutiveUseCount=0,cocaineUsersToday=[],cocainePoliceEventTriggeredToday=false,cocaineBribeEventTriggeredToday=false;
+let unassignedThugMaintenance={beer:0,weed:0,cigarettes:0,cocaine:0};
 const battleTypes=[
 {name:"Street Ambush",enemy:"Street Crew",power:45,reward:350,penalty:20,xp:45},
 {name:"Rival Crew",enemy:"Rival Crew",power:70,reward:650,penalty:30,xp:70},
@@ -282,7 +284,7 @@ expenses,supplies,stable,crew,namedThugs,randomThugs,thugs:crew,ownedProperties,
 vehicles,activeVehicle,weapons,armorOwned,armsDealerUnlocked,roanokeGiftReceived,borisGiftResolved,
 borisAttackPending,borisNightclubForSale,level4RivalResolved,storyStage,roanokeLessons,tabAttention,battleState,
 cocaineUseCountToday,cocaineConsecutiveUseCount,cocaineUsersToday,cocainePoliceEventTriggeredToday,
-cocaineBribeEventTriggeredToday,activityLog,currentWeather,weatherDay,firstThreeBattles,globalAttackCounter,lastEstateMishapDay,lastRanchUpkeepDay,lastPropertyTaxDay
+cocaineBribeEventTriggeredToday,unassignedThugMaintenance,activityLog,currentWeather,weatherDay,firstThreeBattles,globalAttackCounter,lastEstateMishapDay,lastRanchUpkeepDay,lastPropertyTaxDay
 }));
 const s=document.getElementById("saveStatus");if(s) s.textContent="Game saved.";
 }
@@ -322,6 +324,7 @@ cocaineConsecutiveUseCount=Number.isFinite(Number(d.cocaineConsecutiveUseCount))
 cocaineUsersToday=Array.isArray(d.cocaineUsersToday)?d.cocaineUsersToday:[];
 cocainePoliceEventTriggeredToday=Boolean(d.cocainePoliceEventTriggeredToday);
 cocaineBribeEventTriggeredToday=Boolean(d.cocaineBribeEventTriggeredToday);
+unassignedThugMaintenance=d.unassignedThugMaintenance&&typeof d.unassignedThugMaintenance==="object"?d.unassignedThugMaintenance:{beer:0,weed:0,cigarettes:0,cocaine:0};
 currentWeather=d.currentWeather||"clear";weatherDay=Number.isFinite(Number(d.weatherDay))?Number(d.weatherDay):0;
 firstThreeBattles=Number.isFinite(Number(d.firstThreeBattles))?Number(d.firstThreeBattles):0;
 globalAttackCounter=Number.isFinite(Number(d.globalAttackCounter))?Number(d.globalAttackCounter):0;
@@ -448,27 +451,40 @@ function showLevel4RivalPopup(){const o=document.getElementById("level4RivalOver
 function closeLevel4RivalPopup(){const o=document.getElementById("level4RivalOverlay");if(o)o.style.display="none"}
 
 function countOwnedSUVs(){
-return vehicles.filter(v=>v&&v.owned&&/SUV/i.test(v.name)&&Number(v.condition)>0).length;
+const suvNames=["Chevrolet Blazer","Used Cadillac Escalade","Humvee"];
+return vehicles.filter(v=>v&&v.owned&&suvNames.includes(v.name)&&Number(v.condition)>0).length;
 }
 function countPistols(){return weapons["Revolver"]||0}
 function countLongGuns(){return (weapons["AR-69"]||0)+(weapons["AK-67"]||0)+(weapons[".420 Semi-Auto"]||0)+(weapons["Sawed-Off Shotgun"]||0)}
+function isWarReady(){
+return countOwnedSUVs()>=1 && countPistols()>=1 && countLongGuns()>=1 && armorOwned>=1;
+}
 
-function applyLevel4WarDamage(){
-// Active vehicle totaled
+function applyLevel4WarDamage(action){
+const ready=isWarReady();
+// Active vehicle totaled, unless the player prepped with an SUV and it wasn't already wrecked
 const v=vehicles[activeVehicle];
 if(v&&v.owned){
+if(ready && Number(v.condition)>30){
+const dmg=Math.floor(Math.random()*30)+20;
+v.condition=Math.max(0,v.condition-dmg);
+log("[VEHICLE] "+v.name+" took heavy fire but held together — the extra armor plating paid off.");
+}else{
 v.condition=0;
 log("[VEHICLE] "+v.name+" was totaled in the fight.");
 }
+}
+
 // Switch to another working owned vehicle if possible
 const alt=vehicles.findIndex((x,i)=>i!==activeVehicle&&x.owned&&Number(x.condition)>0);
-if(alt>=0){activeVehicle=alt;log("[VEHICLE] You switched to the "+vehicles[alt].name+".")}
-else{log("[VEHICLE] No other working vehicle available.")}
+if(v&&v.condition<=0&&alt>=0){activeVehicle=alt;log("[VEHICLE] You switched to the "+vehicles[alt].name+".")}
+else if(v&&v.condition<=0){log("[VEHICLE] No other working vehicle available.")}
 
-// 3 crew injured (24h)
+// Crew injured (24h). Being armed and prepared reduces the casualties; moving first vs. waiting also matters.
+let injuredTarget=ready?(action==="attack"?1:2):(action==="attack"?2:3);
 let injuredNames=[];
 const healthy=crew.filter(m=>m&&!isJailActive(m)&&!isInjured(m));
-for(let i=0;i<3;i++){
+for(let i=0;i<injuredTarget;i++){
 if(healthy[i]){
 healthy[i].injuredUntilDay=gameDay+1;
 healthy[i].morale=Math.max(5,(Number(healthy[i].morale)||50)-40);
@@ -486,16 +502,17 @@ log("[CREW] Injured and out of action: "+injuredNames.slice(0,3).join(", ")+".")
 }else{
 log("[CREW] No spare bodies to take the hits — the damage still landed on the operation.");
 }
+if(ready){log("[STORY] Roanoke: \"Good. You listened.\"")}
 
 log("[RIVAL] Two of theirs did not walk away.");
 }
 
-function resolveLevel4Rival(){
+function resolveLevel4Rival(action){
 if(level4RivalResolved)return;
 level4RivalResolved=true;
 closeLevel4RivalPopup();
 
-applyLevel4WarDamage();
+applyLevel4WarDamage(action);
 
 [{name:"Katya",condition:86,charm:78},{name:"Mila",condition:82,charm:84},{name:"Svetlana",condition:89,charm:76},{name:"Nadia",condition:80,charm:88}].forEach(g=>{
 if(!stable.some(e=>e&&e.name===g.name))stable.push(g);
@@ -532,7 +549,7 @@ if(level4RivalResolved)return;
 closeLevel4RivalPopup();
 log("[LEVEL 4] You moved on the rival.");
 log("[ROANOKE] \"Hope you listened about the Arms Dealer and the SUVs.\"");
-resolveLevel4Rival();
+resolveLevel4Rival("attack");
 }
 function waitForLevel4Rival(){
 if(level4RivalResolved)return;
@@ -541,7 +558,7 @@ log("[LEVEL 4] You held back.");
 setTimeout(function(){
 if(!level4RivalResolved){
 log("[RIVAL] He did not hold back.");
-resolveLevel4Rival();
+resolveLevel4Rival("wait");
 }
 },1800);
 }
@@ -660,10 +677,12 @@ stable.forEach((w,i)=>{
 const div=document.createElement("div");div.className="worker";
 div.innerHTML=`<div class="worker-name">${w.name}</div>Condition: <span class="condition">${w.condition}</span><br>Charm: ${w.charm}
 ${isWorkerJailed(w)?'<div class="warning" style="margin-top:8px;">⛓️ JAILED</div>':''}
-<button ${isWorkerJailed(w)?"disabled":""} onclick="sendWorker(${i})">SEND ${w.name.toUpperCase()}</button>
+${w.assigned?"<strong>ASSIGNED WORKER</strong>":(w.assignmentEligible?`<button onclick="promoteWorker(${i})">PROMOTE TO ASSIGNED</button>`:"<small>UNASSIGNED — NOT ELIGIBLE FOR ASSIGNMENT</small>")}<br>
+<button ${isWorkerJailed(w)||!w.assigned?"disabled":""} onclick="sendWorker(${i})">SEND ${w.name.toUpperCase()}</button>
 <button onclick="restWorker(${i})">REST ${w.name.toUpperCase()}</button>
 <button onclick="maintainWorker(${i},'beer')">GIVE BEER</button>
 <button onclick="maintainWorker(${i},'weed')">GIVE WEED</button>
+<button onclick="maintainWorker(${i},'cigarettes')">GIVE CIGS</button>
 <button onclick="maintainWorker(${i},'cocaine')">GIVE COKE</button>`;
 box.appendChild(div);
 });
@@ -672,7 +691,7 @@ function renderCrew(){
 syncCrewState();const box=document.getElementById("crew");if(!box)return;
 let html=`<div class="vehicle-card"><strong>CREW ORGANIZATION</strong><p><strong>Total: ${totalOrganizationSize()} / ${CREW_CAPACITY}</strong></p><p>Active Crew: ${crew.length}</p><p>Named Available: ${namedThugs.length}</p><p>Unassigned Thugs: ${randomThugs}</p><p>Battle-Ready: ${battleReadyThugCount()}</p></div>`;
 if(crew.length){html+="<h3>CREW</h3>";crew.forEach((m,i)=>{
-html+=`<div class="crew-member"><strong>${m.name}</strong><br>Strength: ${m.strength}<br>Loyalty: ${m.loyalty}<br>Morale: ${m.morale}
+html+=`<div class="crew-member"><strong>${m.name}</strong><br>Strength: ${m.strength}<br>Loyalty: ${m.loyalty}<br>Morale: ${m.morale}${m.maintenancePremium?`<br><small>Maintenance premium: +${(m.maintenancePremium*100).toFixed(1)}% · Offline protection: +10%</small>`:""}
 ${isJailActive(m)?'<div class="warning">⛓️ JAILED</div>':''}
 ${isInjured(m)?'<div class="warning">🩹 INJURED — sitting out</div>':''}
 <br><button onclick="maintainCrew(${i},'beer')">BEER</button>
@@ -682,12 +701,37 @@ ${isInjured(m)?'<div class="warning">🩹 INJURED — sitting out</div>':''}
 })}
 if(namedThugs.length||randomThugs){
 html+="<h3>AVAILABLE</h3>";
-if(randomThugs)html+=`<div class="crew-member"><strong>${randomThugs} UNASSIGNED THUG(S)</strong></div>`;
+if(randomThugs)html+=`<div class="crew-member"><strong>${randomThugs} UNASSIGNED THUG(S)</strong><br>These guys are available protection but are not assigned to active crew duty.<br>Maintenance is shared across the unassigned pool.<br><button onclick="maintainUnassignedThugs('beer')">GIVE BEER</button> <button onclick="maintainUnassignedThugs('weed')">GIVE WEED</button> <button onclick="maintainUnassignedThugs('cigarettes')">GIVE CIGS</button> <button onclick="maintainUnassignedThugs('cocaine')">GIVE COKE</button><br><small>Maintained: 🍺 ${unassignedThugMaintenance.beer||0} · 🌿 ${unassignedThugMaintenance.weed||0} · 🚬 ${unassignedThugMaintenance.cigarettes||0} · ❄️ ${unassignedThugMaintenance.cocaine||0}</small><br><button onclick="assignUnassignedThug()">ASSIGN 1 THUG — +10% OFFLINE PROTECTION</button></div>`;
 namedThugs.forEach((t,i)=>{html+=`<div class="crew-member"><strong>${t.name}</strong><br>Str ${t.strength} · Loy ${t.loyalty}<br><button onclick="promoteNamedThug(${i})">PROMOTE TO CREW</button></div>`});
 }
 if(!crew.length&&!namedThugs.length&&!randomThugs)html+="<p>No crew yet. You still ride as protection.</p>";
 box.innerHTML=html;
 }
+function maintainUnassignedThugs(item){
+if(!randomThugs){log("[CREW] No unassigned thugs.");return}
+if(!UNASSIGNED_THUG_MAINTENANCE_RECOVERY[item])return;
+if((supplies[item]||0)<=0){log("[CREW] Out of supply.");return}
+supplies[item]--;
+unassignedThugMaintenance[item]=(unassignedThugMaintenance[item]||0)+1;
+if(item==="cocaine")recordCocaineUse({name:"Unassigned Thug"},"unassigned");else cocaineConsecutiveUseCount=0;
+log("[CREW] Unassigned thugs maintained with "+item+".");saveGame();updateScreen();
+}
+function assignUnassignedThug(){
+if(!randomThugs){log("[CREW] No unassigned thugs to assign.");return}
+if(totalOrganizationSize()>=CREW_CAPACITY){log("[CREW] Organization full.");return}
+randomThugs--;
+const premium=ASSIGNED_THUG_MAINTENANCE_PREMIUM;
+let thugName=recruitNames[Math.floor(Math.random()*recruitNames.length)];
+let nameGuard=0;
+while((crew.some(m=>m&&m.name===thugName)||namedThugs.some(t=>t&&t.name===thugName))&&nameGuard++<50){
+  thugName=recruitNames[Math.floor(Math.random()*recruitNames.length)];
+}
+if(crew.some(m=>m&&m.name===thugName)||namedThugs.some(t=>t&&t.name===thugName)) thugName=thugName+" "+(Math.floor(Math.random()*90)+10);
+crew.push({name:thugName,strength:50,loyalty:60,morale:75,maintenancePremium:premium,offlineProtectionBoost:0.10});
+log("[CREW] "+thugName+" assigned to active crew. Assigned maintenance carries a 2.5% premium. Offline protection +10%.");
+saveGame();updateScreen();
+}
+function assignedThugOfflineProtectionBoost(){return crew.some(m=>m&&Number(m.offlineProtectionBoost)>0)?0.10:0}
 function promoteNamedThug(i){syncCrewState();const t=namedThugs[i];if(!t)return;if(totalOrganizationSize()>=CREW_CAPACITY){log("[CREW] Full.");return}crew.push(t);namedThugs.splice(i,1);log("[CREW] "+t.name+" promoted.");saveGame();updateScreen()}
 
 function renderIdentity(){
@@ -771,9 +815,9 @@ function renderSmokeShop(){
 const box=document.getElementById("smokeShopPanel");if(!box)return;
 const items=[{key:"weed",label:"Weed",price:50},{key:"beer",label:"Beer",price:20},{key:"cigarettes",label:"Cigarettes",price:15},{key:"condoms",label:"Condoms",price:expenses.condoms},{key:"medical",label:"Medical",price:expenses.medical},{key:"cocaine",label:"Coke",price:200}];
 box.innerHTML=items.map(it=>`<div class="market-card"><strong>${it.label}</strong><p>Stock: ${supplies[it.key]||0} · $${it.price}</p><button onclick="buySupply('${it.key}')">BUY 1</button></div>`).join("")+
-`<div class="market-card"><strong>TURN CAPACITY</strong><p>Max turns: ${maxTurns} · $3000</p><button onclick="buyTurnUpgrade()">+10 MAX TURNS</button></div>`;
+`<div class="market-card"><strong>BUY EXTRA TURNS</strong><p>+10 playable turns · $3000</p><button onclick="buyTurnUpgrade()">BUY +10 TURNS</button></div>`;
 }
-function buyTurnUpgrade(){if(cash<3000){log("[MARKET] Not enough cash.");return}cash-=3000;maxTurns+=10;log("[MARKET] Max turns +10.");saveGame();updateScreen()}
+function buyTurnUpgrade(){if(cash<3000){log("[MARKET] Not enough cash.");return}cash-=3000;turns+=10;log("[MARKET] +10 playable turns.");saveGame();updateScreen()}
 function useToken(){if(tokens<=0){log("[TOKEN] None left.");return}if(turns>=maxTurns){log("[TOKEN] Turns full.");return}tokens--;turns=Math.min(maxTurns,turns+5);log("[TOKEN] +5 turns.");saveGame();updateScreen()}
 
 function weatherLabel(){return currentWeather==="rain"?"RAIN":currentWeather==="storm"?"STORM":"CLEAR"}
@@ -810,16 +854,20 @@ function isJailActive(e){if(!e||!e.jailUntilDay)return false;return e.jailUntilD
 function isWorkerJailed(w){return isJailActive(w)}
 
 function recordCocaineUse(entity,type){
-if(!entity)return;cocaineUseCountToday++;cocaineConsecutiveUseCount++;
+if(!entity)return;
+cocaineUseCountToday++;cocaineConsecutiveUseCount++;
 cocaineUsersToday.push({name:entity.name,type});
-log("[COCAINE] "+entity.name+" used coke. Streak: "+cocaineConsecutiveUseCount+".");
+if(cocaineUseCountToday===2)log("🚔 You better slow it down wit that hard stuff... people are noticing.");
 if(!cocaineBribeEventTriggeredToday&&cocaineConsecutiveUseCount>=5){triggerCocaineBribeEvent();return}
-if(!cocainePoliceEventTriggeredToday&&cocaineUseCountToday>=3&&Math.random()<0.45)triggerCocainePoliceEvent();
+if(!cocainePoliceEventTriggeredToday&&cocaineUseCountToday>=3&&Math.random()<0.60)triggerCocainePoliceEvent();
 }
 function triggerCocaineBribeEvent(){
 if(cocaineBribeEventTriggeredToday)return;cocaineBribeEventTriggeredToday=true;
 const unique=[];for(const e of cocaineUsersToday){if(!unique.some(p=>p.type===e.type&&p.name===e.name))unique.push(e)}
-let n=0;unique.forEach(e=>{const list=e.type==="crew"?crew:stable;const p=list.find(m=>m&&m.name===e.name);if(!p)return;p.jailUntilDay=gameDay+1;p.jailUntilMinute=gameMinutes;n++});
+let n=0;unique.forEach(e=>{
+if(e.type==="unassigned"){if(randomThugs>0){randomThugs--;n++;}return}
+const list=e.type==="crew"?crew:stable;const p=list.find(m=>m&&m.name===e.name);if(!p)return;p.jailUntilDay=gameDay+1;p.jailUntilMinute=gameMinutes;n++;
+});
 const bribe=1000,paid=Math.min(cash,bribe);cash-=paid;
 log("[ARREST] "+n+" taken in. Bribe $"+bribe+".");syncCrewState();saveGame();updateScreen();
 }
@@ -827,7 +875,10 @@ function triggerCocainePoliceEvent(){
 if(cocainePoliceEventTriggeredToday)return;cocainePoliceEventTriggeredToday=true;
 const unique=[];for(const e of cocaineUsersToday){if(!unique.some(p=>p.type===e.type&&p.name===e.name))unique.push(e)}
 const fine=Math.floor(Math.random()*251)+250;let n=0;
-unique.forEach(e=>{const list=e.type==="crew"?crew:stable;const p=list.find(m=>m&&m.name===e.name);if(!p)return;p.jailUntilDay=gameDay+1;p.jailUntilMinute=gameMinutes;n++});
+unique.forEach(e=>{
+if(e.type==="unassigned"){if(randomThugs>0){randomThugs--;n++;}return}
+const list=e.type==="crew"?crew:stable;const p=list.find(m=>m&&m.name===e.name);if(!p)return;p.jailUntilDay=gameDay+1;p.jailUntilMinute=gameMinutes;n++;
+});
 cash-=Math.min(cash,fine);log("[ARREST] "+n+" jailed 24h. Fine $"+fine+".");syncCrewState();saveGame();updateScreen();
 }
 
@@ -844,13 +895,14 @@ document.getElementById("encounter").innerHTML=`<strong>${individual?"INDIVIDUAL
 log("[TRIP] "+(individual?"Individual":"Group")+" run to "+place+": "+workers.length+" workers, +$"+total+". Protection: "+protection.names.join(", ")+".");
 addXP(25*workers.length);
 const roll=Math.random();
-if(place==="Strip Club"){if(roll<0.40)recruitWorker(place);else if(roll<0.68)crewEncounter(place);else if(roll<0.82)randomEvent(place)}
-else if(roll<0.20)recruitWorker(place);else if(roll<0.35)crewEncounter(place);else if(roll<0.50)randomEvent(place);
+if(place==="Strip Club"){if(roll<0.40)recruitWorkers(place,3,true);else if(roll<0.68)crewEncounter(place);else if(roll<0.82)randomEvent(place)}
+else if(roll<0.20)recruitWorkers(place,Math.floor(Math.random()*2)+1,false);else if(roll<0.35)crewEncounter(place);else if(roll<0.50)randomEvent(place);
 }
 function getWorkerByIndex(i){i=Number(i);if(!Number.isInteger(i)||i<0||i>=stable.length)return null;return stable[i]}
 function sendWorker(i){
-const w=getWorkerByIndex(i);if(!w)return;if(isWorkerJailed(w)){log("[JAIL] Jailed.");return}
-if(!useTurn())return;if(w.condition<25){log("[WORK] Needs rest.");turns++;updateScreen();return}
+const w=getWorkerByIndex(i);if(!w)return;if(!w.assigned){log("[TRIP] "+w.name+" is not assigned yet.");return;}if(isWorkerJailed(w)){log("[JAIL] Jailed.");return}
+if(w.condition<25){log("[WORK] Needs rest. No turn used.");updateScreen();return}
+if(!useTurn())return;
 processLocationTrip("Individual Run",[w],true);saveGame();updateScreen();
 }
 function restWorker(i){const w=getWorkerByIndex(i);if(!w)return;const r=Math.floor(Math.random()*21)+20;w.condition=Math.min(100,w.condition+r);log("[REST] "+w.name+" +"+r);saveGame();updateScreen()}
@@ -869,16 +921,31 @@ m.morale=Math.min(100,(m.morale||0)+r);log("[CREW] "+m.name+" morale +"+r);syncC
 }
 function visitLocation(place){
 if(!activeVehicleCanTravel()){log("[TRIP] Your active vehicle cannot make the trip.");return}
-if(!useTurn())return;
 const workers=getReadyWorkers(vehicles[activeVehicle].capacity);
-if(!workers.length){log("[TRIP] Nobody ready.");saveGame();updateScreen();return}
+if(!workers.length){log("[TRIP] Nobody ready. No turn used.");saveGame();updateScreen();return}
+if(!useTurn())return;
 processLocationTrip(place,workers,false);saveGame();updateScreen();
 }
-function recruitWorker(place){
-const name=workerNames[Math.floor(Math.random()*workerNames.length)];
-const w={name,condition:Math.floor(Math.random()*31)+60,charm:Math.floor(Math.random()*41)+50};
-stable.push(w);log("[RECRUIT] "+name+" joined at "+place+".");
-document.getElementById("encounter").innerHTML="<strong>NEW RECRUIT</strong><br>"+name+" · Charm "+w.charm+" · Cond "+w.condition;
+function recruitWorkers(place,maxCount,isBar=false){
+const count=Math.max(1,Math.min(isBar?3:2,maxCount));
+const found=[];
+for(let n=0;n<count;n++){
+let name=workerNames[Math.floor(Math.random()*workerNames.length)];
+let guard=0;while(stable.some(w=>w&&w.name===name)&&guard++<20)name=workerNames[Math.floor(Math.random()*workerNames.length)];
+const eligible=!isBar&&Math.random()<0.10;
+const w={name,condition:Math.floor(Math.random()*31)+60,charm:Math.floor(Math.random()*41)+50,assigned:false,assignmentEligible:eligible};
+stable.push(w);found.push(w);
+}
+log("[RECRUIT] "+found.length+" worker(s) joined at "+place+".");
+if(found.some(w=>w.assignmentEligible))log("[RECRUIT] One of the new workers may be worth promoting.");
+document.getElementById("encounter").innerHTML="<strong>NEW WORKERS</strong><br>"+found.map(w=>w.name+" · Charm "+w.charm+" · Cond "+w.condition).join("<br>");
+}
+function promoteWorker(i){
+const w=getWorkerByIndex(i);if(!w)return;
+if(w.assigned){log("[RECRUIT] "+w.name+" is already assigned.");return}
+if(!w.assignmentEligible){log("[RECRUIT] "+w.name+" is not eligible for assignment.");return}
+if(stable.filter(x=>x&&x.assigned).length>=CREW_CAPACITY){log("[RECRUIT] Assignment capacity reached.");return}
+w.assigned=true;log("[RECRUIT] "+w.name+" promoted to assigned worker.");saveGame();updateScreen();
 }
 function crewEncounter(place){
 const name=recruitNames[Math.floor(Math.random()*recruitNames.length)];
@@ -943,23 +1010,84 @@ box.innerHTML=`<div class="battle-status"><strong>${battleState.name}</strong><b
 }
 box.innerHTML=battleTypes.map((t,i)=>`<div class="battle-card"><strong>${t.name}</strong><p class="tab-note">${t.enemy} · $${t.reward} · ${t.xp} XP</p><button onclick="startBattle(${i})">START</button></div>`).join("");
 }
-function startBattle(i){if(!useTurn())return;const t=battleTypes[i];if(!t)return;
-const rigged=firstThreeBattles<3; battleState={name:t.name,enemy:t.enemy,enemyPower:Math.floor(t.power*difficultyMultiplier())+(playerLevel-1)*5,reward:Math.floor(t.reward*(1+(playerLevel-1)*0.06)),penalty:Math.min(t.penalty,Math.max(1,Math.floor(cash*0.20))),xp:t.xp,rigged};
-log("[BATTLE] "+t.name+" started.");saveGame();updateScreen();
+function clampBattleChance(v){return Math.max(0.30,Math.min(0.76,v))}
+function battleOutcomeChance(action){
+if(!battleState)return 0.5;
+const power=battlePower();
+const enemy=Math.max(1,battleState.enemyPower);
+const ratio=(power-enemy)/enemy;
+let chance=0.45 + ratio*0.18;
+if(action==='defend') chance+=0.03;
+if(action==='weapon') chance+=0.12;
+/* The first three fights are still secretly favorable, but losses are now much more possible. */
+if(battleState.rigged && firstThreeBattles<3) chance+=0.08;
+return clampBattleChance(chance);
 }
-function finishBattle(win){
-if(!battleState)return;const r=battleState;battleState=null;
-if(win){cash+=r.reward;addXP(r.xp);firstThreeBattles++;crew.forEach(m=>m.morale=Math.min(100,(m.morale||50)+5));log("[BATTLE] Victory +$"+r.reward);if(Math.random()<0.22)awardBattleVehicle()}
-else{cash=Math.max(0,cash-r.penalty);firstThreeBattles++;crew.forEach(m=>m.morale=Math.max(0,(m.morale||50)-8));log("[BATTLE] Lost -$"+r.penalty)}
+function startBattle(i){
+if(!useTurn())return;
+const t=battleTypes[i];if(!t)return;
+const rigged=firstThreeBattles<3;
+const enemyPower=Math.max(10,Math.floor(t.power*difficultyMultiplier())+(playerLevel-1)*5);
+const reward=Math.floor(t.reward*(1+(playerLevel-1)*0.06));
+const penalty=Math.min(Math.max(1,Math.floor(Math.max(cash,1)*0.20)),Math.max(t.penalty,Math.floor(Math.max(cash,1)*0.08)));
+battleState={name:t.name,enemy:t.enemy,enemyPower,reward,penalty,xp:t.xp,rigged};
+log("🎯 [BATTLE] "+t.name+" started. Enemy power: "+enemyPower+" | Your power: "+battlePower()+".");
+saveGame();updateScreen();
+}
+function finishBattle(win,action){
+if(!battleState)return;
+const r=battleState;battleState=null;
+if(win){
+ cash+=r.reward;addXP(r.xp);firstThreeBattles++;
+ crew.forEach(m=>m.morale=Math.min(100,(m.morale||50)+5));
+ log("🎯 [BATTLE] VICTORY — "+r.name+" | +$"+r.reward+" | +"+r.xp+" XP | Crew morale +5.");
+ if(Math.random()<0.22)awardBattleVehicle();
+}else{
+ const loss=Math.min(Math.max(1,Math.floor(Math.max(cash,1)*0.20)),Math.max(r.penalty,1));
+ cash=Math.max(0,cash-loss);firstThreeBattles++;
+ crew.forEach(m=>m.morale=Math.max(0,(m.morale||50)-8));
+ const actionText=action?" after "+action:"";
+ log("⚠️ [BATTLE] LOSS — "+r.name+actionText+" | -$"+loss+" | Crew morale -8. The crew barely holds the operation together.");
+}
 saveGame();updateScreen();
 }
 function awardBattleVehicle(){
-const pool=vehicles.filter(v=>v&&!v.owned&&v.cost>0);if(!pool.length)return;const v=pool[Math.floor(Math.random()*pool.length)];v.owned=true;v.condition=Math.floor(Math.random()*41)+35;log("[BATTLE] A damaged vehicle came with the win: "+v.name+" ("+v.condition+"% condition).");markTabAttention("vehiclesTab");
+const pool=vehicles.filter(v=>v&&!v.owned&&v.cost>0);if(!pool.length)return;
+const v=pool[Math.floor(Math.random()*pool.length)];v.owned=true;v.condition=Math.floor(Math.random()*41)+35;
+log("🎯 [BATTLE] A damaged vehicle came with the win: "+v.name+" ("+v.condition+"% condition).");markTabAttention("vehiclesTab");
 }
-function battleAttack(){if(!battleState)return;if(battleState.rigged&&firstThreeBattles<3){finishBattle(true);return}if(battlePower()+Math.floor(Math.random()*31)>=battleState.enemyPower){finishBattle(true);return}battleState.enemyPower=Math.max(10,battleState.enemyPower-10);log("[BATTLE] Missed.");saveGame();updateScreen()}
-function battleDefend(){if(!battleState)return;if(battleState.rigged&&firstThreeBattles<3){finishBattle(true);return}if(battlePower()+25+Math.floor(Math.random()*21)>=battleState.enemyPower+20){finishBattle(true);return}battleState.enemyPower=Math.max(10,battleState.enemyPower-18);log("[BATTLE] Held ground.");saveGame();updateScreen()}
-function battleUseWeapon(){if(!battleState)return;const w=Object.keys(weapons).find(n=>(weapons[n]||0)>0);if(!w){log("[BATTLE] No weapon.");return}weapons[w]--;if(battleState.rigged&&firstThreeBattles<3){finishBattle(true);return}if(battlePower()+45+Math.floor(Math.random()*31)>=battleState.enemyPower){finishBattle(true);return}battleState.enemyPower=Math.max(10,battleState.enemyPower-25);log("[BATTLE] "+w+" used.");saveGame();updateScreen()}
-function battleEscape(){if(!battleState)return;if(Math.random()<0.65){battleState=null;log("[BATTLE] Escaped.");saveGame();updateScreen();return}battleState.enemyPower=Math.max(10,battleState.enemyPower-8);log("[BATTLE] Escape failed.");saveGame();updateScreen()}
+function battleAttack(){
+if(!battleState)return;
+const chance=battleOutcomeChance('attack');
+if(Math.random()<chance){finishBattle(true,'attack');return;}
+finishBattle(false,'attack');
+}
+function battleDefend(){
+if(!battleState)return;
+const chance=battleOutcomeChance('defend');
+if(Math.random()<chance){finishBattle(true,'defend');return;}
+finishBattle(false,'defend');
+}
+function battleUseWeapon(){
+if(!battleState)return;
+const w=Object.keys(weapons).find(n=>(weapons[n]||0)>0);
+if(!w){log("⚠️ [BATTLE] No weapon available.");return;}
+weapons[w]--;
+const chance=battleOutcomeChance('weapon');
+if(Math.random()<chance){finishBattle(true,'weapon');return;}
+battleState.enemyPower=Math.max(10,battleState.enemyPower-25);
+log("⚠️ [BATTLE] "+w+" was used, but the enemy held. Win chance was "+Math.round(chance*100)+"%.");
+saveGame();updateScreen();
+}
+function battleEscape(){
+if(!battleState)return;
+if(Math.random()<0.65){battleState=null;log("[BATTLE] Escaped before the fight got worse.");saveGame();updateScreen();return;}
+const chance=battleOutcomeChance('escape');
+if(Math.random()<chance*0.35){finishBattle(true,'escape');return;}
+battleState.enemyPower=Math.max(10,battleState.enemyPower-8);
+log("⚠️ [BATTLE] Escape failed. The enemy is still on you.");
+saveGame();updateScreen();
+}
 
 function processPropertyEconomy(){
 const ranch=ownedProperty("Ranch");
@@ -975,7 +1103,9 @@ if(playerLevel<5)return;
 const p=ownedProperties.length?ownedProperties[ownedProperties.length-1]:null;
 let chance=0.06;if(p){if(p.name==="Trailer Park")chance=0.18;if(p.name==="Condo")chance=p.securityActive?0.05:0.14;if(p.name==="Ranch")chance=0.01;if(p.name==="Estate")chance=0;}
 if(Math.random()>=chance)return;globalAttackCounter++;
-let favorable=playerLevel<25?Math.random()<0.55:Math.random()<0.50;
+let favorableBase=playerLevel<25?0.55:0.50;
+const thugBoost=Math.min(0.10,assignedThugOfflineProtectionBoost());
+let favorable=Math.random()<(favorableBase+thugBoost);
 if(favorable){cash+=250;crew.forEach(m=>m.morale=Math.min(100,(m.morale||50)+3));log("[ATTACK] Something came looking while you were away. Your people held it down.");}
 else{const loss=Math.min(Math.max(1,Math.floor(Math.max(cash,1)*0.20)),Math.floor(Math.random()*Math.max(1,Math.floor(Math.max(cash,1)*0.12)))+1);cash=Math.max(0,cash-loss);crew.forEach(m=>m.morale=Math.max(0,(m.morale||50)-5));log("[ATTACK] Trouble found the operation while you were away. Loss: $"+loss+".");}
 }
@@ -1009,7 +1139,6 @@ if(playerLevel>=3&&!borisGiftResolved)scheduleBorisGiftScene(3500);
 if(playerLevel===4&&!level4RivalResolved)scheduleLevel4RivalScene(5000);
 setInterval(applyTurnRegeneration,30000);
 document.addEventListener("visibilitychange",()=>{if(!document.hidden)applyTurnRegeneration()});
-window.addEventListener("focus",applyTurnRegeneration);
 </script>
 </body>
 </html>
