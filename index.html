@@ -22,7 +22,7 @@ button:disabled{background:#555;cursor:not-allowed}
 /* Clear action feedback: success gets a money burst; failures explain the reason. */
 .action-feedback-success{animation:moneyButtonFlash .85s ease-out!important;box-shadow:0 0 0 4px rgba(124,255,124,.9),0 0 30px rgba(124,255,124,.75)!important;outline:2px solid rgba(255,255,255,.8)!important}
 .action-feedback-fail{animation:failedButtonFlash .65s ease-out!important;box-shadow:0 0 0 4px rgba(255,90,90,.9),0 0 28px rgba(255,90,90,.65)!important;outline:2px solid rgba(255,120,120,.8)!important}
-.action-feedback-label{position:absolute;z-index:10001;pointer-events:none;font-size:18px;font-weight:900;white-space:nowrap;text-shadow:0 2px 4px #000;animation:feedbackFloat 1.05s ease-out forwards}
+.action-feedback-label{position:fixed;z-index:10001;pointer-events:none;font-size:18px;font-weight:900;white-space:nowrap;text-shadow:0 2px 4px #000;animation:feedbackFloat 1.05s ease-out forwards}
 .action-feedback-label.success{color:#7cff7c}
 .action-feedback-label.fail{color:#ff7777;background:rgba(20,0,0,.92);padding:7px 10px;border-radius:7px;border:1px solid #ff5555;max-width:360px;white-space:normal;text-align:center}
 @keyframes moneyButtonFlash{0%{transform:scale(1)}25%{transform:scale(1.035)}55%{transform:scale(.99)}100%{transform:scale(1)}}
@@ -555,7 +555,7 @@ const label=document.createElement("div");
 label.className="action-feedback-label "+(success?"success":"fail");
 label.textContent=success?"💵💵💵💵💵 SUCCESS! 💵💵💵💵💵":"❌ FAILED — "+(reason||"Action could not be completed.");
 label.style.left=Math.max(8,Math.min(window.innerWidth-390,rect.left+rect.width/2-195))+"px";
-label.style.top=Math.max(8,rect.top-6)+"px";
+label.style.top=Math.max(8,Math.min(window.innerHeight-70,rect.top-6))+"px";
 document.body.appendChild(label);
 setTimeout(()=>label.remove(),success?1250:1800);
 }
@@ -571,6 +571,11 @@ setTimeout(()=>button.classList.remove("action-feedback-success","action-feedbac
 
 function finishClickedAction(button,beforeSeq,beforeMessage){
 if(!button||button.classList.contains("tab-button")||button.disabled)return;
+const buttonText=(button.textContent||"").trim().toUpperCase();
+if(buttonText==="CLEAR LOG"){
+  setTimeout(function(){showActionFeedback(button,true);flashActionButton(button,true);},60);
+  return;
+}
 // Gameplay handlers normally log synchronously. Give handlers that redraw the screen a little extra time.
 setTimeout(function(){
 let changed=actionLogSeq>beforeSeq || lastActionMessage!==beforeMessage;
@@ -591,11 +596,12 @@ flashActionButton(button,true);
 },160);
 }
 
-// Reliable global action feedback. Capture the exact button before its handler can call updateScreen()
+// Reliable global action feedback. Every dynamic gameplay button is caught here, including buttons created by updateScreen(). Capture the exact button before its handler can call updateScreen()
 // and replace the DOM node. Tab buttons are excluded.
 document.addEventListener("click",function(e){
 const button=e.target.closest("button");
 if(!button||button.classList.contains("tab-button")||button.disabled)return;
+if(button.closest("a[href]"))return;
 const beforeSeq=actionLogSeq;
 const beforeMessage=lastActionMessage;
 finishClickedAction(button,beforeSeq,beforeMessage);
