@@ -1014,22 +1014,18 @@ html+=`<div class="vehicle-card"><strong>STORAGE</strong><p>${ownedCount} / ${li
 if(over>0){
 html+=`<div class="vehicle-card"><p class="warning"><strong>OVER CAPACITY by ${over} vehicle${over===1?"":"s"}.</strong> Nothing gets confiscated automatically — but you can't buy more until you're back under the limit. Sell a vehicle below, or switch to a property with more storage.</p></div>`;
 }
-html+="<h3>YOUR FLEET</h3>";
-const ownedNames=Object.keys(vehicleOwnership).filter(n=>ownedCountOf(n)>0);
-if(!ownedNames.length)html+='<div class="locked">No vehicles owned.</div>';
-ownedNames.forEach(name=>{
-const rec=vehicleOwnership[name];
-const t=vehicleType(name)||{};
-const sellValue=Math.max(50,Math.floor((t.cost||0)*0.35*Math.max(0.2,(Number(rec.condition)||0)/100)));
-const cannotSelect=rec.condition<=0||(t.weather==="dry"&&currentWeather!=="clear");
-html+=`<div class="vehicle-card"><strong>${name}</strong> <span class="good">OWNED ×${rec.owned}</span><p>Tier ${t.tier||"?"} · ${t.capacity||0} passengers</p><p>Speed ${effectiveVehicleStat(name,"speed")} · Tough ${t.toughness||0} · Reliability ${effectiveVehicleStat(name,"reliability")} · Attention ${t.attention||0}</p><p>Condition ${rec.condition}% (shared across all owned) · Weather: ${t.weather==="dry"?"DRY ONLY":"ALL"}</p>${name==="Used Porsche 911"&&rec.upgradeLevel>=3?'<p class="good">Something about this Porsche seems different now.</p>':''}<button onclick="selectVehicle('${name}')" ${cannotSelect?"disabled":""}>${activeVehicleType===name?"ACTIVE":"SELECT"}</button><button onclick="repairVehicle('${name}')">${rec.condition>=100?"UPGRADE / TUNE":"REPAIR"}</button><button onclick="sellVehicle('${name}')">SELL 1 — $${sellValue.toLocaleString()}</button></div>`;
-});
-html+="<h3>DEALERSHIP</h3>";
+html+="<h3>GARAGE</h3>";
 const full=totalOwnedVehicles()>=vehicleStorageLimit();
 VEHICLE_TYPES.forEach(t=>{
-if(!t||t.unique)return; // unique reward vehicles (e.g. Cadillac) are never sold here
-const owned=ownedCountOf(t.name);
-html+=`<div class="vehicle-card"><strong>${t.name}</strong>${owned?` <span class="good">OWNED ×${owned}</span>`:''}<p>Tier ${t.tier} · $${Number(t.cost||0).toLocaleString()} · ${t.capacity} passengers</p><p>Speed ${t.speed||0} · Tough ${t.toughness||0} · Reliability ${t.reliability||0} · Attention ${t.attention||0}</p><p>Weather: ${t.weather==="dry"?"DRY ONLY":"ALL"}</p><button onclick="buyVehicle('${t.name}')" ${full?"disabled":""}>BUY $${Number(t.cost||0).toLocaleString()}</button></div>`;
+if(!t)return;
+const rec=vehicleOwnership[t.name];
+const owned=rec?rec.owned:0;
+if(t.unique&&owned<=0)return; // Cadillac stays hidden until you actually earn one
+const speed=owned>0?effectiveVehicleStat(t.name,"speed"):(t.speed||0);
+const reliability=owned>0?effectiveVehicleStat(t.name,"reliability"):(t.reliability||0);
+const cannotSelect=owned<=0||rec.condition<=0||(t.weather==="dry"&&currentWeather!=="clear");
+const sellValue=rec?Math.max(50,Math.floor((t.cost||0)*0.35*Math.max(0.2,(Number(rec.condition)||0)/100))):0;
+html+=`<div class="vehicle-card"><strong>${t.name}</strong>${owned?` <span class="good">OWNED ×${owned}</span>`:''}<p>Tier ${t.tier||"?"} · ${t.capacity||0} passengers</p><p>Speed ${speed} · Tough ${t.toughness||0} · Reliability ${reliability} · Attention ${t.attention||0}</p><p>${owned>0?`Condition ${rec.condition}% (shared across all owned) · `:''}Weather: ${t.weather==="dry"?"DRY ONLY":"ALL"}</p>${t.name==="Used Porsche 911"&&rec&&rec.upgradeLevel>=3?'<p class="good">Something about this Porsche seems different now.</p>':''}${owned>0?`<button onclick="selectVehicle('${t.name}')" ${cannotSelect?"disabled":""}>${activeVehicleType===t.name?"ACTIVE":"SELECT"}</button><button onclick="repairVehicle('${t.name}')">${rec.condition>=100?"UPGRADE / TUNE":"REPAIR"}</button><button onclick="sellVehicle('${t.name}')">SELL 1 — $${sellValue.toLocaleString()}</button>`:''}${!t.unique?`<button onclick="buyVehicle('${t.name}')" ${full?"disabled":""}>BUY $${Number(t.cost||0).toLocaleString()} ${owned?"— BUY ANOTHER":""}</button>`:''}</div>`;
 });
 box.innerHTML=html;
 }
