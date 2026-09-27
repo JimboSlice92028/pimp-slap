@@ -321,6 +321,7 @@ let crew=[],namedThugs=[],randomThugs=0;
 const CREW_CAPACITY=100;
 function currentCrewCapacity(){return ownedProperty("Trailer Park")?Infinity:CREW_CAPACITY}
 const ASSIGNED_THUG_MAINTENANCE_PREMIUM=0.025;
+const MAX_OFFLINE_PROTECTION=5;
 const UNASSIGNED_THUG_MAINTENANCE_RECOVERY={beer:15,weed:30,cigarettes:10,cocaine:50};
 const recruitNames=["Rico","Dre","Marcus","Tone","Javier","DeShawn","Malik","Andre"];
 const workerNames=["Ava","Nina","Jade","Kayla","Tori","Lexi","Bri","Sasha"];
@@ -398,7 +399,7 @@ let lastPropertyTaxDay=0;
 let activePropertyName=null;
 const AUTO_REPAIR_STORAGE_BONUS=20;
 const PROPERTY_DATA={
-"Trailer Park":{price:15000,capacity:100,vehicles:100,security:25,police:0.18,rival:0.12,info:"Cheap and useful, but police are constantly nearby. Cop pressure can mean bribes."},
+"Trailer Park":{price:15000,capacity:Infinity,vehicles:100,security:25,police:0.18,rival:0.12,info:"Cheap and useful, but police are constantly nearby. Cop pressure can mean bribes."},
 "Condo":{price:25000,capacity:25,vehicles:2,security:70,police:0.07,rival:0.18,info:"Affordable protection, but rivals know where you live. Optional security costs $1,000/24h."},
 "Ranch":{price:75000,capacity:100,vehicles:15,security:99,police:0.025,rival:0.01,info:"Private, huge, profitable and almost impossible to find. Animals cost money to keep."},
 "Estate":{price:250000,capacity:100,vehicles:50,security:100,police:0,rival:0,info:"Massive capacity and near-absolute security. No passive income. Old-house repairs can hurt."}
@@ -456,6 +457,15 @@ injuredUntilDay:Number.isFinite(Number(m.injuredUntilDay))?Number(m.injuredUntil
 maintenancePremium:Number.isFinite(Number(m.maintenancePremium))?Number(m.maintenancePremium):0,
 offlineProtection:Boolean(m.offlineProtection)
 };
+});
+// Never allow a save or legacy state to carry more than the five allowed
+// Offline Protection guards. Keep the first five and stand everyone else down.
+let protectionSeen=0;
+crew.forEach(m=>{
+if(m.offlineProtection){
+protectionSeen++;
+if(protectionSeen>MAX_OFFLINE_PROTECTION)m.offlineProtection=false;
+}
 });
 }
 function normalizeNamedThugs(){
@@ -1150,15 +1160,19 @@ function offlineProtectionThugs(){
 return crew.filter(m=>m&&m.offlineProtection&&!isJailActive(m)&&!isInjured(m));
 }
 function offlineDefenseRating(){
-const guards=offlineProtectionThugs();
+const guards=offlineProtectionThugs().slice(0,MAX_OFFLINE_PROTECTION);
 if(!guards.length)return 0;
 const avgCondition=guards.reduce((sum,m)=>sum+((Number(m.strength)||50)+(Number(m.morale)||50))/2,0)/guards.length;
-const countFactor=Math.min(3,guards.length); // diminishing returns past 3 guards on duty
+const countFactor=Math.min(MAX_OFFLINE_PROTECTION,guards.length);
 return (avgCondition/100)*countFactor;
 }
 function toggleOfflineProtection(i){
 const m=crew[i];if(!m)return;
 if(isJailActive(m)){log("[CREW] Can't put someone in jail on guard duty.");return}
+if(!m.offlineProtection && offlineProtectionThugs().length>=MAX_OFFLINE_PROTECTION){
+log("[CREW] Offline Protection is full. Maximum 5 crew members can guard the operation at one time.");
+return;
+}
 m.offlineProtection=!m.offlineProtection;
 log("[CREW] "+m.name+(m.offlineProtection?" promoted to Offline Protection.":" stood down from Offline Protection duty."));
 saveGame();updateScreen();
@@ -1201,13 +1215,13 @@ function renderProperty(){
 const box=document.getElementById("propertyPanel"),sec=document.getElementById("propertySection");if(!box)return;
 if(playerLevel<6){box.innerHTML="";if(sec)sec.style.display="none";return} if(sec)sec.style.display="block";
 const active=activeProperty();
-let html=`<div class="property-card"><strong>PROPERTY STATUS</strong><p>Owned: ${ownedProperties.length?ownedProperties.map(p=>p.name).join(", "):"None"}</p><p>Active property: <span class="highlight">${active?active.name:"None"}</span></p><p>Current capacity (from active property): ${propertyCapacity()} crew · ${vehicleStorageLimit()} vehicles</p><p class="tab-note">You can own several properties. Only the active one sets your capacity — switch anytime, nothing gets confiscated.</p></div>`;
+let html=`<div class="property-card"><strong>PROPERTY STATUS</strong><p>Owned: ${ownedProperties.length?ownedProperties.map(p=>p.name).join(", "):"None"}</p><p>Active property: <span class="highlight">${active?active.name:"None"}</span></p><p>Current capacity (from active property): ${propertyCapacity()===Infinity?"∞":propertyCapacity()} crew · ${vehicleStorageLimit()} vehicles</p><p class="tab-note">You can own several properties. Only the active one sets your capacity — switch anytime, nothing gets confiscated.</p></div>`;
 if(propertyStatusMessage)html+=`<div class="property-card"><p class="warning">${propertyStatusMessage}</p></div>`;
 Object.keys(PROPERTY_DATA).forEach(name=>{const d=PROPERTY_DATA[name],owned=!!ownedProperty(name),isActive=active&&active.name===name;let extra="";
 if(name==="Condo")extra='<p>Private Security: $1,000 / 24h when activated.</p>';
 if(name==="Ranch")extra='<p>Revenue: $700 / 24h · Animal upkeep: $500 / 72h · Tax: $5,000 / 365 days.</p>';
 if(name==="Estate")extra='<p>Income: $0 · Repairs can cost up to $2,500, with 100 in-game hours between mishaps.</p>';
-html+=`<div class="property-card"><strong>${name}</strong>${isActive?' <span class="good">ACTIVE</span>':''}<p>$${d.price.toLocaleString()}</p><p>${d.info}</p>${extra}<p>Capacity: ${d.capacity} crew · Vehicle storage: ${d.vehicles}</p>${owned?`<p class="good">OWNED</p>${!isActive?`<button onclick="setActiveProperty('${name}')">SET ACTIVE</button>`:""}${name==="Condo"?`<button onclick="toggleCondoSecurity()">${ownedProperty(name).securityActive?"DISABLE":"ACTIVATE"} PRIVATE SECURITY — $1,000 / 24H</button>`:""}`:`<button onclick="buyPropertyByName('${name}')">BUY — $${d.price.toLocaleString()}</button>`}</div>`;
+html+=`<div class="property-card"><strong>${name}</strong>${isActive?' <span class="good">ACTIVE</span>':''}<p>$${d.price.toLocaleString()}</p><p>${d.info}</p>${extra}<p>Capacity: ${d.capacity===Infinity?"∞":d.capacity} crew · Vehicle storage: ${d.vehicles}</p>${owned?`<p class="good">OWNED</p>${!isActive?`<button onclick="setActiveProperty('${name}')">SET ACTIVE</button>`:""}${name==="Condo"?`<button onclick="toggleCondoSecurity()">${ownedProperty(name).securityActive?"DISABLE":"ACTIVATE"} PRIVATE SECURITY — $1,000 / 24H</button>`:""}`:`<button onclick="buyPropertyByName('${name}')">BUY — $${d.price.toLocaleString()}</button>`}</div>`;
 });box.innerHTML=html;
 }
 function buyPropertyByName(name){const d=PROPERTY_DATA[name];if(!d)return;if(ownedProperty(name)){log("[PROPERTY] Already own "+name);return}if(cash<d.price){log("[PROPERTY] Need $"+d.price.toLocaleString());return}cash-=d.price;ownedProperties.push({name,price:d.price,purchasedDay:gameDay,securityActive:false});if(!activePropertyName)activePropertyName=name;log("[PROPERTY] Bought "+name+".");markTabAttention("propertyTab");saveGame();updateScreen()}
