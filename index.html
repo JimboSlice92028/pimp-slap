@@ -219,9 +219,9 @@ let armorOwned=0,armorDurability=0,battleState=null,activityLog=[];
 let cocaineUseCountToday=0,cocaineConsecutiveUseCount=0,cocaineUsersToday=[],cocainePoliceEventTriggeredToday=false,cocaineBribeEventTriggeredToday=false;
 let unassignedThugMaintenance={beer:0,weed:0,cigarettes:0,cocaine:0};
 const battleTypes=[
-{name:"Street Ambush",enemy:"Street Crew",power:45,reward:350,penalty:20,xp:45},
-{name:"Rival Crew",enemy:"Rival Crew",power:70,reward:650,penalty:30,xp:70},
-{name:"Business Defense",enemy:"Raid Team",power:95,reward:1000,penalty:45,xp:100}
+{name:"Street Ambush",enemy:"Street Crew",power:45,reward:350,penalty:20,xp:3},
+{name:"Rival Crew",enemy:"Rival Crew",power:70,reward:650,penalty:30,xp:5},
+{name:"Business Defense",enemy:"Raid Team",power:95,reward:1000,penalty:45,xp:7}
 ];
 const armsDealerItems=[
 {name:"AR-69",price:500,type:"Weapon"},{name:"AK-67",price:750,type:"Weapon"},
@@ -534,7 +534,7 @@ function setText(id,v){const e=document.getElementById(id);if(e)e.textContent=v}
 function xpNeeded(){
 // XP curve intentionally slows as the operation grows.
 const lvl=Math.max(1,playerLevel);
-return Math.floor(100 + ((lvl-1)*85) + Math.pow(Math.max(0,lvl-3),1.35)*35);
+return Math.floor(150 + ((lvl-1)*125) + Math.pow(Math.max(0,lvl-3),1.45)*60);
 }
 function difficultyMultiplier(){return 1+((Math.max(1,playerLevel)-1)*0.12)}
 
@@ -556,6 +556,8 @@ o.style.display="flex";
 function closeLevelUpPopup(){const o=document.getElementById("levelUpOverlay");if(o)o.style.display="none"}
 
 function addXP(amount){
+// XP is intentionally scarce. Primary progression comes from group runs, solo runs, Roanoke work, then battles.
+amount=Math.max(0,Math.floor(Number(amount)||0));
 playerXP+=amount;
 while(playerXP>=xpNeeded()){
 playerXP-=xpNeeded();playerLevel++;
@@ -983,7 +985,7 @@ box.innerHTML=html;
 }
 function buyBusiness(name){if(name!=="Strip Club")return;if(hasBusiness(name))return;if(cash<5000){log("[BUSINESS] Need $5,000.");return}cash-=5000;businesses.push({name:"Strip Club",gross:1000,operatingRate:0,operatingCost:300,net:700,ready:true,lastCollectionDay:gameDay-1,staff:0});log("[BUSINESS] Strip Club opened for $5,000.");saveGame();updateScreen()}
 function openAutoShop(){if(hasBusiness("Auto Repair Shop"))return;businesses.push({name:"Auto Repair Shop",gross:700,operatingRate:0,operatingCost:250,net:450,ready:true,lastCollectionDay:gameDay-1});log("[BUSINESS] Auto Repair Shop is now operational.");saveGame();updateScreen()}
-function collectBusiness(i){const b=businesses[i];if(!b)return;if(Number(b.lastCollectionDay)===Number(gameDay)){log("[BUSINESS] Already collected.");return}const p=Number(b.net);if(!Number.isFinite(p)||p<=0)return;cash+=p;b.lastCollectionDay=gameDay;log("[BUSINESS PAYOUT] "+b.name+" paid you +$"+p.toLocaleString()+" for today.");addXP(20);saveGame();updateScreen()}
+function collectBusiness(i){const b=businesses[i];if(!b)return;if(Number(b.lastCollectionDay)===Number(gameDay)){log("[BUSINESS] Already collected.");return}const p=Number(b.net);if(!Number.isFinite(p)||p<=0)return;cash+=p;b.lastCollectionDay=gameDay;log("[BUSINESS PAYOUT] "+b.name+" paid you +$"+p.toLocaleString()+" for today.");saveGame();updateScreen()}
 
 function renderArmsDealer(){
 const box=document.getElementById("marketArmsPanel"),sec=document.getElementById("marketArmsSection");if(!box)return;
@@ -1160,7 +1162,7 @@ if(tripRec){const tt=vehicleType(activeVehicleType)||{};const reliability=effect
 cash+=total;
 document.getElementById("encounter").innerHTML=`<strong>${individual?"INDIVIDUAL":"GROUP"} — ${place}</strong><br>Workers: ${workers.length}<br>Protection: ${protection.names.join(", ")} (${protection.count})<br>Cash: $${total}<br>Fatigue: ${fat}<br><br>${results.join("<br>")}`;
 log("[TRIP] "+(individual?"Individual":"Group")+" run to "+place+": "+workers.length+" workers, +$"+total+". Protection: "+protection.names.join(", ")+".");
-addXP(25*workers.length);
+addXP(individual?8:15);
 const roll=Math.random();
 if(place==="Strip Club"){if(roll<0.40)recruitWorkers(place,3,true);else if(roll<0.68)crewEncounter(place);else if(roll<0.82)randomEvent(place)}
 else if(roll<0.20)recruitWorkers(place,Math.floor(Math.random()*2)+1,false);else if(roll<0.35)crewEncounter(place);else if(roll<0.50)randomEvent(place);
@@ -1208,6 +1210,7 @@ const payout=Math.floor(Math.random()*(jobData.payoutMax-jobData.payoutMin+1))+j
 cash+=payout;
 const msg=jobData.completionTemplate.replace("%AMOUNT%",payout.toLocaleString());
 log("[ROANOKE] "+msg);
+addXP(10);
 }
 function recruitWorkers(place,maxCount,isBar=false){
 const count=Math.max(1,Math.min(isBar?3:2,maxCount));
@@ -1240,7 +1243,7 @@ if(namedThugs.find(t=>t&&t.name===name))randomThugs++;
 else namedThugs.push({name,strength,loyalty,morale:75});
 log("[CREW] "+name+" available.");
 }else{const amt=Math.min(CREW_CAPACITY-total,Math.floor(Math.random()*4)+1);randomThugs+=amt;log("[CREW] +"+amt+" thugs.")}
-addXP(25);saveGame();updateScreen();
+saveGame();updateScreen();
 }
 function randomEvent(place){
 const e=["Useful local contact.","Bartender shared information.","Quiet night.","New pattern in the crowd."][Math.floor(Math.random()*4)];
@@ -1252,7 +1255,7 @@ if(activeRoanokeJob){
 log("[ROANOKE] Boss, I already put you on something. Handle that job before you call me again.");
 return;
 }
-if(cash<100){log("[ROANOKE] Need $100.");return}cash-=100;roanokeLessons++;
+if(cash<100){log("[ROANOKE] Need $100.");return}cash-=100;roanokeLessons++;addXP(4);
 let messages;
 if(playerLevel>=4&&!level4RivalResolved){
 messages=[
