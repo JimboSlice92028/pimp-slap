@@ -398,10 +398,10 @@ if(Array.isArray(businesses)){
 businesses.forEach(b=>{
 if(!b||!b.name)return;
 if(b.name==="Strip Club"){
-b.gross=1000;b.operatingCost=300;b.net=700;
+b.gross=1000;b.operatingRate=0;b.operatingCost=300;b.net=700;
 }
 if(b.name==="Auto Repair Shop"){
-b.gross=700;b.operatingCost=250;b.net=450;
+b.gross=700;b.operatingRate=0;b.operatingCost=250;b.net=450;
 }
 });
 }
@@ -966,7 +966,16 @@ if(!hasBusiness("Strip Club"))html+=`<div class="business-card"><strong>Strip Cl
 if(!hasBusiness("Auto Repair Shop"))html+=`<div class="business-card"><strong>Auto Repair Shop</strong><p>Central vehicle-management location.</p><p>Gross: $700/24h · Op: $250 · Net: $450</p><p>Buying price is not specified in the current design notes, so this facility unlocks at Level 7 without an additional purchase charge.</p><button onclick="openAutoShop()">OPEN AUTO REPAIR SHOP</button></div>`;
 if(borisNightclubForSale&&!ownsBorisNightclub())html+=`<div class="business-card"><strong>Boris's Run-Down Nightclub</strong><p class="warning">FOR SALE — $${BORIS_CLUB_PRICE.toLocaleString()}</p><p>Gross: $${BORIS_CLUB_GROSS}/24h · Op: $${BORIS_CLUB_OPERATING} · Net: $${BORIS_CLUB_NET}</p><button onclick="buyBorisNightclub()">BUY</button></div>`;
 if(!businesses.length&&!html){box.innerHTML='<div class="locked">No businesses.</div>';return}
-businesses.forEach((b,i)=>{const op=Number.isFinite(Number(b.operatingCost))?Number(b.operatingCost):Math.round(Number(b.gross)*Number(b.operatingRate||0));const label=Number(b.lastCollectionDay)===Number(gameDay)?"COLLECTED":"COLLECT";html+=`<div class="business-card"><strong>${b.name}</strong>${b.name==="Massage Parlor / Nail Salon"?'<p class="good">ROANOKE REWARD · $500 GROSS / $425 NET</p>':''}${b.name==="Strip Club"?'<p>Recruitment location.</p>':''}${b.name==="Auto Repair Shop"?'<p>Vehicle management unlocked.</p>':''}${b.staff?`<p>Staff: ${b.staff}</p>`:""}<p>Gross $${b.gross} · Op $${op} · Net <span class="good">$${b.net}</span></p><p>${label}</p><button onclick="collectBusiness(${i})" ${label==="COLLECTED"?"disabled":""}>${label==="COLLECTED"?"COLLECTED":"COLLECT $"+b.net}</button></div>`});box.innerHTML=html;
+businesses.forEach((b,i)=>{
+let gross=Number(b.gross)||0,op=Number(b.operatingCost),net=Number(b.net);
+if(b.name==="Strip Club"){gross=1000;op=300;net=700;b.gross=gross;b.operatingCost=op;b.net=net;}
+else if(b.name==="Auto Repair Shop"){gross=700;op=250;net=450;b.gross=gross;b.operatingCost=op;b.net=net;}
+else if(!Number.isFinite(op))op=Math.round(gross*Number(b.operatingRate||0));
+const label=Number(b.lastCollectionDay)===Number(gameDay)?"COLLECTED":"COLLECT";
+html+=`<div class="business-card"><strong>${b.name}</strong>${b.name==="Massage Parlor / Nail Salon"?'<p class="good">ROANOKE REWARD · $500 GROSS / $425 NET</p>':''}${b.name==="Strip Club"?'<p>Recruitment location.</p>':''}${b.name==="Auto Repair Shop"?'<p>Vehicle management unlocked.</p>':''}${b.staff?`<p>Staff: ${b.staff}</p>`:""}<p>Gross $${gross.toLocaleString()} · Op $${op.toLocaleString()} · Net <span class="good">$${net.toLocaleString()}</span></p><p>${label}</p><button onclick="collectBusiness(${i})" ${label==="COLLECTED"?"disabled":""}>${label==="COLLECTED"?"COLLECTED":"COLLECT $"+net.toLocaleString()}</button></div>`;
+});
+saveGame();
+box.innerHTML=html;
 }
 function buyBusiness(name){if(name!=="Strip Club")return;if(hasBusiness(name))return;if(cash<5000){log("[BUSINESS] Need $5,000.");return}cash-=5000;businesses.push({name:"Strip Club",gross:1000,operatingRate:0,operatingCost:300,net:700,ready:true,lastCollectionDay:gameDay-1,staff:0});log("[BUSINESS] Strip Club opened for $5,000.");saveGame();updateScreen()}
 function openAutoShop(){if(hasBusiness("Auto Repair Shop"))return;businesses.push({name:"Auto Repair Shop",gross:700,operatingRate:0,operatingCost:250,net:450,ready:true,lastCollectionDay:gameDay-1});log("[BUSINESS] Auto Repair Shop is now operational.");saveGame();updateScreen()}
