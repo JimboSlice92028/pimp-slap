@@ -128,12 +128,9 @@ button:disabled{background:#555;cursor:not-allowed}
 </div>
 <div id="moreTab" class="tab-panel">
 <div id="identitySection" class="panel" style="display:none;"><h2>Identity</h2><div id="identityPanel"></div></div>
-<div class="panel" style="margin-top:20px;"><h2>Operations</h2><div id="operationsPanel"></div></div>
 <div class="panel" style="margin-top:20px;">
 <h2>Game Save</h2>
 <div>Auto-saves in this browser.</div>
-<div class="good" style="margin-top:8px;">Pimp Slap v3.1 — Level 4 War Path.</div>
-<div id="saveStatus" class="good" style="margin-top:8px;">Game ready.</div>
 <button onclick="manualSave()">SAVE GAME</button>
 <button onclick="resetGame()">START NEW GAME</button>
 </div>
@@ -202,6 +199,13 @@ const ASSIGNED_THUG_MAINTENANCE_PREMIUM=0.025;
 const UNASSIGNED_THUG_MAINTENANCE_RECOVERY={beer:15,weed:30,cigarettes:10,cocaine:50};
 const recruitNames=["Rico","Dre","Marcus","Tone","Javier","DeShawn","Malik","Andre"];
 const workerNames=["Ava","Nina","Jade","Kayla","Tori","Lexi","Bri","Sasha"];
+// Stable welfare tuning: girls can work again once rested to WORKER_WORK_READY_CONDITION,
+// but need to stay above WORKER_HEALTHY_CONDITION or their morale drains daily. A girl whose
+// morale bottoms out quits the stable entirely.
+const WORKER_WORK_READY_CONDITION=50;
+const WORKER_HEALTHY_CONDITION=65;
+const WORKER_MORALE_DAILY_DRAIN=10;
+const WORKER_MORALE_DAILY_RECOVERY=5;
 let ownedProperties=[],propertyStatusMessage="",businesses=[],upgrades=[],tokens=0;
 let roanokeGiftReceived=false,borisGiftResolved=false,borisGiftPopupScheduled=false;
 let borisAttackPending=false,borisNightclubForSale=false;
@@ -310,6 +314,19 @@ if(typeof t==="string") return{name:t,strength:50,loyalty:50,morale:75};
 return{name:t.name||"Unknown Thug",strength:Number.isFinite(Number(t.strength))?Number(t.strength):50,loyalty:Number.isFinite(Number(t.loyalty))?Number(t.loyalty):50,morale:Number.isFinite(Number(t.morale))?Number(t.morale):75};
 });
 randomThugs=Math.max(0,Math.floor(Number(randomThugs)||0));
+}
+function normalizeStable(){
+if(!Array.isArray(stable)) stable=[];
+stable=stable.filter(w=>w).map(w=>({
+name:w.name||"Unknown",
+condition:Number.isFinite(Number(w.condition))?Number(w.condition):75,
+charm:Number.isFinite(Number(w.charm))?Number(w.charm):50,
+assigned:Boolean(w.assigned),
+assignmentEligible:Boolean(w.assignmentEligible),
+morale:Number.isFinite(Number(w.morale))?Number(w.morale):75,
+jailUntilDay:Number.isFinite(Number(w.jailUntilDay))?Number(w.jailUntilDay):0,
+jailUntilMinute:Number.isFinite(Number(w.jailUntilMinute))?Number(w.jailUntilMinute):0
+}));
 }
 function totalOrganizationSize(){return crew.length+namedThugs.length+randomThugs}
 function battleReadyThugCount(){return crew.filter(m=>m&&!isJailActive(m)&&!isInjured(m)).length+randomThugs}
@@ -698,13 +715,13 @@ if(b)b.style.display=playerLevel>=7?"block":"none";
 if(bt)bt.style.display=playerLevel>=5?"block":"none";
 }
 function updateScreen(){
-syncCrewState();updateTabVisibility();updateTabAttention();
+syncCrewState();normalizeStable();updateTabVisibility();updateTabAttention();
 setText("cash","$"+cash);setText("turns",turns);
 setText("gameTime","Day "+gameDay+" — "+formatGameTime(gameMinutes));
 setText("stable-count",stable.length);setText("crew-count",totalOrganizationSize());setText("player-level",playerLevel);
 renderActivityLog();renderProgress();renderStable();renderCrew();renderSupplies();
 renderIdentity();renderProperty();renderBusinesses();renderArmsDealer();renderSmokeShop();
-renderVehicles();renderOperations();renderBattle();
+renderVehicles();renderBattle();
 const strip=document.getElementById("stripClubLocationButton");
 if(strip){strip.style.display=playerLevel>=7&&hasBusiness("Strip Club")?"block":"none";}
 }
@@ -721,10 +738,11 @@ function renderStable(){
 const box=document.getElementById("stable");if(!box)return;box.innerHTML="";
 stable.forEach((w,i)=>{
 const div=document.createElement("div");div.className="worker";
-div.innerHTML=`<div class="worker-name">${w.name}</div>Condition: <span class="condition">${w.condition}</span><br>Charm: ${w.charm}
+const notReady=w.condition<WORKER_WORK_READY_CONDITION;
+div.innerHTML=`<div class="worker-name">${w.name}</div>Condition: <span class="condition">${w.condition}</span><br>Charm: ${w.charm}<br>Morale: ${w.morale}
 ${isWorkerJailed(w)?'<div class="warning" style="margin-top:8px;">⛓️ JAILED</div>':''}
-${w.assigned?"<strong>ASSIGNED WORKER</strong>":(w.assignmentEligible?`<button onclick="promoteWorker(${i})">PROMOTE TO ASSIGNED</button>`:"<small>UNASSIGNED — NOT ELIGIBLE FOR ASSIGNMENT</small>")}<br>
-<button ${isWorkerJailed(w)||!w.assigned?"disabled":""} onclick="sendWorker(${i})">SEND ${w.name.toUpperCase()}</button>
+${!isWorkerJailed(w)&&w.condition<WORKER_HEALTHY_CONDITION?'<div class="warning" style="margin-top:8px;">⚠️ Needs attention — morale slipping</div>':''}
+<br><button ${isWorkerJailed(w)||notReady?"disabled":""} onclick="sendWorker(${i})">SEND ${w.name.toUpperCase()}</button>
 <button onclick="restWorker(${i})">REST ${w.name.toUpperCase()}</button>
 <button onclick="maintainWorker(${i},'beer')">GIVE BEER</button>
 <button onclick="maintainWorker(${i},'weed')">GIVE WEED</button>
@@ -854,14 +872,14 @@ function renderBusinesses(){
 const box=document.getElementById("businessPanel"),sec=document.getElementById("businessSection");if(!box)return;
 if(playerLevel<7){box.innerHTML="";if(sec)sec.style.display="none";return} if(sec)sec.style.display="block";
 let html="";
-if(!hasBusiness("Strip Club"))html+=`<div class="business-card"><strong>Strip Club</strong><p>$5,000</p><p>Income: $1,000 / 24h</p><p>Can attract new recruits.</p><button onclick="buyBusiness('Strip Club')">BUY — $5,000</button></div>`;
-if(!hasBusiness("Auto Repair Shop"))html+=`<div class="business-card"><strong>Auto Repair Shop</strong><p>Central vehicle-management location.</p><p>Income: $700 / 24h</p><p>Buying price is not specified in the current design notes, so this facility unlocks at Level 7 without an additional purchase charge.</p><button onclick="openAutoShop()">OPEN AUTO REPAIR SHOP</button></div>`;
+if(!hasBusiness("Strip Club"))html+=`<div class="business-card"><strong>Strip Club</strong><p>$5,000</p><p>Gross: $1,000/24h · Op: $300 · Net: $700</p><p>Can attract new recruits.</p><button onclick="buyBusiness('Strip Club')">BUY — $5,000</button></div>`;
+if(!hasBusiness("Auto Repair Shop"))html+=`<div class="business-card"><strong>Auto Repair Shop</strong><p>Central vehicle-management location.</p><p>Gross: $700/24h · Op: $200 · Net: $500</p><p>Buying price is not specified in the current design notes, so this facility unlocks at Level 7 without an additional purchase charge.</p><button onclick="openAutoShop()">OPEN AUTO REPAIR SHOP</button></div>`;
 if(borisNightclubForSale&&!ownsBorisNightclub())html+=`<div class="business-card"><strong>Boris's Run-Down Nightclub</strong><p class="warning">FOR SALE — $${BORIS_CLUB_PRICE.toLocaleString()}</p><p>Gross: $${BORIS_CLUB_GROSS}/24h · Op: $${BORIS_CLUB_OPERATING} · Net: $${BORIS_CLUB_NET}</p><button onclick="buyBorisNightclub()">BUY</button></div>`;
 if(!businesses.length&&!html){box.innerHTML='<div class="locked">No businesses.</div>';return}
 businesses.forEach((b,i)=>{const op=Number.isFinite(Number(b.operatingCost))?Number(b.operatingCost):Math.round(Number(b.gross)*Number(b.operatingRate||0));const label=Number(b.lastCollectionDay)===Number(gameDay)?"COLLECTED":"COLLECT";html+=`<div class="business-card"><strong>${b.name}</strong>${b.name==="Massage Parlor / Nail Salon"?'<p class="good">ROANOKE REWARD · $500 GROSS / $425 NET</p>':''}${b.name==="Strip Club"?'<p>Recruitment location.</p>':''}${b.name==="Auto Repair Shop"?'<p>Vehicle management unlocked.</p>':''}${b.staff?`<p>Staff: ${b.staff}</p>`:""}<p>Gross $${b.gross} · Op $${op} · Net <span class="good">$${b.net}</span></p><p>${label}</p><button onclick="collectBusiness(${i})" ${label==="COLLECTED"?"disabled":""}>${label==="COLLECTED"?"COLLECTED":"COLLECT $"+b.net}</button></div>`});box.innerHTML=html;
 }
-function buyBusiness(name){if(name!=="Strip Club")return;if(hasBusiness(name))return;if(cash<5000){log("[BUSINESS] Need $5,000.");return}cash-=5000;businesses.push({name:"Strip Club",gross:1000,operatingRate:0,operatingCost:0,net:1000,ready:true,lastCollectionDay:gameDay-1,staff:0});log("[BUSINESS] Strip Club opened for $5,000.");saveGame();updateScreen()}
-function openAutoShop(){if(hasBusiness("Auto Repair Shop"))return;businesses.push({name:"Auto Repair Shop",gross:700,operatingRate:0,operatingCost:0,net:700,ready:true,lastCollectionDay:gameDay-1});log("[BUSINESS] Auto Repair Shop is now operational.");saveGame();updateScreen()}
+function buyBusiness(name){if(name!=="Strip Club")return;if(hasBusiness(name))return;if(cash<5000){log("[BUSINESS] Need $5,000.");return}cash-=5000;businesses.push({name:"Strip Club",gross:1000,operatingRate:0,operatingCost:300,net:700,ready:true,lastCollectionDay:gameDay-1,staff:0});log("[BUSINESS] Strip Club opened for $5,000.");saveGame();updateScreen()}
+function openAutoShop(){if(hasBusiness("Auto Repair Shop"))return;businesses.push({name:"Auto Repair Shop",gross:700,operatingRate:0,operatingCost:200,net:500,ready:true,lastCollectionDay:gameDay-1});log("[BUSINESS] Auto Repair Shop is now operational.");saveGame();updateScreen()}
 function collectBusiness(i){const b=businesses[i];if(!b)return;if(Number(b.lastCollectionDay)===Number(gameDay)){log("[BUSINESS] Already collected.");return}const p=Number(b.net);if(!Number.isFinite(p)||p<=0)return;cash+=p;b.lastCollectionDay=gameDay;log("[BUSINESS] "+b.name+" paid $"+p);addXP(20);saveGame();updateScreen()}
 
 function renderArmsDealer(){
@@ -928,15 +946,6 @@ function selectVehicle(i){const v=vehicles[i];if(!v||!v.owned)return;if(v.condit
 function buyVehicle(i){const v=vehicles[i];if(!v||v.owned)return;if(vehicles.filter(x=>x&&x.owned).length>=vehicleStorageLimit()){log("[VEHICLE] Storage full.");return}if(cash<v.cost){log("[VEHICLE] Not enough cash.");return}cash-=v.cost;v.owned=true;v.condition=100;log("[VEHICLE] Bought "+v.name+" for $"+v.cost+".");saveGame();updateScreen()}
 function repairVehicle(i){const v=vehicles[i];if(!v||!v.owned)return;const base=Math.max(150,Math.floor((100-v.condition)*18));const cost=v.condition>=100?Math.max(300,Math.floor((v.cost||1000)*0.08)):base;if(v.condition>=100){if(cash<cost){log("[VEHICLE] Need $"+cost+" for tuning.");return}cash-=cost;v.upgradeLevel=(Number(v.upgradeLevel)||0)+1;v.speed=Math.min(110,(v.speed||50)+3);v.reliability=Math.min(100,(v.reliability||50)+4);if(v.name==="Used Porsche 911"&&v.upgradeLevel>=3)v.reliability=100;log("[VEHICLE] "+v.name+" received a tune.");}else{if(cash<cost){log("[VEHICLE] Need $"+cost+" to repair.");return}cash-=cost;v.condition=100;log("[VEHICLE] "+v.name+" repaired.");}saveGame();updateScreen()}
 
-function renderOperations(){
-const box=document.getElementById("operationsPanel");if(!box)return;
-const a=vehicles[activeVehicle];
-box.innerHTML=`<div class="market-card"><strong>OPERATION</strong>
-<p>${playerName} · ${operationName}</p><p>Vehicle: ${a.name} (${a.condition}%)</p>
-<p>Org ${totalOrganizationSize()}/${CREW_CAPACITY} · Turns ${turns}/${maxTurns}</p></div>
-<button onclick="useToken()">USE TOKEN +5 TURNS</button>`;
-}
-
 function getTripProtection(individual=false){
 const available=Array.isArray(crew)?crew.filter(m=>m&&!isJailActive(m)&&!isInjured(m)):[];
 const names=[playerName||"You"];let count=1;
@@ -977,7 +986,7 @@ const list=e.type==="crew"?crew:stable;const p=list.find(m=>m&&m.name===e.name);
 cash-=Math.min(cash,fine);log("[ARREST] "+n+" jailed 24h. Fine $"+fine+".");syncCrewState();saveGame();updateScreen();
 }
 
-function getReadyWorkers(limit){return stable.filter(w=>w&&w.condition>=25&&!isWorkerJailed(w)).slice(0,limit)}
+function getReadyWorkers(limit){return stable.filter(w=>w&&w.condition>=WORKER_WORK_READY_CONDITION&&!isWorkerJailed(w)).slice(0,limit)}
 function processLocationTrip(place,workers,individual=false){
 if(!workers||!workers.length){log("[TRIP] No workers ready.");return}
 const protection=getTripProtection(individual);if(protection.count<1){log("[TRIP] No protection.");return}
@@ -995,8 +1004,8 @@ else if(roll<0.20)recruitWorkers(place,Math.floor(Math.random()*2)+1,false);else
 }
 function getWorkerByIndex(i){i=Number(i);if(!Number.isInteger(i)||i<0||i>=stable.length)return null;return stable[i]}
 function sendWorker(i){
-const w=getWorkerByIndex(i);if(!w)return;if(!w.assigned){log("[TRIP] "+w.name+" is not assigned yet.");return;}if(isWorkerJailed(w)){log("[JAIL] Jailed.");return}
-if(w.condition<25){log("[WORK] Needs rest. No turn used.");updateScreen();return}
+const w=getWorkerByIndex(i);if(!w)return;if(isWorkerJailed(w)){log("[JAIL] Jailed.");return}
+if(w.condition<WORKER_WORK_READY_CONDITION){log("[WORK] Needs rest. No turn used.");updateScreen();return}
 if(!useTurn())return;
 processLocationTrip("Individual Run",[w],true);saveGame();updateScreen();
 }
@@ -1047,7 +1056,6 @@ const w={name,condition:Math.floor(Math.random()*31)+60,charm:Math.floor(Math.ra
 stable.push(w);found.push(w);
 }
 log("[RECRUIT] "+found.length+" worker(s) joined at "+place+".");
-if(found.some(w=>w.assignmentEligible))log("[RECRUIT] One of the new workers may be worth promoting.");
 document.getElementById("encounter").innerHTML="<strong>NEW WORKERS</strong><br>"+found.map(w=>w.name+" · Charm "+w.charm+" · Cond "+w.condition).join("<br>");
 }
 function promoteWorker(i){
@@ -1263,11 +1271,30 @@ log("[ATTACK] Trouble found the operation while you were away, with nobody there
 }
 }
 function processPassiveBusinessIncome(){businesses.forEach(b=>{if(!b||!b.net)return;if(Number(b.lastPassiveDay||0)>=gameDay)return;if(b.name==="Ranch")return;});}
+function processStableWelfare(){
+normalizeStable();
+const neglected=[],quit=[];
+stable=stable.filter(w=>{
+if(!w)return false;
+if(isWorkerJailed(w))return true;
+if(w.condition<WORKER_HEALTHY_CONDITION){
+w.morale=Math.max(0,w.morale-WORKER_MORALE_DAILY_DRAIN);
+neglected.push(w.name);
+}else{
+w.morale=Math.min(100,w.morale+WORKER_MORALE_DAILY_RECOVERY);
+}
+if(w.morale<=0){quit.push(w.name);return false}
+return true;
+});
+if(neglected.length)
+log("[ROANOKE] Boss, "+neglected.slice(0,3).join(", ")+(neglected.length>3?" and others":"")+" are running on empty — go check on the girls.");
+quit.forEach(n=>log("[STABLE] "+n+" had enough and walked. She's gone for good."));
+}
 function payDailyExpenses(){
 cocaineUseCountToday=0;cocaineConsecutiveUseCount=0;cocaineUsersToday=[];cocainePoliceEventTriggeredToday=false;cocaineBribeEventTriggeredToday=false;
 let total=0;for(let k in expenses)total+=Math.ceil(expenses[k]*(1+(playerLevel-1)*0.04));cash-=total;log("[EXPENSES] -$"+total);
 businesses.forEach(b=>{if(b.name==="Massage Parlor / Nail Salon"){b.ready=true;b.lastCollectionDay=gameDay-1;}});
-processPropertyEconomy();processOfflineAttack();rollWeather();if(cash<0){cash=0;log("[WARNING] Broke.")}saveGame();updateScreen();
+processPropertyEconomy();processOfflineAttack();processStableWelfare();rollWeather();if(cash<0){cash=0;log("[WARNING] Broke.")}saveGame();updateScreen();
 }
 
 
