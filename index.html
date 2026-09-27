@@ -124,6 +124,7 @@ button:disabled{background:#555;cursor:not-allowed}
 <div id="vehiclesTab" class="tab-panel"><div class="panel"><h2>Vehicles</h2><div id="vehiclesPanel"></div></div></div>
 <div id="marketplaceTab" class="tab-panel">
 <div class="panel"><h2>Smoke Shop</h2><p class="tab-note">No turns used to shop.</p><div id="smokeShopPanel"></div></div>
+<div class="panel" style="margin-top:20px;"><h2>Special Services</h2><p class="tab-note">No turns or XP are used for these purchases. They cost cash only.</p><div id="marketSpecialsPanel"></div></div>
 <div id="marketArmsSection" class="panel" style="margin-top:20px;display:none;"><h2>Arms Dealer</h2><div id="marketArmsPanel"></div></div>
 </div>
 <div id="moreTab" class="tab-panel">
@@ -815,7 +816,7 @@ setText("cash","$"+cash);setText("turns",turns);
 setText("gameTime","Day "+gameDay+" — "+formatGameTime(gameMinutes));
 setText("stable-count",stable.length);setText("crew-count",totalOrganizationSize());setText("player-level",playerLevel);
 renderActivityLog();renderProgress();renderStable();renderCrew();renderSupplies();
-renderIdentity();renderProperty();renderBusinesses();renderArmsDealer();renderSmokeShop();
+renderIdentity();renderProperty();renderBusinesses();renderArmsDealer();renderSmokeShop();renderMarketplaceSpecials();
 renderVehicles();renderBattle();
 const strip=document.getElementById("stripClubLocationButton");
 if(strip){strip.style.display=playerLevel>=7&&hasBusiness("Strip Club")?"block":"none";}
@@ -1013,6 +1014,63 @@ log("[ARMS] Bought "+item.name+" for $"+item.price+".");saveGame();updateScreen(
 }
 
 function buySupply(item){const price=expenses[item];if(!Number.isFinite(price))return;if(cash<price){log("[SMOKE SHOP] Not enough cash.");return}cash-=price;supplies[item]=(supplies[item]||0)+1;log("[SMOKE SHOP] Bought 1 "+item+".");saveGame();updateScreen()}
+function renderMarketplaceSpecials(){
+const box=document.getElementById("marketSpecialsPanel");if(!box)return;
+box.innerHTML=`
+<div class="market-card">
+<strong>🛍️ SHOPPING SPREE — $2,500</strong>
+<p>Immediately restores every girl in the stable to full work-ready condition.</p>
+<button onclick="buyShoppingSpree()" ${cash<2500?"disabled":""}>BUY SHOPPING SPREE — $2,500</button>
+</div>
+<div class="market-card">
+<strong>🎃 PUMPKIN SPICE LATTES — $1,000</strong>
+<p>Small crew boost: raises every active crew member's morale by +10.</p>
+<button onclick="buyPumpkinSpiceLattes()" ${cash<1000||!crew.length?"disabled":""}>BUY PUMPKIN SPICE LATTES — $1,000</button>
+</div>
+<div class="market-card">
+<strong>🎣 FISHING TRIP — $2,500</strong>
+<p>Gets the whole crew battle ready by clearing injuries and jail restrictions.</p>
+<button onclick="buyFishingTrip()" ${cash<2500||!crew.length?"disabled":""}>TAKE FISHING TRIP — $2,500</button>
+</div>
+<div class="market-card">
+<strong>🥊 MMA TRAINING — $1,000</strong>
+<p>Raises every active crew member's strength by +10, up to 100.</p>
+<button onclick="buyMmaTraining()" ${cash<1000||!crew.length?"disabled":""}>BUY MMA TRAINING — $1,000</button>
+</div>`;
+}
+function buyShoppingSpree(){
+if(cash<2500){log("[MARKETPLACE] Not enough cash for a Shopping Spree.");return}
+cash-=2500;
+let changed=0;
+stable.forEach(w=>{if(!w)return;w.condition=100;w.jailUntilDay=0;w.jailUntilMinute=0;changed++});
+log("🛍️ [MARKETPLACE] Shopping Spree complete — all "+changed+" stable girls are immediately available at full condition.");
+saveGame();updateScreen();
+}
+function buyPumpkinSpiceLattes(){
+if(cash<1000){log("[MARKETPLACE] Not enough cash for Pumpkin Spice Lattes.");return}
+if(!crew.length){log("[MARKETPLACE] No active crew to receive the Pumpkin Spice Latte boost.");return}
+cash-=1000;
+crew.forEach(m=>{m.morale=Math.min(100,(Number(m.morale)||0)+10)});
+log("🎃 [MARKETPLACE] Pumpkin Spice Lattes delivered — active crew morale +10.");
+syncCrewState();saveGame();updateScreen();
+}
+function buyFishingTrip(){
+if(cash<2500){log("[MARKETPLACE] Not enough cash for a Fishing Trip.");return}
+if(!crew.length){log("[MARKETPLACE] No active crew to take fishing.");return}
+cash-=2500;
+crew.forEach(m=>{m.injuredUntilDay=0;m.injuredUntilMinute=0;m.jailUntilDay=0;m.jailUntilMinute=0});
+log("🎣 [MARKETPLACE] Fishing Trip complete — the whole active crew is battle ready.");
+markTabAttention("crewTab");
+syncCrewState();saveGame();updateScreen();
+}
+function buyMmaTraining(){
+if(cash<1000){log("[MARKETPLACE] Not enough cash for MMA Training.");return}
+if(!crew.length){log("[MARKETPLACE] No active crew to train.");return}
+cash-=1000;
+crew.forEach(m=>{m.strength=Math.min(100,(Number(m.strength)||50)+10)});
+log("🥊 [MARKETPLACE] MMA Training complete — active crew strength +10.");
+syncCrewState();saveGame();updateScreen();
+}
 function renderSmokeShop(){
 const box=document.getElementById("smokeShopPanel");if(!box)return;
 const items=[{key:"weed",label:"Weed",price:50},{key:"beer",label:"Beer",price:20},{key:"cigarettes",label:"Cigarettes",price:15},{key:"condoms",label:"Condoms",price:expenses.condoms},{key:"medical",label:"Medical",price:expenses.medical},{key:"cocaine",label:"Coke",price:200}];
