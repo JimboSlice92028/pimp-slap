@@ -319,6 +319,7 @@ let supplies={condoms:10,medical:5,cigarettes:10,weed:5,beer:10,cocaine:2};
 let stable=[{name:"Maya",condition:82,charm:72,assigned:true,assignmentEligible:true},{name:"Tasha",condition:91,charm:65,assigned:true,assignmentEligible:true},{name:"Jenny",condition:74,charm:81,assigned:true,assignmentEligible:true}];
 let crew=[],namedThugs=[],randomThugs=0;
 const CREW_CAPACITY=100;
+function currentCrewCapacity(){return ownedProperty("Trailer Park")?Infinity:CREW_CAPACITY}
 const ASSIGNED_THUG_MAINTENANCE_PREMIUM=0.025;
 const UNASSIGNED_THUG_MAINTENANCE_RECOVERY={beer:15,weed:30,cigarettes:10,cocaine:50};
 const recruitNames=["Rico","Dre","Marcus","Tone","Javier","DeShawn","Malik","Andre"];
@@ -517,6 +518,7 @@ crew=sc.length>0?sc:st;
 namedThugs=Array.isArray(d.namedThugs)?d.namedThugs:[];
 randomThugs=Number.isFinite(Number(d.randomThugs))?Math.max(0,Math.floor(Number(d.randomThugs))):0;
 ownedProperties=Array.isArray(d.ownedProperties)?d.ownedProperties:(d.property?[d.property]:[]);
+ownedProperties=ownedProperties.filter((p,i,a)=>p&&p.name&&PROPERTY_DATA[p.name]&&a.findIndex(x=>x&&x.name===p.name)===i);
 activePropertyName=typeof d.activePropertyName==="string"?d.activePropertyName:null;
 if(!activePropertyName||!ownedProperties.some(p=>p&&p.name===activePropertyName)){
 activePropertyName=ownedProperties.length?ownedProperties[ownedProperties.length-1].name:null;
@@ -924,8 +926,8 @@ if(!stable.some(e=>e&&e.name===g.name))stable.push(g);
 });
 const nightclub=businesses.find(b=>b.name==="Boris's Run-Down Nightclub");
 if(nightclub)nightclub.staff=Math.max(Number(nightclub.staff)||0,2);
-if(totalOrganizationSize()+3<=CREW_CAPACITY)randomThugs+=3;
-else randomThugs+=Math.max(0,CREW_CAPACITY-totalOrganizationSize());
+if(totalOrganizationSize()+3<=currentCrewCapacity())randomThugs+=3;
+else randomThugs+=Math.max(0,currentCrewCapacity()-totalOrganizationSize());
 
 // Cadillac is the unique Level 4 rival reward — owned:1, forever. Never re-granted, never for sale.
 if(ownedCountOf("Cadillac")<1){
@@ -1098,7 +1100,7 @@ function renderCrew(){
 syncCrewState();const box=document.getElementById("crew");if(!box)return;
 const guardCount=offlineProtectionThugs().length;
 const armorWarning=armorOwned<=0?'<div class="warning" style="margin:10px 0;padding:10px;border:1px solid #665522;border-radius:7px;"><strong>⚠️ BODY ARMOR NEEDS ATTENTION</strong><br>No body armor is currently available. Battles will cause normal morale and cash losses.</div>':(armorDurability<=0?'<div class="warning" style="margin:10px 0;padding:10px;border:1px solid #665522;border-radius:7px;"><strong>🚨 BODY ARMOR NEEDS ATTENTION</strong><br>Your armor is exhausted. Until replacement armor is purchased, battle losses increase and crew morale takes heavier hits.</div>':(armorDurability===1?'<div class="warning" style="margin:10px 0;padding:10px;border:1px solid #665522;border-radius:7px;"><strong>⚠️ BODY ARMOR NEEDS ATTENTION</strong><br>Only 1 battle turn of armor protection remains. Replace it at the Arms Dealer soon.</div>':''));
-let html=`<div class="vehicle-card"><strong>CREW ORGANIZATION</strong><p><strong>Total: ${totalOrganizationSize()} / ${CREW_CAPACITY}</strong></p><p>Active Crew: ${crew.length}</p><p>Named Available: ${namedThugs.length}</p><p>Unassigned Thugs: ${randomThugs}</p><p>Battle-Ready: ${battleReadyThugCount()}</p><p>🛡 Offline Protection: ${guardCount} ${guardCount?`(defense rating ${offlineDefenseRating().toFixed(1)})`:"— nobody is watching the door while you're away"}</p>${armorWarning}</div>`;
+let html=`<div class="vehicle-card"><strong>CREW ORGANIZATION</strong><p><strong>Total: ${totalOrganizationSize()} / ${currentCrewCapacity()===Infinity?"∞":currentCrewCapacity()}</strong></p><p>Active Crew: ${crew.length}</p><p>Named Available: ${namedThugs.length}</p><p>Unassigned Thugs: ${randomThugs}</p><p>Battle-Ready: ${battleReadyThugCount()}</p><p>🛡 Offline Protection: ${guardCount} ${guardCount?`(defense rating ${offlineDefenseRating().toFixed(1)})`:"— nobody is watching the door while you're away"}</p>${armorWarning}</div>`;
 if(crew.length){html+="<h3>CREW</h3>";crew.forEach((m,i)=>{
 html+=`<div class="crew-member"><strong>${m.name}</strong>${m.offlineProtection?' <span class="good">🛡 OFFLINE PROTECTION</span>':''}<br>Strength: ${m.strength}<br>Loyalty: ${m.loyalty}<br>Morale: ${m.morale}${m.maintenancePremium?`<br><small>Maintenance premium: +${(m.maintenancePremium*100).toFixed(1)}%</small>`:""}
 ${isJailActive(m)?'<div class="warning">⛓️ JAILED</div>':''}
@@ -1128,7 +1130,7 @@ log("[CREW] Unassigned thugs maintained with "+item+".");saveGame();updateScreen
 }
 function assignUnassignedThug(){
 if(!randomThugs){log("[CREW] No unassigned thugs to assign.");return}
-if(totalOrganizationSize()>=CREW_CAPACITY){log("[CREW] Organization full.");return}
+if(totalOrganizationSize()>=currentCrewCapacity()){log("[CREW] Organization full.");return}
 randomThugs--;
 const premium=ASSIGNED_THUG_MAINTENANCE_PREMIUM;
 let thugName=recruitNames[Math.floor(Math.random()*recruitNames.length)];
@@ -1161,7 +1163,7 @@ m.offlineProtection=!m.offlineProtection;
 log("[CREW] "+m.name+(m.offlineProtection?" promoted to Offline Protection.":" stood down from Offline Protection duty."));
 saveGame();updateScreen();
 }
-function promoteNamedThug(i){syncCrewState();const t=namedThugs[i];if(!t)return;if(totalOrganizationSize()>=CREW_CAPACITY){log("[CREW] Full.");return}crew.push({name:t.name,strength:t.strength,loyalty:t.loyalty,morale:t.morale,maintenancePremium:0,offlineProtection:false});namedThugs.splice(i,1);log("[CREW] "+t.name+" promoted to active crew.");saveGame();updateScreen()}
+function promoteNamedThug(i){syncCrewState();const t=namedThugs[i];if(!t)return;if(totalOrganizationSize()>=currentCrewCapacity()){log("[CREW] Full.");return}crew.push({name:t.name,strength:t.strength,loyalty:t.loyalty,morale:t.morale,maintenancePremium:0,offlineProtection:false});namedThugs.splice(i,1);log("[CREW] "+t.name+" promoted to active crew.");saveGame();updateScreen()}
 
 function renderIdentity(){
 const box=document.getElementById("identityPanel"),sec=document.getElementById("identitySection");if(!box)return;
@@ -1542,12 +1544,12 @@ const name=recruitNames[Math.floor(Math.random()*recruitNames.length)];
 const strength=Math.min(100,Math.floor(Math.random()*41)+40+(playerLevel-1)*3);
 const loyalty=Math.min(100,Math.floor(Math.random()*41)+40+(playerLevel-1)*2);
 const total=totalOrganizationSize();
-if(total>=CREW_CAPACITY){log("[CREW] Full.");return}
+if(total>=currentCrewCapacity()){log("[CREW] Full.");return}
 if(Math.random()<0.45){
 if(namedThugs.find(t=>t&&t.name===name))randomThugs++;
 else namedThugs.push({name,strength,loyalty,morale:75});
 log("[CREW] "+name+" available.");
-}else{const amt=Math.min(CREW_CAPACITY-total,Math.floor(Math.random()*4)+1);randomThugs+=amt;log("[CREW] +"+amt+" thugs.")}
+}else{const amt=Math.min(currentCrewCapacity()-total,Math.floor(Math.random()*4)+1);randomThugs+=amt;log("[CREW] +"+amt+" thugs.")}
 saveGame();updateScreen();
 }
 function randomEvent(place){
