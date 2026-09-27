@@ -738,7 +738,7 @@ function renderStable(){
 const box=document.getElementById("stable");if(!box)return;box.innerHTML="";
 stable.forEach((w,i)=>{
 const div=document.createElement("div");div.className="worker";
-const notReady=w.condition<WORKER_WORK_READY_CONDITION;
+const notReady=w.condition<=WORKER_WORK_READY_CONDITION;
 div.innerHTML=`<div class="worker-name">${w.name}</div>Condition: <span class="condition">${w.condition}</span><br>Charm: ${w.charm}<br>Morale: ${w.morale}
 ${isWorkerJailed(w)?'<div class="warning" style="margin-top:8px;">⛓️ JAILED</div>':''}
 ${!isWorkerJailed(w)&&w.condition<WORKER_HEALTHY_CONDITION?'<div class="warning" style="margin-top:8px;">⚠️ Needs attention — morale slipping</div>':''}
@@ -986,12 +986,12 @@ const list=e.type==="crew"?crew:stable;const p=list.find(m=>m&&m.name===e.name);
 cash-=Math.min(cash,fine);log("[ARREST] "+n+" jailed 24h. Fine $"+fine+".");syncCrewState();saveGame();updateScreen();
 }
 
-function getReadyWorkers(limit){return stable.filter(w=>w&&w.condition>=WORKER_WORK_READY_CONDITION&&!isWorkerJailed(w)).slice(0,limit)}
+function getReadyWorkers(limit){return stable.filter(w=>w&&w.condition>WORKER_WORK_READY_CONDITION&&!isWorkerJailed(w)).slice(0,limit)}
 function processLocationTrip(place,workers,individual=false){
 if(!workers||!workers.length){log("[TRIP] No workers ready.");return}
 const protection=getTripProtection(individual);if(protection.count<1){log("[TRIP] No protection.");return}
 let total=0,fat=0,results=[];
-workers.forEach(w=>{const earn=Math.floor(Math.random()*(individual?131:101))+(individual?120:100);const f=Math.floor(Math.random()*16)+10;w.condition=Math.max(0,w.condition-f);total+=earn;fat+=f;results.push(w.name+" +$"+earn+" ("+w.condition+")")});
+workers.forEach(w=>{const earn=Math.floor(Math.random()*(individual?81:101))+(individual?60:100);const f=Math.floor(Math.random()*16)+10;w.condition=Math.max(0,w.condition-f);total+=earn;fat+=f;results.push(w.name+" +$"+earn+" ("+w.condition+")")});
 const tripVehicle=vehicles[activeVehicle];
 if(tripVehicle){const wearChance=Math.max(0.01,0.10-(tripVehicle.reliability||50)/1000+(tripVehicle.attention||0)/900);if(Math.random()<wearChance){const wear=Math.max(1,Math.floor(Math.random()*8)+Math.floor((100-(tripVehicle.toughness||50))/30));tripVehicle.condition=Math.max(0,(tripVehicle.condition||100)-wear);log("[VEHICLE] "+tripVehicle.name+" took some wear on the trip.");if(tripVehicle.condition===0)log("[VEHICLE] "+tripVehicle.name+" is badly damaged and cannot travel.");}}
 cash+=total;
@@ -1005,7 +1005,7 @@ else if(roll<0.20)recruitWorkers(place,Math.floor(Math.random()*2)+1,false);else
 function getWorkerByIndex(i){i=Number(i);if(!Number.isInteger(i)||i<0||i>=stable.length)return null;return stable[i]}
 function sendWorker(i){
 const w=getWorkerByIndex(i);if(!w)return;if(isWorkerJailed(w)){log("[JAIL] Jailed.");return}
-if(w.condition<WORKER_WORK_READY_CONDITION){log("[WORK] Needs rest. No turn used.");updateScreen();return}
+if(w.condition<=WORKER_WORK_READY_CONDITION){log("[WORK] Needs rest. No turn used.");updateScreen();return}
 if(!useTurn())return;
 processLocationTrip("Individual Run",[w],true);saveGame();updateScreen();
 }
