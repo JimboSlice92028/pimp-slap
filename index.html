@@ -331,6 +331,13 @@ button:disabled{background:#555;cursor:not-allowed}
 <script>
 let cash=500,turns=5,maxTurns=20,playerLevel=1,playerXP=0,gameMinutes=0,gameDay=1;
 let playerName="Pimp",operationName="The Operation",lastTurnRegenAt=Date.now();
+let lastTurnActivityAt=Date.now();
+let turnPurchaseWindowStart=Date.now(),turnsPurchasedInWindow=0;
+const TURN_REGEN_MS=5*60*1000;
+const TURN_REGEN_AMOUNT=3;
+const TURN_IDLE_RESET_MS=24*60*60*1000;
+const TURN_PURCHASE_WINDOW_MS=24*60*60*1000;
+const TURN_PURCHASE_DAILY_CAP=50;
 const SAVE_KEY="pimpSlapSave";
 let level2DiscordPromptShown=false,level4XPromptShown=false,level6DonatePromptShown=false;
 let streetCred=50,ambushesThisLevel=0,ambushEligibleTripsThisLevel=0,ambushState=null;
@@ -548,7 +555,7 @@ function isInjured(m){return m&&Number(m.injuredUntilDay)>Number(gameDay)}
 function saveGame(){
 syncCrewState();
 localStorage.setItem(SAVE_KEY,JSON.stringify({
-cash,turns,maxTurns,playerLevel,playerXP,gameMinutes,gameDay,playerName,operationName,lastTurnRegenAt,
+cash,turns,maxTurns,playerLevel,playerXP,gameMinutes,gameDay,playerName,operationName,lastTurnRegenAt,lastTurnActivityAt,turnPurchaseWindowStart,turnsPurchasedInWindow,
 expenses,supplies,stable,crew,namedThugs,randomThugs,thugs:crew,ownedProperties,businesses,upgrades,tokens,
 vehicleOwnership,activeVehicleType,weapons,armorOwned,armorDurability,armsDealerUnlocked,roanokeGiftReceived,borisGiftResolved,
 borisAttackPending,borisNightclubForSale,level4RivalResolved,storyStage,roanokeLessons,tabAttention,battleState,level2DiscordPromptShown,level4XPromptShown,level6DonatePromptShown,
@@ -571,6 +578,11 @@ gameMinutes=d.gameMinutes??gameMinutes;gameDay=d.gameDay??gameDay;
 playerName=d.playerName??playerName;operationName=d.operationName??operationName;
 lastTurnRegenAt=d.lastTurnRegenAt??lastTurnRegenAt;
 if(!Number.isFinite(lastTurnRegenAt)||lastTurnRegenAt<=0) lastTurnRegenAt=Date.now();
+lastTurnActivityAt=d.lastTurnActivityAt??lastTurnRegenAt;
+if(!Number.isFinite(lastTurnActivityAt)||lastTurnActivityAt<=0) lastTurnActivityAt=lastTurnRegenAt;
+turnPurchaseWindowStart=d.turnPurchaseWindowStart??lastTurnActivityAt;
+if(!Number.isFinite(turnPurchaseWindowStart)||turnPurchaseWindowStart<=0) turnPurchaseWindowStart=lastTurnActivityAt;
+turnsPurchasedInWindow=Math.max(0,Math.floor(Number(d.turnsPurchasedInWindow)||0));
 expenses=d.expenses??expenses;expenses.cigarettes=15;expenses.weed=50;expenses.beer=20;expenses.cocaine=200;
 supplies=d.supplies??supplies;stable=d.stable??stable;
 // Crew: prefer d.crew, fall back to legacy d.thugs, then legacy d.crewMembers.
@@ -876,7 +888,7 @@ playerXP+=amount;
 while(playerXP>=xpNeeded()){
 playerXP-=xpNeeded();playerLevel++;ambushesThisLevel=0;ambushEligibleTripsThisLevel=0;ambushState=null;
 // Level-up turn bonus respects maxTurns but never reduces turns already above it (e.g. purchased turns).
-const before=turns;if(turns<maxTurns)turns=Math.min(maxTurns,turns+3);const gained=turns-before;
+const before=turns;turns+=3;const gained=turns-before;
 log("[LEVEL UP] Level "+playerLevel+".");
 if(gained>0)log("[LEVEL UP] +"+gained+" turn"+(gained===1?"":"s")+".");
 showLevelUpPopup();
@@ -1093,6 +1105,7 @@ saveGame();
 
 function useTurn(){
 if(turns<=0){log("[TURN] You're out of turns.");return false}
+lastTurnActivityAt=Date.now();
 turns--;
 if(borisAttackPending){resolveBorisAttack();saveGame();updateScreen();return false}
 saveGame();updateScreen();return true;
@@ -1395,10 +1408,19 @@ function renderSmokeShop(){
 const box=document.getElementById("smokeShopPanel");if(!box)return;
 const items=[{key:"weed",label:"Weed",price:50},{key:"beer",label:"Beer",price:20},{key:"cigarettes",label:"Cigarettes",price:15},{key:"condoms",label:"Condoms",price:expenses.condoms},{key:"medical",label:"Medical",price:expenses.medical},{key:"cocaine",label:"Coke",price:200}];
 box.innerHTML=items.map(it=>`<div class="market-card"><strong>${it.label}</strong><p>Stock: ${supplies[it.key]||0} · $${it.price}</p><button onclick="buySupply('${it.key}')">BUY 1</button></div>`).join("")+
-`<div class="market-card"><strong>BUY EXTRA TURNS</strong><p>+10 playable turns · $3000</p><button onclick="buyTurnUpgrade()">BUY +10 TURNS</button></div>`;
+`<div class="market-card"><strong>BUY EXTRA TURNS</strong><p>+10 playable turns · $3000</p><p><strong>24-hour purchase limit:</strong> ${turnsPurchasedInWindow}/${TURN_PURCHASE_DAILY_CAP} turns purchased</p><button onclick="buyTurnUpgrade()" ${turnsPurchasedInWindow+10>TURN_PURCHASE_DAILY_CAP?"disabled":""}>BUY +10 TURNS</button></div>`;
 }
-function buyTurnUpgrade(){if(cash<3000){log("[MARKET] Not enough cash.");return}cash-=3000;turns+=10;log("[MARKET] +10 playable turns.");saveGame();updateScreen()}
-function useToken(){if(tokens<=0){log("[TOKEN] None left.");return}if(turns>=maxTurns){log("[TOKEN] Turns full.");return}tokens--;turns=Math.min(maxTurns,turns+5);log("[TOKEN] +5 turns.");saveGame();updateScreen()}
+function buyTurnUpgrade(){
+const now=Date.now();
+if(now-turnPurchaseWindowStart>=TURN_PURCHASE_WINDOW_MS){turnPurchaseWindowStart=now;turnsPurchasedInWindow=0;}
+if(turnsPurchasedInWindow+10>TURN_PURCHASE_DAILY_CAP){log("[MARKET] 24-hour turn purchase limit reached: 50 turns.");saveGame();updateScreen();return}
+if(cash<3000){log("[MARKET] Not enough cash.");return}
+lastTurnActivityAt=now;
+cash-=3000;turns+=10;turnsPurchasedInWindow+=10;
+log("[MARKET] +10 playable turns. Purchased this 24-hour period: "+turnsPurchasedInWindow+"/"+TURN_PURCHASE_DAILY_CAP+".");
+saveGame();updateScreen();
+}
+function useToken(){if(tokens<=0){log("[TOKEN] None left.");return}tokens--;lastTurnActivityAt=Date.now();turns+=5;log("[TOKEN] +5 turns.");saveGame();updateScreen()}
 
 function weatherLabel(){return currentWeather==="rain"?"RAIN":currentWeather==="storm"?"STORM":"CLEAR"}
 function rollWeather(){if(weatherDay===gameDay)return;weatherDay=gameDay;const r=Math.random();currentWeather=r<0.18?"rain":r<0.23?"storm":"clear";log("[WEATHER] Conditions changed: "+weatherLabel()+".")}
@@ -1986,15 +2008,26 @@ if(loaded)log("[SAVE] Previous game loaded.");else startOpeningStory();
 updateScreen();
 if(ambushState&&ambushState.level===playerLevel)setTimeout(showAmbushPopup,250);
 
-const TURN_REGEN_MS=13*60*1000;
 function applyTurnRegeneration(){
 const now=Date.now();
+if(!Number.isFinite(lastTurnActivityAt)||lastTurnActivityAt<=0) lastTurnActivityAt=now;
+if(now-lastTurnActivityAt>=TURN_IDLE_RESET_MS){
+turns=20;
+lastTurnRegenAt=now;
+lastTurnActivityAt=now;
+turnPurchaseWindowStart=now;
+turnsPurchasedInWindow=0;
+log("[TIME] 24 hours idle — turns reset to 20. Use them or lose them.");
+saveGame();updateScreen();return;
+}
 if(!Number.isFinite(lastTurnRegenAt)||lastTurnRegenAt<=0){lastTurnRegenAt=now;return}
 const intervals=Math.floor((now-lastTurnRegenAt)/TURN_REGEN_MS);if(intervals<=0)return;
-lastTurnRegenAt+=intervals*TURN_REGEN_MS;gameMinutes+=intervals*13;
-const old=turns;if(turns<maxTurns)turns=Math.min(maxTurns,turns+intervals*3);
-if(turns>old)log("[TIME] +"+ (turns-old) +" turns.");
+lastTurnRegenAt+=intervals*TURN_REGEN_MS;
+gameMinutes+=intervals*5;
+const old=turns;turns+=intervals*TURN_REGEN_AMOUNT;
+if(turns>old)log("[TIME] +"+(turns-old)+" turns. (+3 every 5 minutes)");
 while(gameMinutes>=1440){gameMinutes-=1440;gameDay++;log("[DAY "+gameDay+"] New day.");payDailyExpenses()}
+if(now-turnPurchaseWindowStart>=TURN_PURCHASE_WINDOW_MS){turnPurchaseWindowStart=now;turnsPurchasedInWindow=0;}
 if(playerLevel>=3&&!roanokeGiftReceived)receiveRoanokeGift();
 saveGame();updateScreen();
 }
