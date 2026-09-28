@@ -1157,8 +1157,8 @@ updateScreen();
 function updateTabVisibility(){
 const p=document.getElementById("tabBtn-property"),b=document.getElementById("tabBtn-business"),bt=document.getElementById("tabBtn-battle");
 if(p)p.style.display=playerLevel>=6?"block":"none";
-if(b)b.style.display=playerLevel>=7?"block":"none";
-if(bt)bt.style.display=playerLevel>=5?"block":"none";
+if(b)b.style.display=playerLevel>=3?"block":"none";
+if(bt)bt.style.display=playerLevel>=3?"block":"none";
 }
 function updateScreen(){
 syncCrewState();normalizeStable();updateTabVisibility();updateTabAttention();
@@ -1846,7 +1846,7 @@ if(armorOwned>0&&armorDurability>0)power+=20;return power;
 }
 function renderBattle(){
 const box=document.getElementById("battlePanel");if(!box)return;
-if(playerLevel<4){box.innerHTML='<div class="locked">Battle unlocks at Level 4.</div>';return}
+if(playerLevel<3){box.innerHTML='<div class="locked">Battle unlocks at Level 3.</div>';return}
 if(battleState){
 const armorLine=armorOwned>0?(armorDurability>0?`<span class="good">🛡 Armor protection: ${armorDurability}/${BODY_ARMOR_MAX_TURNS} battle turns remaining</span>`:`<span class="warning">⚠️ BODY ARMOR NEEDS ATTENTION — no protection remaining</span>`):`<span class="warning">⚠️ No body armor</span>`;
 box.innerHTML=`<div class="battle-status"><strong>${battleState.name}</strong><br>${battleState.enemy} · Enemy ${battleState.enemyPower} · You ${battlePower()}<br>${armorLine}</div>
