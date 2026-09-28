@@ -43,7 +43,13 @@ button:disabled{background:#555;cursor:not-allowed}
 .tab-button.attention{animation:tabAttentionPulse 1s ease-in-out infinite;box-shadow:0 0 0 3px rgba(255,180,0,.35)}
 @keyframes tabAttentionPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
 .levelup-overlay{position:fixed;inset:0;background:rgba(0,0,0,.82);display:none;align-items:center;justify-content:center;z-index:9999;padding:20px}
- .age-gate-overlay{position:fixed;inset:0;background:rgba(0,0,0,.94);display:none;align-items:center;justify-content:center;z-index:20000;padding:20px;box-sizing:border-box}
+ .condom-warning-card{width:min(620px,100%);background:#1d1d1d;border:2px solid #ffd36b;border-radius:16px;padding:28px;text-align:center;box-shadow:0 0 35px rgba(255,211,107,.25)}
+.condom-warning-card h2{border:0;margin-top:0;font-size:34px;color:#ffd36b}
+.condom-warning-card p{font-size:19px;line-height:1.5;color:#ddd}
+.condom-warning-buttons{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:20px}
+.condom-warning-button{margin-top:0;min-width:190px}
+.condom-market-button{background:#ffd36b;color:#111}
+.age-gate-overlay{position:fixed;inset:0;background:rgba(0,0,0,.94);display:none;align-items:center;justify-content:center;z-index:20000;padding:20px;box-sizing:border-box}
 .age-gate-card{width:min(620px,100%);background:#1d1d1d;border:2px solid #ff4fa3;border-radius:16px;padding:30px;text-align:center;box-shadow:0 0 45px rgba(255,79,163,.35)}
 .age-gate-card h2{border:0;margin:0 0 18px;font-size:36px;color:#ff4fa3}
 .age-gate-card p{font-size:18px;line-height:1.55;color:#ddd}
@@ -178,6 +184,18 @@ button:disabled{background:#555;cursor:not-allowed}
 <p class="tab-note">Tips go to the developer.</p>
 <a href="https://venmo.com/u/Sirius-Smooth" target="_blank" rel="noopener noreferrer" style="display:block;text-align:center;text-decoration:none;"><button type="button">DONATE ON VENMO</button></a>
 </div>
+</div>
+</div>
+</div>
+
+<div id="condomWarningOverlay" class="levelup-overlay" style="display:none;z-index:15000;">
+<div class="condom-warning-card">
+<h2>⚠️ CONDOMS NEEDED</h2>
+<p id="condomWarningMessage">You do not have enough condoms for this work turn.</p>
+<p><strong>Every girl working uses 1 condom every turn.</strong></p>
+<div class="condom-warning-buttons">
+<button type="button" class="condom-warning-button condom-market-button" onclick="goToMarketplaceForCondoms()">GO TO MARKETPLACE</button>
+<button type="button" class="condom-warning-button" onclick="closeCondomWarning()">CLOSE</button>
 </div>
 </div>
 </div>
@@ -333,6 +351,9 @@ const WORKER_WORK_READY_CONDITION=50;
 const WORKER_HEALTHY_CONDITION=65;
 const WORKER_MORALE_DAILY_DRAIN=10;
 const WORKER_MORALE_DAILY_RECOVERY=5;
+const WORKER_WORK_CONDITION_LOSS_MIN=20;
+const WORKER_WORK_CONDITION_LOSS_MAX=35;
+const CONDOMS_PER_WORKER_TURN=1;
 let ownedProperties=[],propertyStatusMessage="",businesses=[],upgrades=[],tokens=0;
 let roanokeGiftReceived=false,borisGiftResolved=false,borisGiftPopupScheduled=false;
 let borisAttackPending=false,borisNightclubForSale=false;
@@ -1476,12 +1497,41 @@ const list=e.type==="crew"?crew:stable;const p=list.find(m=>m&&m.name===e.name);
 const paidFine=Math.min(cash,fine);cash-=paidFine;log("[ARREST] "+n+" jailed 24h. Fine $"+paidFine+".");syncCrewState();saveGame();updateScreen();
 }
 
+function showCondomWarning(required,available){
+const o=document.getElementById("condomWarningOverlay");
+const m=document.getElementById("condomWarningMessage");
+const need=Math.max(1,Number(required)||1),have=Math.max(0,Number(available)||0);
+if(m)m.innerHTML="This work turn needs <strong>"+need+" condom"+(need===1?"":"s")+"</strong>, but you only have <strong>"+have+"</strong>.<br><br>Go to the Marketplace and stock up before sending the girls out.";
+if(o)o.style.display="flex";
+}
+function closeCondomWarning(){const o=document.getElementById("condomWarningOverlay");if(o)o.style.display="none";}
+function goToMarketplaceForCondoms(){closeCondomWarning();showTab("marketplaceTab");clearTabAttention("marketplaceTab");}
+function canUseCondomsForWorkers(workers){
+const count=Array.isArray(workers)?workers.length:0;
+const required=count*CONDOMS_PER_WORKER_TURN;
+const available=Math.max(0,Number(supplies.condoms)||0);
+if(required<=0)return true;
+if(available<required){
+log("[WORK] Not enough condoms. Need "+required+" for this turn; have "+available+". Go to the Marketplace.");
+showCondomWarning(required,available);
+return false;
+}
+return true;
+}
+function useCondomsForWorkers(workers){
+const required=(Array.isArray(workers)?workers.length:0)*CONDOMS_PER_WORKER_TURN;
+if(required>0)supplies.condoms=Math.max(0,(Number(supplies.condoms)||0)-required);
+return required;
+}
+
 function getReadyWorkers(limit){return stable.filter(w=>w&&w.condition>WORKER_WORK_READY_CONDITION&&!isWorkerJailed(w)).slice(0,limit)}
 function processLocationTrip(place,workers,individual=false){
-if(!workers||!workers.length){log("[TRIP] No workers ready.");return}
-const protection=getTripProtection(individual);if(protection.count<1){log("[TRIP] No protection.");return}
+if(!workers||!workers.length){log("[TRIP] No workers ready.");return false}
+if(!canUseCondomsForWorkers(workers))return false;
+const protection=getTripProtection(individual);if(protection.count<1){log("[TRIP] No protection.");return false}
+useCondomsForWorkers(workers);
 let total=0,fat=0,results=[];
-workers.forEach(w=>{const earn=Math.floor(Math.random()*(individual?81:101))+(individual?60:100);const f=Math.floor(Math.random()*16)+10;w.condition=Math.max(0,w.condition-f);total+=earn;fat+=f;results.push(w.name+" +$"+earn+" ("+w.condition+")")});
+workers.forEach(w=>{const earn=Math.floor(Math.random()*(individual?81:101))+(individual?60:100);const f=Math.floor(Math.random()*(WORKER_WORK_CONDITION_LOSS_MAX-WORKER_WORK_CONDITION_LOSS_MIN+1))+WORKER_WORK_CONDITION_LOSS_MIN;w.condition=Math.max(0,w.condition-f);total+=earn;fat+=f;results.push(w.name+" +$"+earn+" ("+w.condition+")")});
 const tripRec=vehicleOwnership[activeVehicleType];
 if(tripRec){const tt=vehicleType(activeVehicleType)||{};const reliability=effectiveVehicleStat(activeVehicleType,"reliability");const wearChance=Math.max(0.01,0.10-reliability/1000+(tt.attention||0)/900);if(Math.random()<wearChance){const wear=Math.max(1,Math.floor(Math.random()*8)+Math.floor((100-(tt.toughness||50))/30));tripRec.condition=Math.max(0,(tripRec.condition||100)-wear);log("[VEHICLE] "+activeVehicleType+" took some wear on the trip.");if(tripRec.condition===0)log("[VEHICLE] "+activeVehicleType+" is badly damaged and cannot travel.");}}
 cash+=total;
@@ -1496,8 +1546,10 @@ function getWorkerByIndex(i){i=Number(i);if(!Number.isInteger(i)||i<0||i>=stable
 function sendWorker(i){
 const w=getWorkerByIndex(i);if(!w)return;if(isWorkerJailed(w)){log("[JAIL] Jailed.");return}
 if(w.condition<=WORKER_WORK_READY_CONDITION){log("[WORK] Needs rest. No turn used.");updateScreen();return}
+if(!canUseCondomsForWorkers([w])){saveGame();updateScreen();return}
 if(!useTurn())return;
-processLocationTrip("Individual Run",[w],true);saveGame();updateScreen();
+if(!processLocationTrip("Individual Run",[w],true)){saveGame();updateScreen();return}
+saveGame();updateScreen();
 }
 function restWorker(i){const w=getWorkerByIndex(i);if(!w)return;const r=Math.floor(Math.random()*21)+20;w.condition=Math.min(100,w.condition+r);log("[REST] "+w.name+" +"+r);saveGame();updateScreen()}
 const maintenanceRecovery={beer:15,weed:30,cigarettes:10,cocaine:50};
@@ -1518,8 +1570,9 @@ if(!activeVehicleCanTravel()){log("[TRIP] Your active vehicle cannot make the tr
 const activeType=vehicleType(activeVehicleType);
 const workers=getReadyWorkers(activeType?activeType.capacity:4);
 if(!workers.length){log("[TRIP] Nobody ready. No turn used.");saveGame();updateScreen();return}
+if(!canUseCondomsForWorkers(workers)){saveGame();updateScreen();return}
 if(!useTurn())return;
-processLocationTrip(place,workers,false);
+if(!processLocationTrip(place,workers,false)){saveGame();updateScreen();return}
 checkRoanokeJobCompletion(place);
 saveGame();updateScreen();
 }
