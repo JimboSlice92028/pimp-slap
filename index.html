@@ -134,7 +134,7 @@ button:disabled{background:#555;cursor:not-allowed}
 <button id="tabBtn-business" class="tab-button" onclick="showTab('businessTab')" style="display:none;">BUSINESSES</button>
 <button id="tabBtn-vehicles" class="tab-button" onclick="showTab('vehiclesTab')">VEHICLES</button>
 <button id="tabBtn-marketplace" class="tab-button" onclick="showTab('marketplaceTab')">MARKETPLACE</button>
-<button id="tabBtn-more" class="tab-button" onclick="showTab('moreTab')">MORE</button>
+<button id="tabBtn-more" class="tab-button" onclick="showTab('moreTab')">SOCIALS</button>
 <button id="tabBtn-battle" class="tab-button" onclick="showTab('battleTab')" style="display:none;">BATTLE</button>
 </div>
 
@@ -181,19 +181,32 @@ button:disabled{background:#555;cursor:not-allowed}
 <div class="panel"><h2>Smoke Shop</h2><p class="tab-note">No turns used to shop.</p><div id="smokeShopPanel"></div></div>
 <div class="panel" style="margin-top:20px;"><h2>Special Services</h2><p class="tab-note">No turns or XP are used for these purchases. They cost cash only.</p><div id="marketSpecialsPanel"></div></div>
 <div id="marketArmsSection" class="panel" style="margin-top:20px;display:none;"><h2>Arms Dealer</h2><div id="marketArmsPanel"></div></div>
+<div class="panel" style="margin-top:20px;">
+<h2>Support the Developer</h2>
+<p class="tab-note">If you are enjoying Pimp-Slap, you can support development here.</p>
+<a href="https://venmo.com/u/Sirius-Smooth" target="_blank" rel="noopener noreferrer" style="display:block;text-align:center;text-decoration:none;"><button type="button">SUPPORT THE DEVELOPER — VENMO</button></a>
+</div>
 </div>
 <div id="moreTab" class="tab-panel">
 <div id="identitySection" class="panel" style="display:none;"><h2>Identity</h2><div id="identityPanel"></div></div>
 <div class="panel" style="margin-top:20px;">
-<h2>Game Save</h2>
-<div>Auto-saves in this browser.</div>
-<button onclick="manualSave()">SAVE GAME</button>
-<button onclick="resetGame()">START NEW GAME</button>
+<h2>Socials</h2>
+<p class="tab-note">Follow Pimp-Slap The Game and join the community.</p>
+<div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+<a href="https://discord.gg/FM3Qvb4gU6" target="_blank" rel="noopener noreferrer" style="text-decoration:none;"><button type="button">DISCORD</button></a>
+<a href="https://x.com/pimpslapgame" target="_blank" rel="noopener noreferrer" style="text-decoration:none;"><button type="button">X — @pimpslapgame</button></a>
+</div>
 </div>
 <div class="panel" style="margin-top:20px;">
 <h2>Support The Developer</h2>
 <p class="tab-note">Tips go to the developer.</p>
 <a href="https://venmo.com/u/Sirius-Smooth" target="_blank" rel="noopener noreferrer" style="display:block;text-align:center;text-decoration:none;"><button type="button">DONATE ON VENMO</button></a>
+</div>
+<div class="panel" style="margin-top:20px;">
+<h2>Game Save</h2>
+<div>Auto-saves in this browser.</div>
+<button onclick="manualSave()">SAVE GAME</button>
+<button onclick="resetGame()">START NEW GAME</button>
 </div>
 </div>
 </div>
@@ -369,7 +382,7 @@ const r=document.getElementById("ageRejectOverlay");
 if(r)r.style.display="flex";
 }
 let expenses={condoms:50,medical:75,cigarettes:15,weed:50,beer:20,cocaine:200};
-let supplies={condoms:10,medical:5,cigarettes:10,weed:5,beer:10,cocaine:2};
+let supplies={condoms:200,medical:5,cigarettes:10,weed:5,beer:10,cocaine:2};
 let stable=[{name:"Maya",condition:82,charm:72,assigned:true,assignmentEligible:true},{name:"Tasha",condition:91,charm:65,assigned:true,assignmentEligible:true},{name:"Jenny",condition:74,charm:81,assigned:true,assignmentEligible:true}];
 let crew=[],namedThugs=[],randomThugs=0;
 const CREW_CAPACITY=100;
