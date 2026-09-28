@@ -320,6 +320,7 @@ let stable=[{name:"Maya",condition:82,charm:72,assigned:true,assignmentEligible:
 let crew=[],namedThugs=[],randomThugs=0;
 const CREW_CAPACITY=100;
 function currentCrewCapacity(){return ownedProperty("Trailer Park")?Infinity:CREW_CAPACITY}
+function hasTrailerPark(){return !!ownedProperty("Trailer Park")}
 const ASSIGNED_THUG_MAINTENANCE_PREMIUM=0.025;
 const MAX_OFFLINE_PROTECTION=5;
 const UNASSIGNED_THUG_MAINTENANCE_RECOVERY={beer:15,weed:30,cigarettes:10,cocaine:50};
@@ -1108,9 +1109,9 @@ box.appendChild(div);
 }
 function renderCrew(){
 syncCrewState();const box=document.getElementById("crew");if(!box)return;
-const guardCount=offlineProtectionThugs().length;
+const guardCount=offlineProtectionThugs().length;const promotedGuardCount=promotedOfflineProtectionCount();
 const armorWarning=armorOwned<=0?'<div class="warning" style="margin:10px 0;padding:10px;border:1px solid #665522;border-radius:7px;"><strong>⚠️ BODY ARMOR NEEDS ATTENTION</strong><br>No body armor is currently available. Battles will cause normal morale and cash losses.</div>':(armorDurability<=0?'<div class="warning" style="margin:10px 0;padding:10px;border:1px solid #665522;border-radius:7px;"><strong>🚨 BODY ARMOR NEEDS ATTENTION</strong><br>Your armor is exhausted. Until replacement armor is purchased, battle losses increase and crew morale takes heavier hits.</div>':(armorDurability===1?'<div class="warning" style="margin:10px 0;padding:10px;border:1px solid #665522;border-radius:7px;"><strong>⚠️ BODY ARMOR NEEDS ATTENTION</strong><br>Only 1 battle turn of armor protection remains. Replace it at the Arms Dealer soon.</div>':''));
-let html=`<div class="vehicle-card"><strong>CREW ORGANIZATION</strong><p><strong>Total: ${totalOrganizationSize()} / ${currentCrewCapacity()===Infinity?"∞":currentCrewCapacity()}</strong></p><p>Active Crew: ${crew.length}</p><p>Named Available: ${namedThugs.length}</p><p>Unassigned Thugs: ${randomThugs}</p><p>Battle-Ready: ${battleReadyThugCount()}</p><p>🛡 Offline Protection: ${guardCount} ${guardCount?`(defense rating ${offlineDefenseRating().toFixed(1)})`:"— nobody is watching the door while you're away"}</p>${armorWarning}</div>`;
+let html=`<div class="vehicle-card"><strong>CREW ORGANIZATION</strong><p><strong>Total: ${totalOrganizationSize()} / ${currentCrewCapacity()===Infinity?"∞":currentCrewCapacity()}</strong></p><p>Active Crew: ${crew.length}</p><p>Named Available: ${namedThugs.length}</p><p>Unassigned Thugs: ${randomThugs}</p><p>Battle-Ready: ${battleReadyThugCount()}</p><p>🛡 Offline Protection: ${promotedGuardCount}/${MAX_OFFLINE_PROTECTION} promoted${guardCount!==promotedGuardCount?` (${guardCount} currently available)`:` `}${guardCount?`(defense rating ${offlineDefenseRating().toFixed(1)})`:"— nobody is watching the door while you're away"}</p>${armorWarning}</div>`;
 if(crew.length){html+="<h3>CREW</h3>";crew.forEach((m,i)=>{
 html+=`<div class="crew-member"><strong>${m.name}</strong>${m.offlineProtection?' <span class="good">🛡 OFFLINE PROTECTION</span>':''}<br>Strength: ${m.strength}<br>Loyalty: ${m.loyalty}<br>Morale: ${m.morale}${m.maintenancePremium?`<br><small>Maintenance premium: +${(m.maintenancePremium*100).toFixed(1)}%</small>`:""}
 ${isJailActive(m)?'<div class="warning">⛓️ JAILED</div>':''}
@@ -1156,6 +1157,9 @@ saveGame();updateScreen();
 // A crew member being "assigned" (on the payroll, doing runs, taking maintenance) is a
 // different role from being "promoted" to Offline Protection (the ones who actually
 // respond to trouble while the player is away). One does not imply the other.
+function promotedOfflineProtectionCount(){
+return crew.filter(m=>m&&m.offlineProtection).length;
+}
 function offlineProtectionThugs(){
 return crew.filter(m=>m&&m.offlineProtection&&!isJailActive(m)&&!isInjured(m));
 }
@@ -1169,8 +1173,8 @@ return (avgCondition/100)*countFactor;
 function toggleOfflineProtection(i){
 const m=crew[i];if(!m)return;
 if(isJailActive(m)){log("[CREW] Can't put someone in jail on guard duty.");return}
-if(!m.offlineProtection && offlineProtectionThugs().length>=MAX_OFFLINE_PROTECTION){
-log("[CREW] Offline Protection is full. Maximum 5 crew members can guard the operation at one time.");
+if(!m.offlineProtection && promotedOfflineProtectionCount()>=MAX_OFFLINE_PROTECTION){
+log("[CREW] Offline Protection is full. Maximum 5 promoted crew members can be assigned to Offline Protection at one time.");
 return;
 }
 m.offlineProtection=!m.offlineProtection;
