@@ -92,7 +92,6 @@ button:disabled{background:#555;cursor:not-allowed}
 @media (max-width:900px){.stats{grid-template-columns:repeat(3,1fr)}}
 @media (max-width:800px){.tab-bar{grid-template-columns:repeat(2,1fr)}}
 @media (max-width:700px){.stats,.home-layout{grid-template-columns:1fr}.home-activity,.home-actions,.home-encounter,.home-supplies,.home-progress{grid-column:1;grid-row:auto}h1{font-size:38px}}
-@media (max-width:700px){.game>img{display:block;margin-left:auto;margin-right:auto}}
 </style>
 </head>
 <body>
@@ -178,6 +177,7 @@ button:disabled{background:#555;cursor:not-allowed}
 <h2>Support The Developer</h2>
 <p class="tab-note">Tips go to the developer.</p>
 <a href="https://venmo.com/u/Sirius-Smooth" target="_blank" rel="noopener noreferrer" style="display:block;text-align:center;text-decoration:none;"><button type="button">DONATE ON VENMO</button></a>
+</div>
 </div>
 </div>
 </div>
@@ -524,7 +524,8 @@ lastTurnRegenAt=d.lastTurnRegenAt??lastTurnRegenAt;
 if(!Number.isFinite(lastTurnRegenAt)||lastTurnRegenAt<=0) lastTurnRegenAt=Date.now();
 expenses=d.expenses??expenses;expenses.cigarettes=15;expenses.weed=50;expenses.beer=20;expenses.cocaine=200;
 supplies=d.supplies??supplies;stable=d.stable??stable;
-const sc=Array.isArray(d.crew)?d.crew:[],st=Array.isArray(d.thugs)?d.thugs:[];
+// Crew: prefer d.crew, fall back to legacy d.thugs, then legacy d.crewMembers.
+const sc=Array.isArray(d.crew)?d.crew:[],st=Array.isArray(d.thugs)?d.thugs:(Array.isArray(d.crewMembers)?d.crewMembers:[]);
 crew=sc.length>0?sc:st;
 namedThugs=Array.isArray(d.namedThugs)?d.namedThugs:[];
 randomThugs=Number.isFinite(Number(d.randomThugs))?Math.max(0,Math.floor(Number(d.randomThugs))):0;
@@ -628,7 +629,6 @@ lastRanchUpkeepDay=Number.isFinite(Number(d.lastRanchUpkeepDay))?Number(d.lastRa
 lastPropertyTaxDay=Number.isFinite(Number(d.lastPropertyTaxDay))?Number(d.lastPropertyTaxDay):0;
 activeRoanokeJob=(d.activeRoanokeJob&&typeof d.activeRoanokeJob==="object"&&typeof d.activeRoanokeJob.destination==="string"&&ROANOKE_JOBS_DATA[d.activeRoanokeJob.destination])?d.activeRoanokeJob:null;
 if(!Array.isArray(stable)) stable=[];if(!Array.isArray(crew)) crew=[];
-if(crew.length===0){const legacy=Array.isArray(d.thugs)?d.thugs:Array.isArray(d.crewMembers)?d.crewMembers:[];if(legacy.length>0) crew=legacy}
 normalizeCrew();
 if(playerLevel>=3){
 armsDealerUnlocked=true;
@@ -822,7 +822,8 @@ amount=Math.max(0,Math.floor(Number(amount)||0));
 playerXP+=amount;
 while(playerXP>=xpNeeded()){
 playerXP-=xpNeeded();playerLevel++;
-const before=turns;turns=Math.min(maxTurns,turns+3);const gained=turns-before;
+// Level-up turn bonus respects maxTurns but never reduces turns already above it (e.g. purchased turns).
+const before=turns;if(turns<maxTurns)turns=Math.min(maxTurns,turns+3);const gained=turns-before;
 log("[LEVEL UP] Level "+playerLevel+".");
 if(gained>0)log("[LEVEL UP] +"+gained+" turn"+(gained===1?"":"s")+".");
 showLevelUpPopup();
@@ -905,7 +906,7 @@ const healthy=crew.filter(m=>m&&!isJailActive(m)&&!isInjured(m));
 for(let i=0;i<injuredTarget;i++){
 if(healthy[i]){
 healthy[i].injuredUntilDay=gameDay+1;
-healthy[i].morale=Math.max(5,(Number(healthy[i].morale)||50)-40);
+healthy[i].morale=Math.max(5,(healthy[i].morale??50)-40);
 injuredNames.push(healthy[i].name);
 }else if(randomThugs>0){
 randomThugs--;
@@ -1248,7 +1249,6 @@ else if(!Number.isFinite(op))op=Math.round(gross*Number(b.operatingRate||0));
 const label=Number(b.lastCollectionDay)===Number(gameDay)?"COLLECTED":"COLLECT";
 html+=`<div class="business-card"><strong>${b.name}</strong>${b.name==="Massage Parlor / Nail Salon"?'<p class="good">ROANOKE REWARD · $500 GROSS / $425 NET</p>':''}${b.name==="Strip Club"?'<p>Recruitment location.</p>':''}${b.name==="Auto Repair Shop"?'<p>Vehicle management unlocked.</p>':''}${b.staff?`<p>Staff: ${b.staff}</p>`:""}<p>Gross $${gross.toLocaleString()} · Op $${op.toLocaleString()} · Net <span class="good">$${net.toLocaleString()}</span></p><p>${label}</p><button onclick="collectBusiness(${i})" ${label==="COLLECTED"?"disabled":""}>${label==="COLLECTED"?"COLLECTED":"COLLECT $"+net.toLocaleString()}</button></div>`;
 });
-saveGame();
 box.innerHTML=html;
 }
 function buyBusiness(name){if(name!=="Strip Club")return;if(hasBusiness(name))return;if(cash<5000){log("[BUSINESS] Need $5,000.");return}cash-=5000;businesses.push({name:"Strip Club",gross:1000,operatingRate:0,operatingCost:300,net:700,ready:true,lastCollectionDay:gameDay-1,staff:0});log("[BUSINESS] Strip Club opened for $5,000.");saveGame();updateScreen()}
@@ -1463,7 +1463,7 @@ if(e.type==="unassigned"){if(randomThugs>0){randomThugs--;n++;}return}
 const list=e.type==="crew"?crew:stable;const p=list.find(m=>m&&m.name===e.name);if(!p)return;p.jailUntilDay=gameDay+1;p.jailUntilMinute=gameMinutes;n++;
 });
 const bribe=1000,paid=Math.min(cash,bribe);cash-=paid;
-log("[ARREST] "+n+" taken in. Bribe $"+bribe+".");syncCrewState();saveGame();updateScreen();
+log("[ARREST] "+n+" taken in. Bribe $"+paid+".");syncCrewState();saveGame();updateScreen();
 }
 function triggerCocainePoliceEvent(){
 if(cocainePoliceEventTriggeredToday)return;cocainePoliceEventTriggeredToday=true;
@@ -1473,7 +1473,7 @@ unique.forEach(e=>{
 if(e.type==="unassigned"){if(randomThugs>0){randomThugs--;n++;}return}
 const list=e.type==="crew"?crew:stable;const p=list.find(m=>m&&m.name===e.name);if(!p)return;p.jailUntilDay=gameDay+1;p.jailUntilMinute=gameMinutes;n++;
 });
-cash-=Math.min(cash,fine);log("[ARREST] "+n+" jailed 24h. Fine $"+fine+".");syncCrewState();saveGame();updateScreen();
+const paidFine=Math.min(cash,fine);cash-=paidFine;log("[ARREST] "+n+" jailed 24h. Fine $"+paidFine+".");syncCrewState();saveGame();updateScreen();
 }
 
 function getReadyWorkers(limit){return stable.filter(w=>w&&w.condition>WORKER_WORK_READY_CONDITION&&!isWorkerJailed(w)).slice(0,limit)}
@@ -1635,7 +1635,6 @@ box.innerHTML=`<div class="battle-status"><strong>${battleState.name}</strong><b
 }
 const armorSummary=armorOwned>0?(armorDurability>0?`<div class="battle-card"><strong>BODY ARMOR</strong><p class="good">🛡 Protection remaining: ${armorDurability}/${BODY_ARMOR_MAX_TURNS} battle turns.</p></div>`:`<div class="battle-card"><strong>BODY ARMOR</strong><p class="warning">⚠️ Armor needs attention. Protection is exhausted. Visit the Arms Dealer for replacement armor.</p></div>`):'';
 box.innerHTML=armorSummary+battleTypes.map((t,i)=>`<div class="battle-card"><strong>${t.name}</strong><p class="tab-note">${t.enemy} · $${t.reward} · ${t.xp} XP</p><button onclick="startBattle(${i})">START</button></div>`).join("");
-box.innerHTML=battleTypes.map((t,i)=>`<div class="battle-card"><strong>${t.name}</strong><p class="tab-note">${t.enemy} · $${t.reward} · ${t.xp} XP</p><button onclick="startBattle(${i})">START</button></div>`).join("");
 }
 function clampBattleChance(v){return Math.max(0.30,Math.min(0.76,v))}
 function battleOutcomeChance(action){
@@ -1680,7 +1679,7 @@ if(!battleState)return;
 const r=battleState;battleState=null;
 if(win){
  cash+=r.reward;addXP(r.xp);firstThreeBattles++;
- crew.forEach(m=>m.morale=Math.min(100,(m.morale||50)+5));
+ crew.forEach(m=>m.morale=Math.min(100,(m.morale??50)+5));
  log("🎯 [BATTLE] VICTORY — "+r.name+" | +$"+r.reward+" | +"+r.xp+" XP | Crew morale +5.");
  if(Math.random()<0.22)awardBattleVehicle();
 }else{
@@ -1688,7 +1687,7 @@ if(win){
  const loss=r.armorProtected?baseLoss:Math.min(Math.max(1,Math.ceil(Math.max(cash,1)*0.30)),Math.max(baseLoss,Math.ceil(baseLoss*1.5)));
  const moraleLoss=r.armorProtected?8:14;
  cash=Math.max(0,cash-loss);firstThreeBattles++;
- crew.forEach(m=>m.morale=Math.max(0,(m.morale||50)-moraleLoss));
+ crew.forEach(m=>m.morale=Math.max(0,(m.morale??50)-moraleLoss));
  const actionText=action?" after "+action:"";
  if(r.armorProtected){
  log("⚠️ [BATTLE] LOSS — "+r.name+actionText+" | -$"+loss+" | Crew morale -"+moraleLoss+". Body armor reduced the damage.");
@@ -1764,17 +1763,17 @@ const favorable=Math.random()<favorableChance;
 if(favorable){
 const reward=200+Math.floor(rating*120);
 cash+=reward;
-if(guards.length){guards.forEach(m=>m.morale=Math.min(100,(m.morale||50)+5));log("[ATTACK] Trouble came looking while you were away. "+guards.map(g=>g.name).join(", ")+" held the door. +$"+reward+".");}
+if(guards.length){guards.forEach(m=>m.morale=Math.min(100,(m.morale??50)+5));log("[ATTACK] Trouble came looking while you were away. "+guards.map(g=>g.name).join(", ")+" held the door. +$"+reward+".");}
 else log("[ATTACK] Something came looking while you were away. Got lucky — nobody was even watching the door. +$"+reward+".");
 }else{
 const loss=Math.min(Math.max(1,Math.floor(Math.max(cash,1)*0.20)),Math.floor(Math.random()*Math.max(1,Math.floor(Math.max(cash,1)*0.12)))+1);
 cash=Math.max(0,cash-loss);
 if(guards.length){
-guards.forEach(m=>m.morale=Math.max(0,(m.morale||50)-8));
+guards.forEach(m=>m.morale=Math.max(0,(m.morale??50)-8));
 const hit=guards[Math.floor(Math.random()*guards.length)];
 if(Math.random()<0.4){
 hit.injuredUntilDay=gameDay+1;
-hit.morale=Math.max(5,(hit.morale||50)-30);
+hit.morale=Math.max(5,(hit.morale??50)-30);
 log("[ATTACK] Trouble found the operation while you were away. "+hit.name+" got hurt defending it and is out for the day. Loss: $"+loss+".");
 }else{
 log("[ATTACK] Trouble found the operation while you were away. Your people held on, barely. Loss: $"+loss+".");
