@@ -333,9 +333,10 @@ let cash=500,turns=5,maxTurns=20,playerLevel=1,playerXP=0,gameMinutes=0,gameDay=
 let playerName="Pimp",operationName="The Operation",lastTurnRegenAt=Date.now();
 const SAVE_KEY="pimpSlapSave";
 let level2DiscordPromptShown=false,level4XPromptShown=false,level6DonatePromptShown=false;
-let streetCred=50,ambushesThisLevel=0,ambushState=null;
+let streetCred=50,ambushesThisLevel=0,ambushEligibleTripsThisLevel=0,ambushState=null;
 const AMBUSH_MAX_PER_LEVEL=2;
-const AMBUSH_TRIGGER_CHANCE=0.12;
+const AMBUSH_TRIGGER_CHANCE=0.35;
+const AMBUSH_PITY_TRIPS=4;
 const AGE_GATE_KEY="pimpSlapAgeGateAccepted";
 function showAgeGate(){
 const o=document.getElementById("ageGateOverlay");
@@ -552,7 +553,7 @@ expenses,supplies,stable,crew,namedThugs,randomThugs,thugs:crew,ownedProperties,
 vehicleOwnership,activeVehicleType,weapons,armorOwned,armorDurability,armsDealerUnlocked,roanokeGiftReceived,borisGiftResolved,
 borisAttackPending,borisNightclubForSale,level4RivalResolved,storyStage,roanokeLessons,tabAttention,battleState,level2DiscordPromptShown,level4XPromptShown,level6DonatePromptShown,
 cocaineUseCountToday,cocaineConsecutiveUseCount,cocaineUsersToday,cocainePoliceEventTriggeredToday,
-cocaineBribeEventTriggeredToday,unassignedThugMaintenance,activityLog,currentWeather,weatherDay,firstThreeBattles,globalAttackCounter,lastEstateMishapDay,lastRanchUpkeepDay,lastPropertyTaxDay,activePropertyName,activeRoanokeJob,streetCred,ambushesThisLevel,ambushState
+cocaineBribeEventTriggeredToday,unassignedThugMaintenance,activityLog,currentWeather,weatherDay,firstThreeBattles,globalAttackCounter,lastEstateMishapDay,lastRanchUpkeepDay,lastPropertyTaxDay,activePropertyName,activeRoanokeJob,streetCred,ambushesThisLevel,ambushEligibleTripsThisLevel,ambushState
 }));
 const s=document.getElementById("saveStatus");if(s) s.textContent="Game saved.";
 }
@@ -678,6 +679,7 @@ lastPropertyTaxDay=Number.isFinite(Number(d.lastPropertyTaxDay))?Number(d.lastPr
 activeRoanokeJob=(d.activeRoanokeJob&&typeof d.activeRoanokeJob==="object"&&typeof d.activeRoanokeJob.destination==="string"&&ROANOKE_JOBS_DATA[d.activeRoanokeJob.destination])?d.activeRoanokeJob:null;
 streetCred=Number.isFinite(Number(d.streetCred))?Math.max(0,Math.floor(Number(d.streetCred))):50;
 ambushesThisLevel=Number.isFinite(Number(d.ambushesThisLevel))?Math.max(0,Math.min(AMBUSH_MAX_PER_LEVEL,Math.floor(Number(d.ambushesThisLevel)))):0;
+ambushEligibleTripsThisLevel=Number.isFinite(Number(d.ambushEligibleTripsThisLevel))?Math.max(0,Math.floor(Number(d.ambushEligibleTripsThisLevel))):0;
 ambushState=(d.ambushState&&typeof d.ambushState==="object")?d.ambushState:null;
 if(!Array.isArray(stable)) stable=[];if(!Array.isArray(crew)) crew=[];
 normalizeCrew();
@@ -872,7 +874,7 @@ function addXP(amount){
 amount=Math.max(0,Math.floor(Number(amount)||0));
 playerXP+=amount;
 while(playerXP>=xpNeeded()){
-playerXP-=xpNeeded();playerLevel++;ambushesThisLevel=0;ambushState=null;
+playerXP-=xpNeeded();playerLevel++;ambushesThisLevel=0;ambushEligibleTripsThisLevel=0;ambushState=null;
 // Level-up turn bonus respects maxTurns but never reduces turns already above it (e.g. purchased turns).
 const before=turns;if(turns<maxTurns)turns=Math.min(maxTurns,turns+3);const gained=turns-before;
 log("[LEVEL UP] Level "+playerLevel+".");
@@ -1559,7 +1561,10 @@ return playerLevel>=6&&totalOrganizationSize()>=10&&totalOwnedVehicles()>=1&&cas
 }
 function maybeTriggerAmbush(){
 if(!ambushEligibility())return false;
-if(Math.random()>=AMBUSH_TRIGGER_CHANCE)return false;
+ambushEligibleTripsThisLevel++;
+const pityReady=ambushEligibleTripsThisLevel>=AMBUSH_PITY_TRIPS;
+const roll=Math.random();
+if(!pityReady&&roll>=AMBUSH_TRIGGER_CHANCE)return false;
 const demand=Math.floor(Math.random()*1501)+1500;
 ambushesThisLevel++;
 ambushState={demand,level:playerLevel};
