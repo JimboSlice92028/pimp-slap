@@ -123,7 +123,7 @@ button:disabled{background:#555;cursor:not-allowed}
 <button id="tabBtn-business" class="tab-button" onclick="showTab('businessTab')" style="display:none;">BUSINESSES</button>
 <button id="tabBtn-vehicles" class="tab-button" onclick="showTab('vehiclesTab')">VEHICLES</button>
 <button id="tabBtn-marketplace" class="tab-button" onclick="showTab('marketplaceTab')">MARKETPLACE</button>
-<button id="tabBtn-more" class="tab-button" onclick="showTab('moreTab')">MORE</button>
+<button id="tabBtn-more" class="tab-button" onclick="showTab('moreTab')">SOCIALS &amp; MORE</button>
 <button id="tabBtn-battle" class="tab-button" onclick="showTab('battleTab')" style="display:none;">BATTLE</button>
 </div>
 
@@ -170,19 +170,25 @@ button:disabled{background:#555;cursor:not-allowed}
 <div class="panel"><h2>Smoke Shop</h2><p class="tab-note">No turns used to shop.</p><div id="smokeShopPanel"></div></div>
 <div class="panel" style="margin-top:20px;"><h2>Special Services</h2><p class="tab-note">No turns or XP are used for these purchases. They cost cash only.</p><div id="marketSpecialsPanel"></div></div>
 <div id="marketArmsSection" class="panel" style="margin-top:20px;display:none;"><h2>Arms Dealer</h2><div id="marketArmsPanel"></div></div>
+<div class="panel" style="margin-top:20px;">
+<h2>Support The Developer</h2>
+<p class="tab-note">Tips go to the developer.</p>
+<a href="https://venmo.com/u/Sirius-Smooth" target="_blank" rel="noopener noreferrer" style="display:block;text-align:center;text-decoration:none;"><button type="button">DONATE ON VENMO</button></a>
+</div>
 </div>
 <div id="moreTab" class="tab-panel">
 <div id="identitySection" class="panel" style="display:none;"><h2>Identity</h2><div id="identityPanel"></div></div>
+<div class="panel" style="margin-top:20px;">
+<h2>Socials</h2>
+<p class="tab-note">Follow Pimp-Slap The Game and join the community.</p>
+<a href="https://discord.gg/FM3Qvb4gU6" target="_blank" rel="noopener noreferrer" style="display:block;text-align:center;text-decoration:none;"><button type="button" style="background:#5865f2;">JOIN THE DISCORD</button></a>
+<a href="https://x.com/pimpslapgame" target="_blank" rel="noopener noreferrer" style="display:block;text-align:center;text-decoration:none;"><button type="button" style="background:#fff;color:#000;">FOLLOW ON X</button></a>
+</div>
 <div class="panel" style="margin-top:20px;">
 <h2>Game Save</h2>
 <div>Auto-saves in this browser.</div>
 <button onclick="manualSave()">SAVE GAME</button>
 <button onclick="resetGame()">START NEW GAME</button>
-</div>
-<div class="panel" style="margin-top:20px;">
-<h2>Support The Developer</h2>
-<p class="tab-note">Tips go to the developer.</p>
-<a href="https://venmo.com/u/Sirius-Smooth" target="_blank" rel="noopener noreferrer" style="display:block;text-align:center;text-decoration:none;"><button type="button">DONATE ON VENMO</button></a>
 </div>
 </div>
 </div>
@@ -306,6 +312,9 @@ button:disabled{background:#555;cursor:not-allowed}
 
 <script>
 let cash=500,turns=5,maxTurns=20,playerLevel=1,playerXP=0,gameMinutes=0,gameDay=1;
+const TURN_PURCHASE_LIMIT=50;
+const TURN_PURCHASE_WINDOW_MS=24*60*60*1000;
+let purchasedTurnsToday=0,turnPurchaseWindowStart=Date.now();
 let playerName="Pimp",operationName="The Operation",lastTurnRegenAt=Date.now();
 const SAVE_KEY="pimpSlapSave";
 let level2DiscordPromptShown=false,level4XPromptShown=false,level6DonatePromptShown=false;
@@ -333,7 +342,7 @@ const r=document.getElementById("ageRejectOverlay");
 if(r)r.style.display="flex";
 }
 let expenses={condoms:50,medical:75,cigarettes:15,weed:50,beer:20,cocaine:200};
-let supplies={condoms:10,medical:5,cigarettes:10,weed:5,beer:10,cocaine:2};
+let supplies={condoms:200,medical:5,cigarettes:10,weed:5,beer:10,cocaine:2};
 let stable=[{name:"Maya",condition:82,charm:72,assigned:true,assignmentEligible:true},{name:"Tasha",condition:91,charm:65,assigned:true,assignmentEligible:true},{name:"Jenny",condition:74,charm:81,assigned:true,assignmentEligible:true}];
 let crew=[],namedThugs=[],randomThugs=0;
 const CREW_CAPACITY=100;
@@ -458,7 +467,7 @@ payoutMin:900,payoutMax:1700
 // matching the existing visibility rule for the SEND GROUP TO STRIP CLUB button.
 function getAvailableRoanokeDestinations(){
 const dests=["Hotel","The Bar","Downtown"];
-if(playerLevel>=7&&hasBusiness("Strip Club"))dests.push("Strip Club");
+if(playerLevel>=3&&hasBusiness("Strip Club"))dests.push("Strip Club");
 return dests;
 }
 
@@ -521,7 +530,7 @@ function saveGame(){
 syncCrewState();
 localStorage.setItem(SAVE_KEY,JSON.stringify({
 cash,turns,maxTurns,playerLevel,playerXP,gameMinutes,gameDay,playerName,operationName,lastTurnRegenAt,
-expenses,supplies,stable,crew,namedThugs,randomThugs,thugs:crew,ownedProperties,businesses,upgrades,tokens,
+purchasedTurnsToday,turnPurchaseWindowStart,expenses,supplies,stable,crew,namedThugs,randomThugs,thugs:crew,ownedProperties,businesses,upgrades,tokens,
 vehicleOwnership,activeVehicleType,weapons,armorOwned,armorDurability,armsDealerUnlocked,roanokeGiftReceived,borisGiftResolved,
 borisAttackPending,borisNightclubForSale,level4RivalResolved,storyStage,roanokeLessons,tabAttention,battleState,level2DiscordPromptShown,level4XPromptShown,level6DonatePromptShown,
 cocaineUseCountToday,cocaineConsecutiveUseCount,cocaineUsersToday,cocainePoliceEventTriggeredToday,
@@ -535,6 +544,9 @@ const saved=localStorage.getItem(SAVE_KEY);if(!saved) return false;
 try{
 const d=JSON.parse(saved);
 cash=d.cash??cash;turns=d.turns??turns;maxTurns=d.maxTurns??maxTurns;
+purchasedTurnsToday=Number.isFinite(Number(d.purchasedTurnsToday))?Math.max(0,Math.floor(Number(d.purchasedTurnsToday))):0;
+turnPurchaseWindowStart=Number.isFinite(Number(d.turnPurchaseWindowStart))?Number(d.turnPurchaseWindowStart):Date.now();
+if(Date.now()-turnPurchaseWindowStart>=TURN_PURCHASE_WINDOW_MS){purchasedTurnsToday=0;turnPurchaseWindowStart=Date.now();}
 playerLevel=d.playerLevel??playerLevel;playerXP=d.playerXP??playerXP;
 level2DiscordPromptShown=d.level2DiscordPromptShown??level2DiscordPromptShown;
 level4XPromptShown=d.level4XPromptShown??level4XPromptShown;
@@ -1088,8 +1100,8 @@ updateScreen();
 }
 function updateTabVisibility(){
 const p=document.getElementById("tabBtn-property"),b=document.getElementById("tabBtn-business"),bt=document.getElementById("tabBtn-battle");
-if(p)p.style.display=playerLevel>=6?"block":"none";
-if(b)b.style.display=playerLevel>=7?"block":"none";
+if(p)p.style.display=playerLevel>=3?"block":"none";
+if(b)b.style.display=playerLevel>=3?"block":"none";
 if(bt)bt.style.display=playerLevel>=5?"block":"none";
 }
 function updateScreen(){
@@ -1101,7 +1113,7 @@ renderActivityLog();renderProgress();renderStable();renderCrew();renderSupplies(
 renderIdentity();renderProperty();renderBusinesses();renderArmsDealer();renderSmokeShop();renderMarketplaceSpecials();
 renderVehicles();renderBattle();
 const strip=document.getElementById("stripClubLocationButton");
-if(strip){strip.style.display=playerLevel>=7&&hasBusiness("Strip Club")?"block":"none";}
+if(strip){strip.style.display=playerLevel>=3&&hasBusiness("Strip Club")?"block":"none";}
 }
 
 function renderProgress(){
@@ -1239,7 +1251,7 @@ return base+(hasBusiness("Auto Repair Shop")?AUTO_REPAIR_STORAGE_BONUS:0);
 function hasBusiness(name){return businesses.some(b=>b&&b.name===name)}
 function renderProperty(){
 const box=document.getElementById("propertyPanel"),sec=document.getElementById("propertySection");if(!box)return;
-if(playerLevel<6){box.innerHTML="";if(sec)sec.style.display="none";return} if(sec)sec.style.display="block";
+if(playerLevel<3){box.innerHTML="";if(sec)sec.style.display="none";return} if(sec)sec.style.display="block";
 const active=activeProperty();
 let html=`<div class="property-card"><strong>PROPERTY STATUS</strong><p>Owned: ${ownedProperties.length?ownedProperties.map(p=>p.name).join(", "):"None"}</p><p>Active property: <span class="highlight">${active?active.name:"None"}</span></p><p>Current capacity (from active property): ${propertyCapacity()===Infinity?"∞":propertyCapacity()} crew · ${vehicleStorageLimit()} vehicles</p><p class="tab-note">You can own several properties. Only the active one sets your capacity — switch anytime, nothing gets confiscated.</p></div>`;
 if(propertyStatusMessage)html+=`<div class="property-card"><p class="warning">${propertyStatusMessage}</p></div>`;
@@ -1250,13 +1262,13 @@ if(name==="Estate")extra='<p>Income: $0 · Repairs can cost up to $2,500, with 1
 html+=`<div class="property-card"><strong>${name}</strong>${isActive?' <span class="good">ACTIVE</span>':''}<p>$${d.price.toLocaleString()}</p><p>${d.info}</p>${extra}<p>Capacity: ${d.capacity===Infinity?"∞":d.capacity} crew · Vehicle storage: ${d.vehicles}</p>${owned?`<p class="good">OWNED</p>${!isActive?`<button onclick="setActiveProperty('${name}')">SET ACTIVE</button>`:""}${name==="Condo"?`<button onclick="toggleCondoSecurity()">${ownedProperty(name).securityActive?"DISABLE":"ACTIVATE"} PRIVATE SECURITY — $1,000 / 24H</button>`:""}`:`<button onclick="buyPropertyByName('${name}')">BUY — $${d.price.toLocaleString()}</button>`}</div>`;
 });box.innerHTML=html;
 }
-function buyPropertyByName(name){const d=PROPERTY_DATA[name];if(!d)return;if(ownedProperty(name)){log("[PROPERTY] Already own "+name);return}if(cash<d.price){log("[PROPERTY] Need $"+d.price.toLocaleString());return}cash-=d.price;ownedProperties.push({name,price:d.price,purchasedDay:gameDay,securityActive:false});if(!activePropertyName)activePropertyName=name;log("[PROPERTY] Bought "+name+".");markTabAttention("propertyTab");saveGame();updateScreen()}
+function buyPropertyByName(name){const d=PROPERTY_DATA[name];if(!d)return;if(playerLevel<3){log("[PROPERTY] Properties unlock at Level 3.");return}if(ownedProperty(name)){log("[PROPERTY] Already own "+name);return}if(cash<d.price){log("[PROPERTY] Need $"+d.price.toLocaleString());return}cash-=d.price;ownedProperties.push({name,price:d.price,purchasedDay:gameDay,securityActive:false});if(!activePropertyName)activePropertyName=name;log("[PROPERTY] Bought "+name+".");markTabAttention("propertyTab");saveGame();updateScreen()}
 function buyProperty(i){const names=Object.keys(PROPERTY_DATA);buyPropertyByName(names[i])}
 function toggleCondoSecurity(){const p=ownedProperty("Condo");if(!p)return;if(p.securityActive){p.securityActive=false;log("[PROPERTY] Condo security switched off.");}else{if(cash<1000){log("[PROPERTY] Need $1,000 for security.");return}cash-=1000;p.securityActive=true;log("[PROPERTY] Private security active for 24 hours.");}saveGame();updateScreen()}
 
 function renderBusinesses(){
 const box=document.getElementById("businessPanel"),sec=document.getElementById("businessSection");if(!box)return;
-if(playerLevel<7){box.innerHTML="";if(sec)sec.style.display="none";return} if(sec)sec.style.display="block";
+if(playerLevel<3){box.innerHTML="";if(sec)sec.style.display="none";return} if(sec)sec.style.display="block";
 let html="";
 if(!hasBusiness("Strip Club"))html+=`<div class="business-card"><strong>Strip Club</strong><p>$5,000</p><p>Gross: $1,000/24h · Op: $300 · Net: $700</p><p>Can attract new recruits.</p><button onclick="buyBusiness('Strip Club')">BUY — $5,000</button></div>`;
 if(!hasBusiness("Auto Repair Shop"))html+=`<div class="business-card"><strong>Auto Repair Shop</strong><p>Central vehicle-management location.</p><p>Gross: $700/24h · Op: $250 · Net: $450</p><p>Buying price is not specified in the current design notes, so this facility unlocks at Level 7 without an additional purchase charge.</p><button onclick="openAutoShop()">OPEN AUTO REPAIR SHOP</button></div>`;
@@ -1272,7 +1284,7 @@ html+=`<div class="business-card"><strong>${b.name}</strong>${b.name==="Massage 
 });
 box.innerHTML=html;
 }
-function buyBusiness(name){if(name!=="Strip Club")return;if(hasBusiness(name))return;if(cash<5000){log("[BUSINESS] Need $5,000.");return}cash-=5000;businesses.push({name:"Strip Club",gross:1000,operatingRate:0,operatingCost:300,net:700,ready:true,lastCollectionDay:gameDay-1,staff:0});log("[BUSINESS] Strip Club opened for $5,000.");saveGame();updateScreen()}
+function buyBusiness(name){if(playerLevel<3){log("[BUSINESS] Businesses unlock at Level 3.");return}if(name!=="Strip Club")return;if(hasBusiness(name))return;if(cash<5000){log("[BUSINESS] Need $5,000.");return}cash-=5000;businesses.push({name:"Strip Club",gross:1000,operatingRate:0,operatingCost:300,net:700,ready:true,lastCollectionDay:gameDay-1,staff:0});log("[BUSINESS] Strip Club opened for $5,000.");saveGame();updateScreen()}
 function openAutoShop(){if(hasBusiness("Auto Repair Shop"))return;businesses.push({name:"Auto Repair Shop",gross:700,operatingRate:0,operatingCost:250,net:450,ready:true,lastCollectionDay:gameDay-1});log("[BUSINESS] Auto Repair Shop is now operational.");saveGame();updateScreen()}
 function collectBusiness(i){const b=businesses[i];if(!b)return;if(Number(b.lastCollectionDay)===Number(gameDay)){log("[BUSINESS] Already collected.");return}const p=Number(b.net);if(!Number.isFinite(p)||p<=0)return;cash+=p;b.lastCollectionDay=gameDay;log("[BUSINESS PAYOUT] "+b.name+" paid you +$"+p.toLocaleString()+" for today.");saveGame();updateScreen()}
 
@@ -1362,10 +1374,17 @@ syncCrewState();saveGame();updateScreen();
 function renderSmokeShop(){
 const box=document.getElementById("smokeShopPanel");if(!box)return;
 const items=[{key:"weed",label:"Weed",price:50},{key:"beer",label:"Beer",price:20},{key:"cigarettes",label:"Cigarettes",price:15},{key:"condoms",label:"Condoms",price:expenses.condoms},{key:"medical",label:"Medical",price:expenses.medical},{key:"cocaine",label:"Coke",price:200}];
+const remainingTurnPurchases=Math.max(0,TURN_PURCHASE_LIMIT-purchasedTurnsToday);
 box.innerHTML=items.map(it=>`<div class="market-card"><strong>${it.label}</strong><p>Stock: ${supplies[it.key]||0} · $${it.price}</p><button onclick="buySupply('${it.key}')">BUY 1</button></div>`).join("")+
-`<div class="market-card"><strong>BUY EXTRA TURNS</strong><p>+10 playable turns · $3000</p><button onclick="buyTurnUpgrade()">BUY +10 TURNS</button></div>`;
+`<div class="market-card"><strong>BUY EXTRA TURNS</strong><p>+10 playable turns · $3000</p><p>Turn allowance remaining this 24-hour period: <strong>${remainingTurnPurchases}</strong></p><button onclick="buyTurnUpgrade()" ${remainingTurnPurchases<10||cash<3000?"disabled":""}>BUY +10 TURNS</button></div>`;
 }
-function buyTurnUpgrade(){if(cash<3000){log("[MARKET] Not enough cash.");return}cash-=3000;turns+=10;log("[MARKET] +10 playable turns.");saveGame();updateScreen()}
+function buyTurnUpgrade(){
+if(Date.now()-turnPurchaseWindowStart>=TURN_PURCHASE_WINDOW_MS){purchasedTurnsToday=0;turnPurchaseWindowStart=Date.now();}
+if(purchasedTurnsToday+10>TURN_PURCHASE_LIMIT){log("[MARKET] You can only buy 50 extra turns every 24 hours.");return}
+if(cash<3000){log("[MARKET] Not enough cash.");return}
+cash-=3000;turns+=10;purchasedTurnsToday+=10;
+log("[MARKET] +10 playable turns. Purchased "+purchasedTurnsToday+"/"+TURN_PURCHASE_LIMIT+" extra turns this 24-hour period.");
+saveGame();updateScreen()}
 function useToken(){if(tokens<=0){log("[TOKEN] None left.");return}if(turns>=maxTurns){log("[TOKEN] Turns full.");return}tokens--;turns=Math.min(maxTurns,turns+5);log("[TOKEN] +5 turns.");saveGame();updateScreen()}
 
 function weatherLabel(){return currentWeather==="rain"?"RAIN":currentWeather==="storm"?"STORM":"CLEAR"}
