@@ -1846,7 +1846,7 @@ if(armorOwned>0&&armorDurability>0)power+=20;return power;
 }
 function renderBattle(){
 const box=document.getElementById("battlePanel");if(!box)return;
-if(playerLevel<5){box.innerHTML='<div class="locked">Battle unlocks at Level 5.</div>';return}
+if(playerLevel<4){box.innerHTML='<div class="locked">Battle unlocks at Level 4.</div>';return}
 if(battleState){
 const armorLine=armorOwned>0?(armorDurability>0?`<span class="good">🛡 Armor protection: ${armorDurability}/${BODY_ARMOR_MAX_TURNS} battle turns remaining</span>`:`<span class="warning">⚠️ BODY ARMOR NEEDS ATTENTION — no protection remaining</span>`):`<span class="warning">⚠️ No body armor</span>`;
 box.innerHTML=`<div class="battle-status"><strong>${battleState.name}</strong><br>${battleState.enemy} · Enemy ${battleState.enemyPower} · You ${battlePower()}<br>${armorLine}</div>
@@ -1970,7 +1970,7 @@ if(estate&&((gameDay*1440+gameMinutes)-(lastEstateMishapDay*1440)>=6000)&&Math.r
 const condo=ownedProperty("Condo");if(condo&&condo.securityActive){condo.securityActive=false;log("[PROPERTY] Condo private security expired.");}
 }
 function processOfflineAttack(){
-if(playerLevel<5)return;
+if(playerLevel<4)return;
 const p=ownedProperty(activePropertyName)||(ownedProperties.length?ownedProperties[ownedProperties.length-1]:null);
 let chance=0.06;if(p){if(p.name==="Trailer Park")chance=0.18;if(p.name==="Condo")chance=p.securityActive?0.05:0.14;if(p.name==="Ranch")chance=0.01;if(p.name==="Estate")chance=0;}
 if(Math.random()>=chance)return;globalAttackCounter++;
