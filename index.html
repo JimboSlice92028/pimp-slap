@@ -49,6 +49,17 @@ button:disabled{background:#555;cursor:not-allowed}
 .condom-warning-buttons{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:20px}
 .condom-warning-button{margin-top:0;min-width:190px}
 .condom-market-button{background:#ffd36b;color:#111}
+
+.ambush-card{width:min(680px,100%);background:#1d1d1d;border:2px solid #ff6b6b;border-radius:16px;padding:28px;text-align:left;box-shadow:0 0 40px rgba(255,80,80,.28)}
+.ambush-card h2{border:0;margin-top:0;font-size:36px;color:#ff8a8a;text-align:center}
+.ambush-card p{font-size:18px;line-height:1.5;color:#ddd}
+.ambush-status{background:#242424;border-radius:10px;padding:12px;margin:16px 0}
+.ambush-options{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:20px}
+.ambush-options button{margin-top:0;min-height:54px}
+.ambush-fight{border-color:#ff6b6b}
+.ambush-pay{border-color:#ffd36b}
+.ambush-escape{border-color:#7cc7ff}
+@media(max-width:700px){.ambush-options{grid-template-columns:1fr}.ambush-card{padding:22px}}
 .age-gate-overlay{position:fixed;inset:0;background:rgba(0,0,0,.94);display:none;align-items:center;justify-content:center;z-index:20000;padding:20px;box-sizing:border-box}
 .age-gate-card{width:min(620px,100%);background:#1d1d1d;border:2px solid #ff4fa3;border-radius:16px;padding:30px;text-align:center;box-shadow:0 0 45px rgba(255,79,163,.35)}
 .age-gate-card h2{border:0;margin:0 0 18px;font-size:36px;color:#ff4fa3}
@@ -200,6 +211,19 @@ button:disabled{background:#555;cursor:not-allowed}
 </div>
 </div>
 
+<div id="ambushOverlay" class="levelup-overlay" style="display:none;z-index:17000;">
+<div class="ambush-card">
+<h2>🚨 STREET AMBUSH</h2>
+<p><strong>You got boxed in.</strong> A crew stepped out and wants your money, your people, or a fight.</p>
+<div class="ambush-status"><strong>They gave you three choices:</strong><br>Fight them, pay them off, or try to escape.</div>
+<div class="ambush-options">
+<button type="button" class="ambush-fight" onclick="ambushFight()">FIGHT</button>
+<button type="button" class="ambush-pay" id="ambushPayButton" onclick="ambushPayOff()">PAY OFF</button>
+<button type="button" class="ambush-escape" onclick="ambushEscape()">ESCAPE</button>
+</div>
+</div>
+</div>
+
 <div id="ageGateOverlay" class="age-gate-overlay">
 <div class="age-gate-card">
 <h2>PIMP-SLAP</h2>
@@ -309,6 +333,9 @@ let cash=500,turns=5,maxTurns=20,playerLevel=1,playerXP=0,gameMinutes=0,gameDay=
 let playerName="Pimp",operationName="The Operation",lastTurnRegenAt=Date.now();
 const SAVE_KEY="pimpSlapSave";
 let level2DiscordPromptShown=false,level4XPromptShown=false,level6DonatePromptShown=false;
+let streetCred=50,ambushesThisLevel=0,ambushState=null;
+const AMBUSH_MAX_PER_LEVEL=2;
+const AMBUSH_TRIGGER_CHANCE=0.12;
 const AGE_GATE_KEY="pimpSlapAgeGateAccepted";
 function showAgeGate(){
 const o=document.getElementById("ageGateOverlay");
@@ -525,7 +552,7 @@ expenses,supplies,stable,crew,namedThugs,randomThugs,thugs:crew,ownedProperties,
 vehicleOwnership,activeVehicleType,weapons,armorOwned,armorDurability,armsDealerUnlocked,roanokeGiftReceived,borisGiftResolved,
 borisAttackPending,borisNightclubForSale,level4RivalResolved,storyStage,roanokeLessons,tabAttention,battleState,level2DiscordPromptShown,level4XPromptShown,level6DonatePromptShown,
 cocaineUseCountToday,cocaineConsecutiveUseCount,cocaineUsersToday,cocainePoliceEventTriggeredToday,
-cocaineBribeEventTriggeredToday,unassignedThugMaintenance,activityLog,currentWeather,weatherDay,firstThreeBattles,globalAttackCounter,lastEstateMishapDay,lastRanchUpkeepDay,lastPropertyTaxDay,activePropertyName,activeRoanokeJob
+cocaineBribeEventTriggeredToday,unassignedThugMaintenance,activityLog,currentWeather,weatherDay,firstThreeBattles,globalAttackCounter,lastEstateMishapDay,lastRanchUpkeepDay,lastPropertyTaxDay,activePropertyName,activeRoanokeJob,streetCred,ambushesThisLevel,ambushState
 }));
 const s=document.getElementById("saveStatus");if(s) s.textContent="Game saved.";
 }
@@ -649,6 +676,9 @@ lastEstateMishapDay=Number.isFinite(Number(d.lastEstateMishapDay))?Number(d.last
 lastRanchUpkeepDay=Number.isFinite(Number(d.lastRanchUpkeepDay))?Number(d.lastRanchUpkeepDay):0;
 lastPropertyTaxDay=Number.isFinite(Number(d.lastPropertyTaxDay))?Number(d.lastPropertyTaxDay):0;
 activeRoanokeJob=(d.activeRoanokeJob&&typeof d.activeRoanokeJob==="object"&&typeof d.activeRoanokeJob.destination==="string"&&ROANOKE_JOBS_DATA[d.activeRoanokeJob.destination])?d.activeRoanokeJob:null;
+streetCred=Number.isFinite(Number(d.streetCred))?Math.max(0,Math.floor(Number(d.streetCred))):50;
+ambushesThisLevel=Number.isFinite(Number(d.ambushesThisLevel))?Math.max(0,Math.min(AMBUSH_MAX_PER_LEVEL,Math.floor(Number(d.ambushesThisLevel)))):0;
+ambushState=(d.ambushState&&typeof d.ambushState==="object")?d.ambushState:null;
 if(!Array.isArray(stable)) stable=[];if(!Array.isArray(crew)) crew=[];
 normalizeCrew();
 if(playerLevel>=3){
@@ -842,7 +872,7 @@ function addXP(amount){
 amount=Math.max(0,Math.floor(Number(amount)||0));
 playerXP+=amount;
 while(playerXP>=xpNeeded()){
-playerXP-=xpNeeded();playerLevel++;
+playerXP-=xpNeeded();playerLevel++;ambushesThisLevel=0;ambushState=null;
 // Level-up turn bonus respects maxTurns but never reduces turns already above it (e.g. purchased turns).
 const before=turns;if(turns<maxTurns)turns=Math.min(maxTurns,turns+3);const gained=turns-before;
 log("[LEVEL UP] Level "+playerLevel+".");
@@ -1106,7 +1136,7 @@ if(strip){strip.style.display=playerLevel>=7&&hasBusiness("Strip Club")?"block":
 
 function renderProgress(){
 const box=document.getElementById("progress");if(!box)return;
-box.innerHTML=`<div><b>${playerName}</b></div><div>Operation: <b>${operationName}</b></div><div style="margin-top:8px;">Level: <span class="highlight">${playerLevel}</span></div><div>XP: ${playerXP} / ${xpNeeded()}</div>`;
+box.innerHTML=`<div><b>${playerName}</b></div><div>Operation: <b>${operationName}</b></div><div style="margin-top:8px;">Level: <span class="highlight">${playerLevel}</span></div><div>XP: ${playerXP} / ${xpNeeded()}</div><div style="margin-top:8px;">Street Cred: <span class="highlight">${streetCred}</span></div>`;
 }
 function renderSupplies(){
 const box=document.getElementById("supplies");if(!box)return;
@@ -1524,6 +1554,79 @@ if(required>0)supplies.condoms=Math.max(0,(Number(supplies.condoms)||0)-required
 return required;
 }
 
+function ambushEligibility(){
+return playerLevel>=6&&totalOrganizationSize()>=10&&totalOwnedVehicles()>=1&&cash>=10000&&ambushesThisLevel<AMBUSH_MAX_PER_LEVEL&&!ambushState;
+}
+function maybeTriggerAmbush(){
+if(!ambushEligibility())return false;
+if(Math.random()>=AMBUSH_TRIGGER_CHANCE)return false;
+const demand=Math.floor(Math.random()*1501)+1500;
+ambushesThisLevel++;
+ambushState={demand,level:playerLevel};
+log("🚨 [AMBUSH] A street crew boxed you in. You have three choices.");
+saveGame();
+showAmbushPopup();
+return true;
+}
+function showAmbushPopup(){
+const o=document.getElementById("ambushOverlay");if(!o||!ambushState)return;
+const b=document.getElementById("ambushPayButton");
+if(b)b.textContent="PAY OFF — $"+Number(ambushState.demand||0).toLocaleString();
+o.style.display="flex";
+}
+function closeAmbushPopup(){const o=document.getElementById("ambushOverlay");if(o)o.style.display="none";}
+function resolveAmbushState(){ambushState=null;closeAmbushPopup();saveGame();updateScreen();}
+function ambushEscape(){
+if(!ambushState)return;
+streetCred=Math.max(0,streetCred-10);
+log("🚨 [AMBUSH] You escaped. Street Cred -10.");
+document.getElementById("encounter").innerHTML="<strong>STREET AMBUSH</strong><br>You got away, but word will travel.<br><br><span class='warning'>Street Cred -10</span>";
+resolveAmbushState();
+}
+function ambushPayOff(){
+if(!ambushState)return;
+const cost=Math.min(Math.max(0,Number(ambushState.demand)||0),Math.max(0,cash));
+if(cash<cost){log("[AMBUSH] You cannot afford the payoff.");return;}
+cash-=cost;
+log("🚨 [AMBUSH] You paid off the crew and walked away. -$"+cost.toLocaleString()+".");
+document.getElementById("encounter").innerHTML="<strong>STREET AMBUSH</strong><br>You paid them off and got out clean.<br><br><span class='warning'>-$"+cost.toLocaleString()+"</span>";
+resolveAmbushState();
+}
+function ambushFight(){
+if(!ambushState)return;
+const win=Math.random()<0.25;
+if(win){
+const reward=Math.floor(Math.random()*2501)+7500;
+ cash+=reward;
+ addXP(3);
+ crew.forEach(m=>m.morale=Math.min(100,(m.morale??50)+5));
+ log("🔥 [AMBUSH] VICTORY — +$"+reward.toLocaleString()+" and +3 XP.");
+ let vehicleWon=false;
+ if(totalOwnedVehicles()<vehicleStorageLimit()&&Math.random()<0.30){
+   const pool=VEHICLE_TYPES.filter(t=>t&&!t.unique&&t.cost>0);
+   if(pool.length){
+     const t=pool[Math.floor(Math.random()*pool.length)];
+     const condition=Math.floor(Math.random()*41)+50;
+     const rec=vehicleOwnership[t.name];
+     if(!rec)vehicleOwnership[t.name]={owned:1,condition,upgradeLevel:0,speedBonus:0,reliabilityBonus:0};
+     else{rec.condition=Math.round((rec.condition*rec.owned+condition)/(rec.owned+1));rec.owned++;}
+     vehicleWon=true;
+     log("🎁 [AMBUSH] You also took a vehicle: "+t.name+" ("+condition+"% condition).");
+     markTabAttention("vehiclesTab");
+   }
+ }
+ document.getElementById("encounter").innerHTML="<strong>STREET AMBUSH — VICTORY</strong><br>You won the fight.<br><br><span class='good'>+$"+reward.toLocaleString()+"</span> · +3 XP"+(vehicleWon?"<br><br><span class='good'>A vehicle was added to the garage.</span>":"");
+}else{
+ const cap=Math.min(Math.floor(Math.max(cash,0)*0.20),500);
+ const loss=cap>0?(Math.floor(Math.random()*cap)+1):0;
+ cash=Math.max(0,cash-loss);
+ crew.forEach(m=>m.morale=Math.max(0,(m.morale??50)-8));
+ log("🚨 [AMBUSH] LOSS — -$"+loss.toLocaleString()+". The crew forced you to pay the price of the fight.");
+ document.getElementById("encounter").innerHTML="<strong>STREET AMBUSH — LOSS</strong><br>The fight went bad.<br><br><span class='warning'>-$"+loss.toLocaleString()+" · Crew morale -8</span>";
+}
+resolveAmbushState();
+}
+
 function getReadyWorkers(limit){return stable.filter(w=>w&&w.condition>WORKER_WORK_READY_CONDITION&&!isWorkerJailed(w)).slice(0,limit)}
 function processLocationTrip(place,workers,individual=false){
 if(!workers||!workers.length){log("[TRIP] No workers ready.");return false}
@@ -1541,6 +1644,7 @@ addXP(individual?8:15);
 const roll=Math.random();
 if(place==="Strip Club"){if(roll<0.40)recruitWorkers(place,3,true);else if(roll<0.68)crewEncounter(place);else if(roll<0.82)randomEvent(place)}
 else if(roll<0.20)recruitWorkers(place,Math.floor(Math.random()*2)+1,false);else if(roll<0.35)crewEncounter(place);else if(roll<0.50)randomEvent(place);
+maybeTriggerAmbush();
 }
 function getWorkerByIndex(i){i=Number(i);if(!Number.isInteger(i)||i<0||i>=stable.length)return null;return stable[i]}
 function sendWorker(i){
@@ -1875,6 +1979,7 @@ function bootGame(){
 const loaded=loadGame();
 if(loaded)log("[SAVE] Previous game loaded.");else startOpeningStory();
 updateScreen();
+if(ambushState&&ambushState.level===playerLevel)setTimeout(showAmbushPopup,250);
 
 const TURN_REGEN_MS=13*60*1000;
 function applyTurnRegeneration(){
