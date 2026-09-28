@@ -333,6 +333,7 @@ let cash=500,turns=5,maxTurns=20,playerLevel=1,playerXP=0,gameMinutes=0,gameDay=
 let playerName="Pimp",operationName="The Operation",lastTurnRegenAt=Date.now();
 let lastTurnActivityAt=Date.now();
 let turnPurchaseWindowStart=Date.now(),turnsPurchasedInWindow=0;
+let turnPurchaseHistory=[];
 const TURN_REGEN_MS=5*60*1000;
 const TURN_REGEN_AMOUNT=3;
 const TURN_IDLE_RESET_MS=24*60*60*1000;
@@ -555,7 +556,7 @@ function isInjured(m){return m&&Number(m.injuredUntilDay)>Number(gameDay)}
 function saveGame(){
 syncCrewState();
 localStorage.setItem(SAVE_KEY,JSON.stringify({
-cash,turns,maxTurns,playerLevel,playerXP,gameMinutes,gameDay,playerName,operationName,lastTurnRegenAt,lastTurnActivityAt,turnPurchaseWindowStart,turnsPurchasedInWindow,
+cash,turns,maxTurns,playerLevel,playerXP,gameMinutes,gameDay,playerName,operationName,lastTurnRegenAt,lastTurnActivityAt,turnPurchaseWindowStart,turnsPurchasedInWindow,turnPurchaseHistory,
 expenses,supplies,stable,crew,namedThugs,randomThugs,thugs:crew,ownedProperties,businesses,upgrades,tokens,
 vehicleOwnership,activeVehicleType,weapons,armorOwned,armorDurability,armsDealerUnlocked,roanokeGiftReceived,borisGiftResolved,
 borisAttackPending,borisNightclubForSale,level4RivalResolved,storyStage,roanokeLessons,tabAttention,battleState,level2DiscordPromptShown,level4XPromptShown,level6DonatePromptShown,
@@ -583,6 +584,15 @@ if(!Number.isFinite(lastTurnActivityAt)||lastTurnActivityAt<=0) lastTurnActivity
 turnPurchaseWindowStart=d.turnPurchaseWindowStart??lastTurnActivityAt;
 if(!Number.isFinite(turnPurchaseWindowStart)||turnPurchaseWindowStart<=0) turnPurchaseWindowStart=lastTurnActivityAt;
 turnsPurchasedInWindow=Math.max(0,Math.floor(Number(d.turnsPurchasedInWindow)||0));
+turnPurchaseHistory=Array.isArray(d.turnPurchaseHistory)?d.turnPurchaseHistory.map(x=>Number(x)).filter(Number.isFinite):[];
+const purchaseCutoff=Date.now()-TURN_PURCHASE_WINDOW_MS;
+turnPurchaseHistory=turnPurchaseHistory.filter(t=>t>purchaseCutoff);
+if(!turnPurchaseHistory.length&&turnsPurchasedInWindow>0){
+  const legacyBatches=Math.ceil(turnsPurchasedInWindow/10);
+  turnPurchaseHistory=Array.from({length:legacyBatches},()=>Date.now());
+}
+turnsPurchasedInWindow=turnPurchaseHistory.reduce((sum)=>sum+10,0);
+turnPurchaseWindowStart=turnPurchaseHistory.length?Math.min(...turnPurchaseHistory):Date.now();
 expenses=d.expenses??expenses;expenses.cigarettes=15;expenses.weed=50;expenses.beer=20;expenses.cocaine=200;
 supplies=d.supplies??supplies;stable=d.stable??stable;
 // Crew: prefer d.crew, fall back to legacy d.thugs, then legacy d.crewMembers.
@@ -1408,16 +1418,28 @@ function renderSmokeShop(){
 const box=document.getElementById("smokeShopPanel");if(!box)return;
 const items=[{key:"weed",label:"Weed",price:50},{key:"beer",label:"Beer",price:20},{key:"cigarettes",label:"Cigarettes",price:15},{key:"condoms",label:"Condoms",price:expenses.condoms},{key:"medical",label:"Medical",price:expenses.medical},{key:"cocaine",label:"Coke",price:200}];
 box.innerHTML=items.map(it=>`<div class="market-card"><strong>${it.label}</strong><p>Stock: ${supplies[it.key]||0} · $${it.price}</p><button onclick="buySupply('${it.key}')">BUY 1</button></div>`).join("")+
-`<div class="market-card"><strong>BUY EXTRA TURNS</strong><p>+10 playable turns · $3000</p><p><strong>24-hour purchase limit:</strong> ${turnsPurchasedInWindow}/${TURN_PURCHASE_DAILY_CAP} turns purchased</p><button onclick="buyTurnUpgrade()" ${turnsPurchasedInWindow+10>TURN_PURCHASE_DAILY_CAP?"disabled":""}>BUY +10 TURNS</button></div>`;
+`<div class="market-card"><strong>BUY EXTRA TURNS</strong><p>+10 playable turns · $3000</p><p><strong>Rolling 24-hour purchase limit:</strong> ${getTurnPurchaseCount()}/${TURN_PURCHASE_DAILY_CAP} turns purchased</p><button onclick="buyTurnUpgrade()" ${getTurnPurchaseCount()+10>TURN_PURCHASE_DAILY_CAP?"disabled":""}>BUY +10 TURNS</button></div>`;
+}
+function getTurnPurchaseCount(){
+const cutoff=Date.now()-TURN_PURCHASE_WINDOW_MS;
+turnPurchaseHistory=turnPurchaseHistory.filter(t=>Number.isFinite(Number(t))&&Number(t)>cutoff);
+turnsPurchasedInWindow=turnPurchaseHistory.length*10;
+turnPurchaseWindowStart=turnPurchaseHistory.length?Math.min(...turnPurchaseHistory):Date.now();
+return turnsPurchasedInWindow;
 }
 function buyTurnUpgrade(){
 const now=Date.now();
-if(now-turnPurchaseWindowStart>=TURN_PURCHASE_WINDOW_MS){turnPurchaseWindowStart=now;turnsPurchasedInWindow=0;}
-if(turnsPurchasedInWindow+10>TURN_PURCHASE_DAILY_CAP){log("[MARKET] 24-hour turn purchase limit reached: 50 turns.");saveGame();updateScreen();return}
+const purchased=getTurnPurchaseCount();
+if(purchased+10>TURN_PURCHASE_DAILY_CAP){
+  log("[MARKET] Rolling 24-hour turn purchase limit reached: 50 turns. Wait until an earlier purchase expires.");
+  saveGame();updateScreen();return;
+}
 if(cash<3000){log("[MARKET] Not enough cash.");return}
 lastTurnActivityAt=now;
-cash-=3000;turns+=10;turnsPurchasedInWindow+=10;
-log("[MARKET] +10 playable turns. Purchased this 24-hour period: "+turnsPurchasedInWindow+"/"+TURN_PURCHASE_DAILY_CAP+".");
+cash-=3000;turns+=10;
+turnPurchaseHistory.push(now);
+turnsPurchasedInWindow=getTurnPurchaseCount();
+log("[MARKET] +10 playable turns. Purchased in the rolling 24-hour period: "+turnsPurchasedInWindow+"/"+TURN_PURCHASE_DAILY_CAP+".");
 saveGame();updateScreen();
 }
 function useToken(){if(tokens<=0){log("[TOKEN] None left.");return}tokens--;lastTurnActivityAt=Date.now();turns+=5;log("[TOKEN] +5 turns.");saveGame();updateScreen()}
