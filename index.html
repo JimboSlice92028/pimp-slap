@@ -94,6 +94,9 @@ button:disabled{background:#555;cursor:not-allowed}
 .home-supplies{grid-column:2;grid-row:2}
 .home-progress{grid-column:1/-1;grid-row:3}
 .tab-note{color:#aaa;margin:0 0 15px}
+.roanoke-notice{background:#2a2110;border:1px solid #ffd36b;border-left:4px solid #ffd36b;color:#ffd36b;border-radius:7px;padding:10px;margin-top:8px;font-size:14px;line-height:1.45}
+button.roanoke-blocked{background:#b8860b;box-shadow:0 0 0 3px rgba(255,211,107,.45)}
+button.roanoke-blocked:hover{background:#d19a10}
 @media (max-width:1000px){.tab-bar{grid-template-columns:repeat(3,1fr)}}
 @media (max-width:900px){.stats{grid-template-columns:repeat(3,1fr)}}
 @media (max-width:800px){.tab-bar{grid-template-columns:repeat(2,1fr)}}
@@ -143,7 +146,8 @@ button:disabled{background:#555;cursor:not-allowed}
 <button onclick="visitLocation('Hotel')">SEND GROUP TO HOTEL</button>
 <button id="stripClubLocationButton" style="display:none;" onclick="visitLocation('Strip Club')">SEND GROUP TO STRIP CLUB</button>
 <h2>Roanoke</h2>
-<button onclick="callRoanoke()">CALL ROANOKE — $100</button>
+<button id="callRoanokeButton" onclick="callRoanoke()">CALL ROANOKE — $100</button>
+<div id="roanokeGateNotice" class="roanoke-notice" style="display:none;"></div>
 </div>
 <div class="panel home-encounter" style="margin-top:0;">
 <h2>Current Encounter</h2>
@@ -368,8 +372,11 @@ let roanokeGiftReceived=false,borisGiftResolved=false,borisGiftPopupScheduled=fa
 let borisAttackPending=false,borisNightclubForSale=false;
 let level4RivalResolved=false,level4RivalPopupScheduled=false;
 let storyStage=0,roanokeLessons=0,tabAttention={},armsDealerUnlocked=false;
-// Active Roanoke job: {destination} or null. One job at a time; cleared on completion.
+// Active Roanoke job: {destination,crewRequired} or null. One job at a time; cleared on completion.
+// (Jobs saved before crew/vehicle requirements existed have no crewRequired and are never gated.)
 let activeRoanokeJob=null;
+// Pending Roanoke job the player isn't equipped for yet: {destination} or null. Calls are free while it is set.
+let roanokeGate=null;
 let weapons={"AR-69":0,"AK-67":0,"Revolver":0,".420 Semi-Auto":0,"Sawed-Off Shotgun":0};
 const BODY_ARMOR_MAX_TURNS=5;
 let armorOwned=0,armorDurability=0,battleState=null,activityLog=[];
@@ -470,6 +477,74 @@ const dests=["Hotel","The Bar","Downtown"];
 if(playerLevel>=3&&hasBusiness("Strip Club"))dests.push("Strip Club");
 return dests;
 }
+function pickRoanokeDestination(){const d=getAvailableRoanokeDestinations();return d[Math.floor(Math.random()*d.length)]}
+
+// ROANOKE JOB REQUIREMENTS (people + vehicles)
+// Each new job needs N people and enough seats to move all N. Any mix of owned, working vehicles counts
+// (dry-only cars drop out in rain/storm). People come from crew first (active crew, unassigned and
+// named thugs who aren't jailed/injured), then from ready stable workers. It scales with player level:
+// Level 4 -> 3 people (one car), then +1.5 per level, capped at 40.
+function roanokeCrewRequired(level){const l=Math.max(4,Number(level)||4);return Math.min(40,3+Math.floor((l-4)*1.5))}
+// Returns the people/seats a job needs, or null for jobs saved before requirements existed (never gated).
+function roanokeJobNeed(job){const n=job?Number(job.crewRequired):NaN;return Number.isFinite(n)&&n>0?Math.floor(n):null}
+function roanokeUsableSeatList(){
+const seats=[];
+VEHICLE_TYPES.forEach(t=>{
+if(!t)return;
+const r=vehicleOwnership[t.name];
+if(!r||ownedCountOf(t.name)<=0||Number(r.condition)<=0)return;
+if(t.weather==="dry"&&currentWeather!=="clear")return;
+for(let i=0;i<ownedCountOf(t.name);i++)seats.push(Number(t.capacity)||0);
+});
+return seats.sort((a,b)=>b-a);
+}
+function roanokeAvailablePeople(){
+const list=[];
+crew.forEach(m=>{if(m&&!isJailActive(m)&&!isInjured(m))list.push({kind:"crew",name:m.name})});
+for(let i=0;i<randomThugs;i++)list.push({kind:"crew",name:"Unassigned Thug"});
+namedThugs.forEach(t=>{if(t)list.push({kind:"crew",name:t.name})});
+stable.forEach(w=>{if(w&&w.condition>WORKER_WORK_READY_CONDITION&&!isWorkerJailed(w))list.push({kind:"stable",name:w.name})});
+return list;
+}
+function checkRoanokeRequirements(need){
+const people=roanokeAvailablePeople().length;
+const seatList=roanokeUsableSeatList();
+const seats=seatList.reduce((a,b)=>a+b,0);
+let run=0,vehiclesNeeded=0;
+for(const c of seatList){if(run>=need)break;run+=c;vehiclesNeeded++}
+return{ok:people>=need&&seats>=need,need,people,seats,vehiclesNeeded:run>=need?vehiclesNeeded:null,missingPeople:Math.max(0,need-people),missingSeats:Math.max(0,need-seats)};
+}
+function describeRoanokeShortfall(c){
+const parts=[];
+if(c.missingPeople>0)parts.push(c.missingPeople+" more ready "+(c.missingPeople===1?"person":"people")+" (crew or stable)");
+if(c.missingSeats>0)parts.push(c.missingSeats+" more seat"+(c.missingSeats===1?"":"s")+" in working vehicles");
+return parts.join(" and ");
+}
+function assembleRoanokeTeam(need){
+const team=roanokeAvailablePeople().slice(0,need);
+const stableCount=team.filter(p=>p.kind==="stable").length;
+return{names:team.map(p=>p.name),crewCount:team.length-stableCount,stableCount};
+}
+// Live notice state: only shows while a pending/active Roanoke job is not yet covered.
+function roanokeNoticeState(){
+let need=null,dest=null,active=false;
+if(activeRoanokeJob){need=roanokeJobNeed(activeRoanokeJob);dest=activeRoanokeJob.destination;active=true}
+else if(roanokeGate){need=roanokeCrewRequired(playerLevel);dest=roanokeGate.destination}
+if(need===null)return null;
+const c=checkRoanokeRequirements(need);
+return c.ok?null:{c,dest,active};
+}
+function renderRoanokeGate(){
+const btn=document.getElementById("callRoanokeButton"),box=document.getElementById("roanokeGateNotice");
+if(!btn||!box)return;
+const st=roanokeNoticeState();
+if(!st){btn.textContent="CALL ROANOKE — $100";btn.classList.remove("roanoke-blocked");box.style.display="none";box.innerHTML="";return}
+const c=st.c;
+btn.textContent=st.active?"❗ CALL ROANOKE — JOB WAITING":"❗ CALL ROANOKE — FREE WHILE YOU PREPARE";
+btn.classList.add("roanoke-blocked");
+box.style.display="block";
+box.innerHTML="<strong>⚠️ ROANOKE'S JOB — "+st.dest+"</strong><br>Needs "+c.need+" people and "+c.need+" seats.<br>You have "+c.people+" ready · "+c.seats+" seats.<br>Still need: "+describeRoanokeShortfall(c)+".<br><small>Crew fill in first, then stable. Any mix of working vehicles counts."+(st.active?"":" Calls are free until you're ready.")+"</small>";
+}
 
 function normalizeCrew(){
 if(!Array.isArray(crew)) crew=[];
@@ -534,7 +609,7 @@ purchasedTurnsToday,turnPurchaseWindowStart,expenses,supplies,stable,crew,namedT
 vehicleOwnership,activeVehicleType,weapons,armorOwned,armorDurability,armsDealerUnlocked,roanokeGiftReceived,borisGiftResolved,
 borisAttackPending,borisNightclubForSale,level4RivalResolved,storyStage,roanokeLessons,tabAttention,battleState,level2DiscordPromptShown,level4XPromptShown,level6DonatePromptShown,
 cocaineUseCountToday,cocaineConsecutiveUseCount,cocaineUsersToday,cocainePoliceEventTriggeredToday,
-cocaineBribeEventTriggeredToday,unassignedThugMaintenance,activityLog,currentWeather,weatherDay,firstThreeBattles,globalAttackCounter,lastEstateMishapDay,lastRanchUpkeepDay,lastPropertyTaxDay,activePropertyName,activeRoanokeJob
+cocaineBribeEventTriggeredToday,unassignedThugMaintenance,activityLog,currentWeather,weatherDay,firstThreeBattles,globalAttackCounter,lastEstateMishapDay,lastRanchUpkeepDay,lastPropertyTaxDay,activePropertyName,activeRoanokeJob,roanokeGate
 }));
 const s=document.getElementById("saveStatus");if(s) s.textContent="Game saved.";
 }
@@ -661,6 +736,7 @@ lastEstateMishapDay=Number.isFinite(Number(d.lastEstateMishapDay))?Number(d.last
 lastRanchUpkeepDay=Number.isFinite(Number(d.lastRanchUpkeepDay))?Number(d.lastRanchUpkeepDay):0;
 lastPropertyTaxDay=Number.isFinite(Number(d.lastPropertyTaxDay))?Number(d.lastPropertyTaxDay):0;
 activeRoanokeJob=(d.activeRoanokeJob&&typeof d.activeRoanokeJob==="object"&&typeof d.activeRoanokeJob.destination==="string"&&ROANOKE_JOBS_DATA[d.activeRoanokeJob.destination])?d.activeRoanokeJob:null;
+roanokeGate=(d.roanokeGate&&typeof d.roanokeGate==="object"&&typeof d.roanokeGate.destination==="string"&&ROANOKE_JOBS_DATA[d.roanokeGate.destination])?{destination:d.roanokeGate.destination}:null;
 if(!Array.isArray(stable)) stable=[];if(!Array.isArray(crew)) crew=[];
 normalizeCrew();
 if(playerLevel>=3){
@@ -1111,7 +1187,7 @@ setText("gameTime","Day "+gameDay+" — "+formatGameTime(gameMinutes));
 setText("stable-count",stable.length);setText("crew-count",totalOrganizationSize());setText("player-level",playerLevel);
 renderActivityLog();renderProgress();renderStable();renderCrew();renderSupplies();
 renderIdentity();renderProperty();renderBusinesses();renderArmsDealer();renderSmokeShop();renderMarketplaceSpecials();
-renderVehicles();renderBattle();
+renderVehicles();renderBattle();renderRoanokeGate();
 const strip=document.getElementById("stripClubLocationButton");
 if(strip){strip.style.display=playerLevel>=3&&hasBusiness("Strip Club")?"block":"none";}
 }
@@ -1560,6 +1636,7 @@ addXP(individual?8:15);
 const roll=Math.random();
 if(place==="Strip Club"){if(roll<0.40)recruitWorkers(place,3,true);else if(roll<0.68)crewEncounter(place);else if(roll<0.82)randomEvent(place)}
 else if(roll<0.20)recruitWorkers(place,Math.floor(Math.random()*2)+1,false);else if(roll<0.35)crewEncounter(place);else if(roll<0.50)randomEvent(place);
+return true;
 }
 function getWorkerByIndex(i){i=Number(i);if(!Number.isInteger(i)||i<0||i>=stable.length)return null;return stable[i]}
 function sendWorker(i){
@@ -1597,14 +1674,27 @@ saveGame();updateScreen();
 }
 // Fires only when the destination visited matches the active Roanoke job. Awards the payout once,
 // logs the completion line into the existing Activity Log, then clears the job so it can't repeat.
+// Jobs that carry a crewRequired must still have their people and seats when you arrive; jobs saved
+// before requirements existed (no crewRequired) complete exactly as they always did.
 function checkRoanokeJobCompletion(place){
 if(!activeRoanokeJob)return;
 if(activeRoanokeJob.destination!==place)return;
 const jobData=ROANOKE_JOBS_DATA[activeRoanokeJob.destination];
+if(!jobData){activeRoanokeJob=null;return}
+const need=roanokeJobNeed(activeRoanokeJob);
+let team=null;
+if(need!==null){
+const check=checkRoanokeRequirements(need);
+if(!check.ok){
+log("[ROANOKE] Boss, you showed up at "+place+" and you're not ready — short "+describeRoanokeShortfall(check)+". The job is still open. Come back when you're ready.");
+return;
+}
+team=assembleRoanokeTeam(need);
+}
 activeRoanokeJob=null;
-if(!jobData)return;
 const payout=Math.floor(Math.random()*(jobData.payoutMax-jobData.payoutMin+1))+jobData.payoutMin;
 cash+=payout;
+if(team)log("[ROANOKE] Team on the job: "+team.crewCount+" crew"+(team.stableCount?" + "+team.stableCount+" from the stable":"")+" ("+team.names.join(", ")+").");
 const msg=jobData.completionTemplate.replace("%AMOUNT%",payout.toLocaleString());
 log("[ROANOKE] "+msg);
 addXP(10);
@@ -1652,6 +1742,30 @@ if(activeRoanokeJob){
 log("[ROANOKE] Boss, I already put you on something. Handle that job before you call me again.");
 return;
 }
+// Job calls (Level 4+, rival resolved, past the tutorial call) have crew + vehicle gatekeepers that scale
+// with player level. Until they're met, calls are free (no charge, no XP) and Roanoke says to come back.
+const nextIsJob=playerLevel>=4&&level4RivalResolved&&(roanokeLessons+1)!==1;
+if(nextIsJob){
+const destination=(roanokeGate&&getAvailableRoanokeDestinations().includes(roanokeGate.destination))?roanokeGate.destination:pickRoanokeDestination();
+const jobData=ROANOKE_JOBS_DATA[destination];
+const check=checkRoanokeRequirements(roanokeCrewRequired(playerLevel));
+if(!check.ok){
+roanokeGate={destination};
+document.getElementById("encounter").innerHTML="<strong>ROANOKE</strong><br>"+jobData.message+"<br><br><span class='warning'>Needs "+check.need+" people and "+check.need+" seats. Short: "+describeRoanokeShortfall(check)+".</span><br>Come back when you're ready. No charge until then.";
+log("[ROANOKE] "+jobData.message);
+log("[ROANOKE] You're not ready — short "+describeRoanokeShortfall(check)+". Come back when you're ready. No charge for calls while you sort it out.");
+saveGame();updateScreen();
+return;
+}
+if(cash<100){log("[ROANOKE] Need $100.");return}
+cash-=100;roanokeLessons++;addXP(4);
+activeRoanokeJob={destination,crewRequired:check.need};
+roanokeGate=null;
+document.getElementById("encounter").innerHTML="<strong>ROANOKE</strong><br>"+jobData.message+"<br><br>Team needed: "+check.need+" people ("+(check.vehiclesNeeded||1)+" vehicle"+((check.vehiclesNeeded||1)===1?"":"s")+" minimum). Crew first, then stable — I'll pull them automatically.";
+log("[ROANOKE] "+jobData.message+" Needs "+check.need+" people and seats for all of them. -$100.");
+saveGame();updateScreen();
+return;
+}
 if(cash<100){log("[ROANOKE] Need $100.");return}cash-=100;roanokeLessons++;addXP(4);
 let messages;
 if(playerLevel>=4&&!level4RivalResolved){
@@ -1673,17 +1787,7 @@ messages=["You are getting noticed. Be wary of rivals.","Keep your people close.
 messages=["More money, more problems.","Make sure people are strapped. Look at the Arms Dealer.","The Strip Club draws different blood."];
 markTabAttention("marketplaceTab");
 }else{
-// Generic case: instead of a random flavor line, Roanoke now hands out an actual job
-// pointing at a real destination. Reward comes from ROANOKE_JOBS_DATA once the player
-// visits that destination via the existing visitLocation() flow.
-const dests=getAvailableRoanokeDestinations();
-const destination=dests[Math.floor(Math.random()*dests.length)];
-const jobData=ROANOKE_JOBS_DATA[destination];
-activeRoanokeJob={destination};
-document.getElementById("encounter").innerHTML="<strong>ROANOKE</strong><br>"+jobData.message;
-log("[ROANOKE] "+jobData.message+" -$100.");
-saveGame();updateScreen();
-return;
+messages=["Keep your head down.","Stay ready."];
 }
 const msg=messages[Math.floor(Math.random()*messages.length)];
 document.getElementById("encounter").innerHTML="<strong>ROANOKE</strong><br>"+msg;
