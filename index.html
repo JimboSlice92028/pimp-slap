@@ -49,17 +49,6 @@ button:disabled{background:#555;cursor:not-allowed}
 .condom-warning-buttons{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:20px}
 .condom-warning-button{margin-top:0;min-width:190px}
 .condom-market-button{background:#ffd36b;color:#111}
-
-.ambush-card{width:min(680px,100%);background:#1d1d1d;border:2px solid #ff6b6b;border-radius:16px;padding:28px;text-align:left;box-shadow:0 0 40px rgba(255,80,80,.28)}
-.ambush-card h2{border:0;margin-top:0;font-size:36px;color:#ff8a8a;text-align:center}
-.ambush-card p{font-size:18px;line-height:1.5;color:#ddd}
-.ambush-status{background:#242424;border-radius:10px;padding:12px;margin:16px 0}
-.ambush-options{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:20px}
-.ambush-options button{margin-top:0;min-height:54px}
-.ambush-fight{border-color:#ff6b6b}
-.ambush-pay{border-color:#ffd36b}
-.ambush-escape{border-color:#7cc7ff}
-@media(max-width:700px){.ambush-options{grid-template-columns:1fr}.ambush-card{padding:22px}}
 .age-gate-overlay{position:fixed;inset:0;background:rgba(0,0,0,.94);display:none;align-items:center;justify-content:center;z-index:20000;padding:20px;box-sizing:border-box}
 .age-gate-card{width:min(620px,100%);background:#1d1d1d;border:2px solid #ff4fa3;border-radius:16px;padding:30px;text-align:center;box-shadow:0 0 45px rgba(255,79,163,.35)}
 .age-gate-card h2{border:0;margin:0 0 18px;font-size:36px;color:#ff4fa3}
@@ -134,7 +123,7 @@ button:disabled{background:#555;cursor:not-allowed}
 <button id="tabBtn-business" class="tab-button" onclick="showTab('businessTab')" style="display:none;">BUSINESSES</button>
 <button id="tabBtn-vehicles" class="tab-button" onclick="showTab('vehiclesTab')">VEHICLES</button>
 <button id="tabBtn-marketplace" class="tab-button" onclick="showTab('marketplaceTab')">MARKETPLACE</button>
-<button id="tabBtn-more" class="tab-button" onclick="showTab('moreTab')">SOCIALS &amp; MORE</button>
+<button id="tabBtn-more" class="tab-button" onclick="showTab('moreTab')">MORE</button>
 <button id="tabBtn-battle" class="tab-button" onclick="showTab('battleTab')" style="display:none;">BATTLE</button>
 </div>
 
@@ -181,32 +170,19 @@ button:disabled{background:#555;cursor:not-allowed}
 <div class="panel"><h2>Smoke Shop</h2><p class="tab-note">No turns used to shop.</p><div id="smokeShopPanel"></div></div>
 <div class="panel" style="margin-top:20px;"><h2>Special Services</h2><p class="tab-note">No turns or XP are used for these purchases. They cost cash only.</p><div id="marketSpecialsPanel"></div></div>
 <div id="marketArmsSection" class="panel" style="margin-top:20px;display:none;"><h2>Arms Dealer</h2><div id="marketArmsPanel"></div></div>
-<div class="panel" style="margin-top:20px;">
-<h2>Support the Developer</h2>
-<p class="tab-note">If you are enjoying Pimp-Slap, you can support development here.</p>
-<a href="https://venmo.com/u/Sirius-Smooth" target="_blank" rel="noopener noreferrer" style="display:block;text-align:center;text-decoration:none;"><button type="button">SUPPORT THE DEVELOPER — VENMO</button></a>
-</div>
 </div>
 <div id="moreTab" class="tab-panel">
 <div id="identitySection" class="panel" style="display:none;"><h2>Identity</h2><div id="identityPanel"></div></div>
-<div class="panel" style="margin-top:20px;">
-<h2>Socials</h2>
-<p class="tab-note">Follow Pimp-Slap The Game and join the community.</p>
-<div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
-<a href="https://discord.gg/FM3Qvb4gU6" target="_blank" rel="noopener noreferrer" style="text-decoration:none;"><button type="button">DISCORD</button></a>
-<a href="https://x.com/pimpslapgame" target="_blank" rel="noopener noreferrer" style="text-decoration:none;"><button type="button">X — @pimpslapgame</button></a>
-</div>
-</div>
-<div class="panel" style="margin-top:20px;">
-<h2>Support The Developer</h2>
-<p class="tab-note">Tips go to the developer.</p>
-<a href="https://venmo.com/u/Sirius-Smooth" target="_blank" rel="noopener noreferrer" style="display:block;text-align:center;text-decoration:none;"><button type="button">DONATE ON VENMO</button></a>
-</div>
 <div class="panel" style="margin-top:20px;">
 <h2>Game Save</h2>
 <div>Auto-saves in this browser.</div>
 <button onclick="manualSave()">SAVE GAME</button>
 <button onclick="resetGame()">START NEW GAME</button>
+</div>
+<div class="panel" style="margin-top:20px;">
+<h2>Support The Developer</h2>
+<p class="tab-note">Tips go to the developer.</p>
+<a href="https://venmo.com/u/Sirius-Smooth" target="_blank" rel="noopener noreferrer" style="display:block;text-align:center;text-decoration:none;"><button type="button">DONATE ON VENMO</button></a>
 </div>
 </div>
 </div>
@@ -220,19 +196,6 @@ button:disabled{background:#555;cursor:not-allowed}
 <div class="condom-warning-buttons">
 <button type="button" class="condom-warning-button condom-market-button" onclick="goToMarketplaceForCondoms()">GO TO MARKETPLACE</button>
 <button type="button" class="condom-warning-button" onclick="closeCondomWarning()">CLOSE</button>
-</div>
-</div>
-</div>
-
-<div id="ambushOverlay" class="levelup-overlay" style="display:none;z-index:17000;">
-<div class="ambush-card">
-<h2>🚨 STREET AMBUSH</h2>
-<p><strong>You got boxed in.</strong> A crew stepped out and wants your money, your people, or a fight.</p>
-<div class="ambush-status"><strong>They gave you three choices:</strong><br>Fight them, pay them off, or try to escape.</div>
-<div class="ambush-options">
-<button type="button" class="ambush-fight" onclick="ambushFight()">FIGHT</button>
-<button type="button" class="ambush-pay" id="ambushPayButton" onclick="ambushPayOff()">PAY OFF</button>
-<button type="button" class="ambush-escape" onclick="ambushEscape()">ESCAPE</button>
 </div>
 </div>
 </div>
@@ -344,20 +307,8 @@ button:disabled{background:#555;cursor:not-allowed}
 <script>
 let cash=500,turns=5,maxTurns=20,playerLevel=1,playerXP=0,gameMinutes=0,gameDay=1;
 let playerName="Pimp",operationName="The Operation",lastTurnRegenAt=Date.now();
-let lastTurnActivityAt=Date.now();
-let turnPurchaseWindowStart=Date.now(),turnsPurchasedInWindow=0;
-let turnPurchaseHistory=[];
-const TURN_REGEN_MS=5*60*1000;
-const TURN_REGEN_AMOUNT=3;
-const TURN_IDLE_RESET_MS=24*60*60*1000;
-const TURN_PURCHASE_WINDOW_MS=24*60*60*1000;
-const TURN_PURCHASE_DAILY_CAP=50;
 const SAVE_KEY="pimpSlapSave";
 let level2DiscordPromptShown=false,level4XPromptShown=false,level6DonatePromptShown=false;
-let streetCred=50,ambushesThisLevel=0,ambushEligibleTripsThisLevel=0,ambushState=null;
-const AMBUSH_MAX_PER_LEVEL=2;
-const AMBUSH_TRIGGER_CHANCE=0.35;
-const AMBUSH_PITY_TRIPS=4;
 const AGE_GATE_KEY="pimpSlapAgeGateAccepted";
 function showAgeGate(){
 const o=document.getElementById("ageGateOverlay");
@@ -382,7 +333,7 @@ const r=document.getElementById("ageRejectOverlay");
 if(r)r.style.display="flex";
 }
 let expenses={condoms:50,medical:75,cigarettes:15,weed:50,beer:20,cocaine:200};
-let supplies={condoms:200,medical:5,cigarettes:10,weed:5,beer:10,cocaine:2};
+let supplies={condoms:10,medical:5,cigarettes:10,weed:5,beer:10,cocaine:2};
 let stable=[{name:"Maya",condition:82,charm:72,assigned:true,assignmentEligible:true},{name:"Tasha",condition:91,charm:65,assigned:true,assignmentEligible:true},{name:"Jenny",condition:74,charm:81,assigned:true,assignmentEligible:true}];
 let crew=[],namedThugs=[],randomThugs=0;
 const CREW_CAPACITY=100;
@@ -569,12 +520,12 @@ function isInjured(m){return m&&Number(m.injuredUntilDay)>Number(gameDay)}
 function saveGame(){
 syncCrewState();
 localStorage.setItem(SAVE_KEY,JSON.stringify({
-cash,turns,maxTurns,playerLevel,playerXP,gameMinutes,gameDay,playerName,operationName,lastTurnRegenAt,lastTurnActivityAt,turnPurchaseWindowStart,turnsPurchasedInWindow,turnPurchaseHistory,
+cash,turns,maxTurns,playerLevel,playerXP,gameMinutes,gameDay,playerName,operationName,lastTurnRegenAt,
 expenses,supplies,stable,crew,namedThugs,randomThugs,thugs:crew,ownedProperties,businesses,upgrades,tokens,
 vehicleOwnership,activeVehicleType,weapons,armorOwned,armorDurability,armsDealerUnlocked,roanokeGiftReceived,borisGiftResolved,
 borisAttackPending,borisNightclubForSale,level4RivalResolved,storyStage,roanokeLessons,tabAttention,battleState,level2DiscordPromptShown,level4XPromptShown,level6DonatePromptShown,
 cocaineUseCountToday,cocaineConsecutiveUseCount,cocaineUsersToday,cocainePoliceEventTriggeredToday,
-cocaineBribeEventTriggeredToday,unassignedThugMaintenance,activityLog,currentWeather,weatherDay,firstThreeBattles,globalAttackCounter,lastEstateMishapDay,lastRanchUpkeepDay,lastPropertyTaxDay,activePropertyName,activeRoanokeJob,streetCred,ambushesThisLevel,ambushEligibleTripsThisLevel,ambushState
+cocaineBribeEventTriggeredToday,unassignedThugMaintenance,activityLog,currentWeather,weatherDay,firstThreeBattles,globalAttackCounter,lastEstateMishapDay,lastRanchUpkeepDay,lastPropertyTaxDay,activePropertyName,activeRoanokeJob
 }));
 const s=document.getElementById("saveStatus");if(s) s.textContent="Game saved.";
 }
@@ -592,20 +543,6 @@ gameMinutes=d.gameMinutes??gameMinutes;gameDay=d.gameDay??gameDay;
 playerName=d.playerName??playerName;operationName=d.operationName??operationName;
 lastTurnRegenAt=d.lastTurnRegenAt??lastTurnRegenAt;
 if(!Number.isFinite(lastTurnRegenAt)||lastTurnRegenAt<=0) lastTurnRegenAt=Date.now();
-lastTurnActivityAt=d.lastTurnActivityAt??lastTurnRegenAt;
-if(!Number.isFinite(lastTurnActivityAt)||lastTurnActivityAt<=0) lastTurnActivityAt=lastTurnRegenAt;
-turnPurchaseWindowStart=d.turnPurchaseWindowStart??lastTurnActivityAt;
-if(!Number.isFinite(turnPurchaseWindowStart)||turnPurchaseWindowStart<=0) turnPurchaseWindowStart=lastTurnActivityAt;
-turnsPurchasedInWindow=Math.max(0,Math.floor(Number(d.turnsPurchasedInWindow)||0));
-turnPurchaseHistory=Array.isArray(d.turnPurchaseHistory)?d.turnPurchaseHistory.map(x=>Number(x)).filter(Number.isFinite):[];
-const purchaseCutoff=Date.now()-TURN_PURCHASE_WINDOW_MS;
-turnPurchaseHistory=turnPurchaseHistory.filter(t=>t>purchaseCutoff);
-if(!turnPurchaseHistory.length&&turnsPurchasedInWindow>0){
-  const legacyBatches=Math.ceil(turnsPurchasedInWindow/10);
-  turnPurchaseHistory=Array.from({length:legacyBatches},()=>Date.now());
-}
-turnsPurchasedInWindow=turnPurchaseHistory.reduce((sum)=>sum+10,0);
-turnPurchaseWindowStart=turnPurchaseHistory.length?Math.min(...turnPurchaseHistory):Date.now();
 expenses=d.expenses??expenses;expenses.cigarettes=15;expenses.weed=50;expenses.beer=20;expenses.cocaine=200;
 supplies=d.supplies??supplies;stable=d.stable??stable;
 // Crew: prefer d.crew, fall back to legacy d.thugs, then legacy d.crewMembers.
@@ -712,10 +649,6 @@ lastEstateMishapDay=Number.isFinite(Number(d.lastEstateMishapDay))?Number(d.last
 lastRanchUpkeepDay=Number.isFinite(Number(d.lastRanchUpkeepDay))?Number(d.lastRanchUpkeepDay):0;
 lastPropertyTaxDay=Number.isFinite(Number(d.lastPropertyTaxDay))?Number(d.lastPropertyTaxDay):0;
 activeRoanokeJob=(d.activeRoanokeJob&&typeof d.activeRoanokeJob==="object"&&typeof d.activeRoanokeJob.destination==="string"&&ROANOKE_JOBS_DATA[d.activeRoanokeJob.destination])?d.activeRoanokeJob:null;
-streetCred=Number.isFinite(Number(d.streetCred))?Math.max(0,Math.floor(Number(d.streetCred))):50;
-ambushesThisLevel=Number.isFinite(Number(d.ambushesThisLevel))?Math.max(0,Math.min(AMBUSH_MAX_PER_LEVEL,Math.floor(Number(d.ambushesThisLevel)))):0;
-ambushEligibleTripsThisLevel=Number.isFinite(Number(d.ambushEligibleTripsThisLevel))?Math.max(0,Math.floor(Number(d.ambushEligibleTripsThisLevel))):0;
-ambushState=(d.ambushState&&typeof d.ambushState==="object")?d.ambushState:null;
 if(!Array.isArray(stable)) stable=[];if(!Array.isArray(crew)) crew=[];
 normalizeCrew();
 if(playerLevel>=3){
@@ -909,9 +842,9 @@ function addXP(amount){
 amount=Math.max(0,Math.floor(Number(amount)||0));
 playerXP+=amount;
 while(playerXP>=xpNeeded()){
-playerXP-=xpNeeded();playerLevel++;ambushesThisLevel=0;ambushEligibleTripsThisLevel=0;ambushState=null;
+playerXP-=xpNeeded();playerLevel++;
 // Level-up turn bonus respects maxTurns but never reduces turns already above it (e.g. purchased turns).
-const before=turns;turns+=3;const gained=turns-before;
+const before=turns;if(turns<maxTurns)turns=Math.min(maxTurns,turns+3);const gained=turns-before;
 log("[LEVEL UP] Level "+playerLevel+".");
 if(gained>0)log("[LEVEL UP] +"+gained+" turn"+(gained===1?"":"s")+".");
 showLevelUpPopup();
@@ -1128,7 +1061,6 @@ saveGame();
 
 function useTurn(){
 if(turns<=0){log("[TURN] You're out of turns.");return false}
-lastTurnActivityAt=Date.now();
 turns--;
 if(borisAttackPending){resolveBorisAttack();saveGame();updateScreen();return false}
 saveGame();updateScreen();return true;
@@ -1157,8 +1089,8 @@ updateScreen();
 function updateTabVisibility(){
 const p=document.getElementById("tabBtn-property"),b=document.getElementById("tabBtn-business"),bt=document.getElementById("tabBtn-battle");
 if(p)p.style.display=playerLevel>=6?"block":"none";
-if(b)b.style.display=playerLevel>=3?"block":"none";
-if(bt)bt.style.display=playerLevel>=3?"block":"none";
+if(b)b.style.display=playerLevel>=7?"block":"none";
+if(bt)bt.style.display=playerLevel>=5?"block":"none";
 }
 function updateScreen(){
 syncCrewState();normalizeStable();updateTabVisibility();updateTabAttention();
@@ -1174,7 +1106,7 @@ if(strip){strip.style.display=playerLevel>=7&&hasBusiness("Strip Club")?"block":
 
 function renderProgress(){
 const box=document.getElementById("progress");if(!box)return;
-box.innerHTML=`<div><b>${playerName}</b></div><div>Operation: <b>${operationName}</b></div><div style="margin-top:8px;">Level: <span class="highlight">${playerLevel}</span></div><div>XP: ${playerXP} / ${xpNeeded()}</div><div style="margin-top:8px;">Street Cred: <span class="highlight">${streetCred}</span></div>`;
+box.innerHTML=`<div><b>${playerName}</b></div><div>Operation: <b>${operationName}</b></div><div style="margin-top:8px;">Level: <span class="highlight">${playerLevel}</span></div><div>XP: ${playerXP} / ${xpNeeded()}</div>`;
 }
 function renderSupplies(){
 const box=document.getElementById("supplies");if(!box)return;
@@ -1431,31 +1363,10 @@ function renderSmokeShop(){
 const box=document.getElementById("smokeShopPanel");if(!box)return;
 const items=[{key:"weed",label:"Weed",price:50},{key:"beer",label:"Beer",price:20},{key:"cigarettes",label:"Cigarettes",price:15},{key:"condoms",label:"Condoms",price:expenses.condoms},{key:"medical",label:"Medical",price:expenses.medical},{key:"cocaine",label:"Coke",price:200}];
 box.innerHTML=items.map(it=>`<div class="market-card"><strong>${it.label}</strong><p>Stock: ${supplies[it.key]||0} · $${it.price}</p><button onclick="buySupply('${it.key}')">BUY 1</button></div>`).join("")+
-`<div class="market-card"><strong>BUY EXTRA TURNS</strong><p>+10 playable turns · $3000</p><p><strong>Rolling 24-hour purchase limit:</strong> ${getTurnPurchaseCount()}/${TURN_PURCHASE_DAILY_CAP} turns purchased</p><button onclick="buyTurnUpgrade()" ${getTurnPurchaseCount()+10>TURN_PURCHASE_DAILY_CAP?"disabled":""}>BUY +10 TURNS</button></div>`;
+`<div class="market-card"><strong>BUY EXTRA TURNS</strong><p>+10 playable turns · $3000</p><button onclick="buyTurnUpgrade()">BUY +10 TURNS</button></div>`;
 }
-function getTurnPurchaseCount(){
-const cutoff=Date.now()-TURN_PURCHASE_WINDOW_MS;
-turnPurchaseHistory=turnPurchaseHistory.filter(t=>Number.isFinite(Number(t))&&Number(t)>cutoff);
-turnsPurchasedInWindow=turnPurchaseHistory.length*10;
-turnPurchaseWindowStart=turnPurchaseHistory.length?Math.min(...turnPurchaseHistory):Date.now();
-return turnsPurchasedInWindow;
-}
-function buyTurnUpgrade(){
-const now=Date.now();
-const purchased=getTurnPurchaseCount();
-if(purchased+10>TURN_PURCHASE_DAILY_CAP){
-  log("[MARKET] Rolling 24-hour turn purchase limit reached: 50 turns. Wait until an earlier purchase expires.");
-  saveGame();updateScreen();return;
-}
-if(cash<3000){log("[MARKET] Not enough cash.");return}
-lastTurnActivityAt=now;
-cash-=3000;turns+=10;
-turnPurchaseHistory.push(now);
-turnsPurchasedInWindow=getTurnPurchaseCount();
-log("[MARKET] +10 playable turns. Purchased in the rolling 24-hour period: "+turnsPurchasedInWindow+"/"+TURN_PURCHASE_DAILY_CAP+".");
-saveGame();updateScreen();
-}
-function useToken(){if(tokens<=0){log("[TOKEN] None left.");return}tokens--;lastTurnActivityAt=Date.now();turns+=5;log("[TOKEN] +5 turns.");saveGame();updateScreen()}
+function buyTurnUpgrade(){if(cash<3000){log("[MARKET] Not enough cash.");return}cash-=3000;turns+=10;log("[MARKET] +10 playable turns.");saveGame();updateScreen()}
+function useToken(){if(tokens<=0){log("[TOKEN] None left.");return}if(turns>=maxTurns){log("[TOKEN] Turns full.");return}tokens--;turns=Math.min(maxTurns,turns+5);log("[TOKEN] +5 turns.");saveGame();updateScreen()}
 
 function weatherLabel(){return currentWeather==="rain"?"RAIN":currentWeather==="storm"?"STORM":"CLEAR"}
 function rollWeather(){if(weatherDay===gameDay)return;weatherDay=gameDay;const r=Math.random();currentWeather=r<0.18?"rain":r<0.23?"storm":"clear";log("[WEATHER] Conditions changed: "+weatherLabel()+".")}
@@ -1613,82 +1524,6 @@ if(required>0)supplies.condoms=Math.max(0,(Number(supplies.condoms)||0)-required
 return required;
 }
 
-function ambushEligibility(){
-return playerLevel>=6&&totalOrganizationSize()>=10&&totalOwnedVehicles()>=1&&cash>=10000&&ambushesThisLevel<AMBUSH_MAX_PER_LEVEL&&!ambushState;
-}
-function maybeTriggerAmbush(){
-if(!ambushEligibility())return false;
-ambushEligibleTripsThisLevel++;
-const pityReady=ambushEligibleTripsThisLevel>=AMBUSH_PITY_TRIPS;
-const roll=Math.random();
-if(!pityReady&&roll>=AMBUSH_TRIGGER_CHANCE)return false;
-const demand=Math.floor(Math.random()*1501)+1500;
-ambushesThisLevel++;
-ambushState={demand,level:playerLevel};
-log("🚨 [AMBUSH] A street crew boxed you in. You have three choices.");
-saveGame();
-showAmbushPopup();
-return true;
-}
-function showAmbushPopup(){
-const o=document.getElementById("ambushOverlay");if(!o||!ambushState)return;
-const b=document.getElementById("ambushPayButton");
-if(b)b.textContent="PAY OFF — $"+Number(ambushState.demand||0).toLocaleString();
-o.style.display="flex";
-}
-function closeAmbushPopup(){const o=document.getElementById("ambushOverlay");if(o)o.style.display="none";}
-function resolveAmbushState(){ambushState=null;closeAmbushPopup();saveGame();updateScreen();}
-function ambushEscape(){
-if(!ambushState)return;
-streetCred=Math.max(0,streetCred-10);
-log("🚨 [AMBUSH] You escaped. Street Cred -10.");
-document.getElementById("encounter").innerHTML="<strong>STREET AMBUSH</strong><br>You got away, but word will travel.<br><br><span class='warning'>Street Cred -10</span>";
-resolveAmbushState();
-}
-function ambushPayOff(){
-if(!ambushState)return;
-const cost=Math.min(Math.max(0,Number(ambushState.demand)||0),Math.max(0,cash));
-if(cash<cost){log("[AMBUSH] You cannot afford the payoff.");return;}
-cash-=cost;
-log("🚨 [AMBUSH] You paid off the crew and walked away. -$"+cost.toLocaleString()+".");
-document.getElementById("encounter").innerHTML="<strong>STREET AMBUSH</strong><br>You paid them off and got out clean.<br><br><span class='warning'>-$"+cost.toLocaleString()+"</span>";
-resolveAmbushState();
-}
-function ambushFight(){
-if(!ambushState)return;
-const win=Math.random()<0.25;
-if(win){
-const reward=Math.floor(Math.random()*2501)+7500;
- cash+=reward;
- addXP(3);
- crew.forEach(m=>m.morale=Math.min(100,(m.morale??50)+5));
- log("🔥 [AMBUSH] VICTORY — +$"+reward.toLocaleString()+" and +3 XP.");
- let vehicleWon=false;
- if(totalOwnedVehicles()<vehicleStorageLimit()&&Math.random()<0.30){
-   const pool=VEHICLE_TYPES.filter(t=>t&&!t.unique&&t.cost>0);
-   if(pool.length){
-     const t=pool[Math.floor(Math.random()*pool.length)];
-     const condition=Math.floor(Math.random()*41)+50;
-     const rec=vehicleOwnership[t.name];
-     if(!rec)vehicleOwnership[t.name]={owned:1,condition,upgradeLevel:0,speedBonus:0,reliabilityBonus:0};
-     else{rec.condition=Math.round((rec.condition*rec.owned+condition)/(rec.owned+1));rec.owned++;}
-     vehicleWon=true;
-     log("🎁 [AMBUSH] You also took a vehicle: "+t.name+" ("+condition+"% condition).");
-     markTabAttention("vehiclesTab");
-   }
- }
- document.getElementById("encounter").innerHTML="<strong>STREET AMBUSH — VICTORY</strong><br>You won the fight.<br><br><span class='good'>+$"+reward.toLocaleString()+"</span> · +3 XP"+(vehicleWon?"<br><br><span class='good'>A vehicle was added to the garage.</span>":"");
-}else{
- const cap=Math.min(Math.floor(Math.max(cash,0)*0.20),500);
- const loss=cap>0?(Math.floor(Math.random()*cap)+1):0;
- cash=Math.max(0,cash-loss);
- crew.forEach(m=>m.morale=Math.max(0,(m.morale??50)-8));
- log("🚨 [AMBUSH] LOSS — -$"+loss.toLocaleString()+". The crew forced you to pay the price of the fight.");
- document.getElementById("encounter").innerHTML="<strong>STREET AMBUSH — LOSS</strong><br>The fight went bad.<br><br><span class='warning'>-$"+loss.toLocaleString()+" · Crew morale -8</span>";
-}
-resolveAmbushState();
-}
-
 function getReadyWorkers(limit){return stable.filter(w=>w&&w.condition>WORKER_WORK_READY_CONDITION&&!isWorkerJailed(w)).slice(0,limit)}
 function processLocationTrip(place,workers,individual=false){
 if(!workers||!workers.length){log("[TRIP] No workers ready.");return false}
@@ -1706,7 +1541,6 @@ addXP(individual?8:15);
 const roll=Math.random();
 if(place==="Strip Club"){if(roll<0.40)recruitWorkers(place,3,true);else if(roll<0.68)crewEncounter(place);else if(roll<0.82)randomEvent(place)}
 else if(roll<0.20)recruitWorkers(place,Math.floor(Math.random()*2)+1,false);else if(roll<0.35)crewEncounter(place);else if(roll<0.50)randomEvent(place);
-maybeTriggerAmbush();
 }
 function getWorkerByIndex(i){i=Number(i);if(!Number.isInteger(i)||i<0||i>=stable.length)return null;return stable[i]}
 function sendWorker(i){
@@ -1846,7 +1680,7 @@ if(armorOwned>0&&armorDurability>0)power+=20;return power;
 }
 function renderBattle(){
 const box=document.getElementById("battlePanel");if(!box)return;
-if(playerLevel<3){box.innerHTML='<div class="locked">Battle unlocks at Level 3.</div>';return}
+if(playerLevel<5){box.innerHTML='<div class="locked">Battle unlocks at Level 5.</div>';return}
 if(battleState){
 const armorLine=armorOwned>0?(armorDurability>0?`<span class="good">🛡 Armor protection: ${armorDurability}/${BODY_ARMOR_MAX_TURNS} battle turns remaining</span>`:`<span class="warning">⚠️ BODY ARMOR NEEDS ATTENTION — no protection remaining</span>`):`<span class="warning">⚠️ No body armor</span>`;
 box.innerHTML=`<div class="battle-status"><strong>${battleState.name}</strong><br>${battleState.enemy} · Enemy ${battleState.enemyPower} · You ${battlePower()}<br>${armorLine}</div>
@@ -1970,7 +1804,7 @@ if(estate&&((gameDay*1440+gameMinutes)-(lastEstateMishapDay*1440)>=6000)&&Math.r
 const condo=ownedProperty("Condo");if(condo&&condo.securityActive){condo.securityActive=false;log("[PROPERTY] Condo private security expired.");}
 }
 function processOfflineAttack(){
-if(playerLevel<4)return;
+if(playerLevel<5)return;
 const p=ownedProperty(activePropertyName)||(ownedProperties.length?ownedProperties[ownedProperties.length-1]:null);
 let chance=0.06;if(p){if(p.name==="Trailer Park")chance=0.18;if(p.name==="Condo")chance=p.securityActive?0.05:0.14;if(p.name==="Ranch")chance=0.01;if(p.name==="Estate")chance=0;}
 if(Math.random()>=chance)return;globalAttackCounter++;
@@ -2041,28 +1875,16 @@ function bootGame(){
 const loaded=loadGame();
 if(loaded)log("[SAVE] Previous game loaded.");else startOpeningStory();
 updateScreen();
-if(ambushState&&ambushState.level===playerLevel)setTimeout(showAmbushPopup,250);
 
+const TURN_REGEN_MS=13*60*1000;
 function applyTurnRegeneration(){
 const now=Date.now();
-if(!Number.isFinite(lastTurnActivityAt)||lastTurnActivityAt<=0) lastTurnActivityAt=now;
-if(now-lastTurnActivityAt>=TURN_IDLE_RESET_MS){
-turns=20;
-lastTurnRegenAt=now;
-lastTurnActivityAt=now;
-turnPurchaseWindowStart=now;
-turnsPurchasedInWindow=0;
-log("[TIME] 24 hours idle — turns reset to 20. Use them or lose them.");
-saveGame();updateScreen();return;
-}
 if(!Number.isFinite(lastTurnRegenAt)||lastTurnRegenAt<=0){lastTurnRegenAt=now;return}
 const intervals=Math.floor((now-lastTurnRegenAt)/TURN_REGEN_MS);if(intervals<=0)return;
-lastTurnRegenAt+=intervals*TURN_REGEN_MS;
-gameMinutes+=intervals*5;
-const old=turns;turns+=intervals*TURN_REGEN_AMOUNT;
-if(turns>old)log("[TIME] +"+(turns-old)+" turns. (+3 every 5 minutes)");
+lastTurnRegenAt+=intervals*TURN_REGEN_MS;gameMinutes+=intervals*13;
+const old=turns;if(turns<maxTurns)turns=Math.min(maxTurns,turns+intervals*3);
+if(turns>old)log("[TIME] +"+ (turns-old) +" turns.");
 while(gameMinutes>=1440){gameMinutes-=1440;gameDay++;log("[DAY "+gameDay+"] New day.");payDailyExpenses()}
-if(now-turnPurchaseWindowStart>=TURN_PURCHASE_WINDOW_MS){turnPurchaseWindowStart=now;turnsPurchasedInWindow=0;}
 if(playerLevel>=3&&!roanokeGiftReceived)receiveRoanokeGift();
 saveGame();updateScreen();
 }
