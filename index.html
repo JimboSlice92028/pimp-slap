@@ -190,6 +190,16 @@ button.roanoke-blocked:hover{background:#d19a10}
 <a href="mailto:pimpslapgame@gmail.com" target="_blank" rel="noopener noreferrer" style="display:block;text-align:center;text-decoration:none;"><button type="button" style="background:#5865f2;">EMAIL SUPPORT</button></a>
 </div>
 <div class="panel" style="margin-top:20px;">
+<h2>Support The Developer</h2>
+<p class="tab-note">Tips go to the developer.</p>
+<a href="https://venmo.com/u/Sirius-Smooth" target="_blank" rel="noopener noreferrer" style="display:block;text-align:center;text-decoration:none;"><button type="button">DONATE ON VENMO</button></a>
+</div>
+<div class="panel" style="margin-top:20px;">
+<h2>New Player Guide</h2>
+<p class="tab-note">You can safely explore the tabs without spending turns. Use the Home tab to send workers, Stable to manage workers, Crew to manage your organization, and Marketplace to buy supplies and upgrades.</p>
+<p class="tab-note"><strong>Turns:</strong> work and travel use turns. Rest, maintenance, shopping, saving, and changing tabs do not.</p>
+</div>
+<div class="panel" style="margin-top:20px;">
 <h2>Game Save</h2>
 <div>Auto-saves in this browser.</div>
 <button onclick="manualSave()">SAVE GAME</button>
@@ -352,7 +362,7 @@ let stable=[{name:"Maya",condition:82,charm:72,assigned:true,assignmentEligible:
 let crew=[],namedThugs=[],randomThugs=0;
 const CREW_CAPACITY=100;
 function currentCrewCapacity(){return ownedProperty("Trailer Park")?Infinity:CREW_CAPACITY}
-function hasTrailerPark(){return !!ownedProperty("Trailer Park")}
+
 const ASSIGNED_THUG_MAINTENANCE_PREMIUM=0.025;
 const MAX_OFFLINE_PROTECTION=5;
 const UNASSIGNED_THUG_MAINTENANCE_RECOVERY={beer:15,weed:30,cigarettes:10,cocaine:50};
@@ -954,7 +964,7 @@ markTabAttention("businessTab");
 document.getElementById("encounter").innerHTML="<strong>ROANOKE</strong><br>\"You have enough moving parts now. Let some of them make money while you are somewhere else.\"<br><br>The Strip Club and Auto Repair Shop are now available.";
 }
 if(playerLevel===6){
-markTabAttention("propertyTab");log("[STORY] Property ownership is now available.");
+markTabAttention("propertyTab");log("[STORY] Property ownership is now available from Level 3.");
 }
 if(playerLevel===4){
 log("[STORY] The temperature on the street just changed.");
@@ -1149,6 +1159,8 @@ saveGame();
 }
 
 function useTurn(){
+// SINGLE TURN CONSUMPTION POINT: callers should not decrement turns separately.
+
 if(turns<=0){log("[TURN] You're out of turns.");return false}
 turns--;
 if(borisAttackPending){resolveBorisAttack();saveGame();updateScreen();return false}
@@ -1167,6 +1179,10 @@ btn.dataset.baseLabel=base;btn.textContent=tabAttention[id]?"❗ "+base:base;
 });
 }
 function showTab(tabId){
+const tabButtonId={homeTab:"tabBtn-home",stableTab:"tabBtn-stable",crewTab:"tabBtn-crew",propertyTab:"tabBtn-property",businessTab:"tabBtn-business",vehiclesTab:"tabBtn-vehicles",marketplaceTab:"tabBtn-marketplace",moreTab:"tabBtn-more",battleTab:"tabBtn-battle"}[tabId];
+const tabButton=tabButtonId?document.getElementById(tabButtonId):null;
+if(tabButton && getComputedStyle(tabButton).display==="none"){tabId="homeTab";}
+
 clearTabAttention(tabId);
 document.querySelectorAll(".tab-panel").forEach(t=>t.classList.remove("active"));
 const t=document.getElementById(tabId);if(t)t.classList.add("active");
@@ -1179,6 +1195,7 @@ function updateTabVisibility(){
 const p=document.getElementById("tabBtn-property"),b=document.getElementById("tabBtn-business"),bt=document.getElementById("tabBtn-battle");
 if(p)p.style.display=playerLevel>=3?"block":"none";
 if(b)b.style.display=playerLevel>=3?"block":"none";
+const autoShopButton=document.getElementById("autoShopButton");if(autoShopButton)autoShopButton.style.display=playerLevel>=7?"inline-block":"none";
 if(bt)bt.style.display=playerLevel>=5?"block":"none";
 }
 function updateScreen(){
@@ -1193,16 +1210,26 @@ const strip=document.getElementById("stripClubLocationButton");
 if(strip){strip.style.display=playerLevel>=3&&hasBusiness("Strip Club")?"block":"none";}
 }
 
+
+function escapeHtml(value){
+  return String(value ?? "")
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#39;");
+}
+
 function renderProgress(){
 const box=document.getElementById("progress");if(!box)return;
-box.innerHTML=`<div><b>${playerName}</b></div><div>Operation: <b>${operationName}</b></div><div style="margin-top:8px;">Level: <span class="highlight">${playerLevel}</span></div><div>XP: ${playerXP} / ${xpNeeded()}</div>`;
+box.innerHTML=`<div><b>${escapeHtml(playerName)}</b></div><div>Operation: <b>${operationName}</b></div><div style="margin-top:8px;">Level: <span class="highlight">${playerLevel}</span></div><div>XP: ${playerXP} / ${xpNeeded()}</div>`;
 }
 function renderSupplies(){
 const box=document.getElementById("supplies");if(!box)return;
 box.innerHTML=`<div class="supply-item">Condoms: ${supplies.condoms}</div><div class="supply-item">Medical: ${supplies.medical}</div><div class="supply-item">Cigarettes: ${supplies.cigarettes}</div><div class="supply-item">Weed: ${supplies.weed}</div><div class="supply-item">Beer: ${supplies.beer}</div><div class="supply-item">Cocaine: ${supplies.cocaine}</div>`;
 }
 function renderStable(){
-const box=document.getElementById("stable");if(!box)return;box.innerHTML="";
+const box=document.getElementById("stable");if(!box)return;box.innerHTML="";box.insertAdjacentHTML("beforeend",'<div class="muted" style="margin:6px 0 10px;">Work uses 1 turn. Rest and supplies do not.</div>');
 stable.forEach((w,i)=>{
 const div=document.createElement("div");div.className="worker";
 const notReady=w.condition<=WORKER_WORK_READY_CONDITION;
@@ -1211,7 +1238,7 @@ ${isWorkerJailed(w)?'<div class="warning" style="margin-top:8px;">⛓️ JAILED<
 ${!isWorkerJailed(w)&&w.condition<WORKER_HEALTHY_CONDITION?'<div class="warning" style="margin-top:8px;">⚠️ Needs attention — morale slipping</div>':''}
 <br><button ${isWorkerJailed(w)||notReady?"disabled":""} onclick="sendWorker(${i})">SEND ${w.name.toUpperCase()}</button>
 <button onclick="restWorker(${i})">REST ${w.name.toUpperCase()}</button>
-<button onclick="maintainWorker(${i},'beer')">GIVE BEER</button>
+<button onclick="maintainWorker(${i},'beer')">SUPPLIES: GIVE BEER</button>
 <button onclick="maintainWorker(${i},'weed')">GIVE WEED</button>
 <button onclick="maintainWorker(${i},'cigarettes')">GIVE CIGS</button>
 <button onclick="maintainWorker(${i},'cocaine')">GIVE COKE</button>`;
@@ -1298,8 +1325,8 @@ function renderIdentity(){
 const box=document.getElementById("identityPanel"),sec=document.getElementById("identitySection");if(!box)return;
 if(playerLevel<2){box.innerHTML="";if(sec)sec.style.display="none";return}
 if(sec)sec.style.display="block";
-box.innerHTML=`<div class="identity-card"><div class="identity-section"><b>Player Name</b><div>${playerName}</div>
-<input id="newPlayerName" class="identity-input" maxlength="30" value="${playerName}"><button onclick="changePlayerName()">CHANGE NAME</button></div>
+box.innerHTML=`<div class="identity-card"><div class="identity-section"><b>Player Name</b><div>${escapeHtml(playerName)}</div>
+<input id="newPlayerName" class="identity-input" maxlength="30" value="${escapeHtml(playerName)}"><button onclick="changePlayerName()">CHANGE NAME</button></div>
 <div class="identity-section"><b>Operation</b><div>${operationName}</div>
 <input id="newOperationName" class="identity-input" maxlength="40" value="${operationName}"><button onclick="changeOperationName()">RENAME</button></div></div>`;
 }
@@ -1318,6 +1345,10 @@ log("[PROPERTY] "+name+" is now your active property. Storage and capacity now f
 saveGame();updateScreen();
 }
 function propertyCapacity(){
+    // PROPERTY CAPACITY IS DISPLAY-ONLY FOR NOW: currentCrewCapacity() remains the live organization-capacity rule.
+
+    // DISPLAY/SEMANTICS CHECK: property capacity is currently separate from currentCrewCapacity(); do not merge without save testing.
+
 const p=activeProperty();return p&&PROPERTY_DATA[p.name]?PROPERTY_DATA[p.name].capacity:25;
 }
 function vehicleStorageLimit(){
@@ -1348,7 +1379,7 @@ const box=document.getElementById("businessPanel"),sec=document.getElementById("
 if(playerLevel<3){box.innerHTML="";if(sec)sec.style.display="none";return} if(sec)sec.style.display="block";
 let html="";
 if(!hasBusiness("Strip Club"))html+=`<div class="business-card"><strong>Strip Club</strong><p>$5,000</p><p>Gross: $1,000/24h · Op: $300 · Net: $700</p><p>Can attract new recruits.</p><button onclick="buyBusiness('Strip Club')">BUY — $5,000</button></div>`;
-if(!hasBusiness("Auto Repair Shop"))html+=`<div class="business-card"><strong>Auto Repair Shop</strong><p>Central vehicle-management location.</p><p>Gross: $700/24h · Op: $250 · Net: $450</p><p>Buying price is not specified in the current design notes, so this facility unlocks at Level 7 without an additional purchase charge.</p><button onclick="openAutoShop()">OPEN AUTO REPAIR SHOP</button></div>`;
+if(!hasBusiness("Auto Repair Shop"))html+=`<div class="business-card"><strong>Auto Repair Shop</strong><p>Central vehicle-management location.</p><p>Gross: $700/24h · Op: $250 · Net: $450</p><p>Buying price is not specified in the current design notes, so this facility unlocks at Level 7 without an additional purchase charge.</p><button onclick="openAutoShop()" id="autoShopButton">OPEN AUTO REPAIR SHOP</button></div>`;
 if(borisNightclubForSale&&!ownsBorisNightclub())html+=`<div class="business-card"><strong>Boris's Run-Down Nightclub</strong><p class="warning">FOR SALE — $${BORIS_CLUB_PRICE.toLocaleString()}</p><p>Gross: $${BORIS_CLUB_GROSS}/24h · Op: $${BORIS_CLUB_OPERATING} · Net: $${BORIS_CLUB_NET}</p><button onclick="buyBorisNightclub()">BUY</button></div>`;
 if(!businesses.length&&!html){box.innerHTML='<div class="locked">No businesses.</div>';return}
 businesses.forEach((b,i)=>{
@@ -1362,7 +1393,9 @@ html+=`<div class="business-card"><strong>${b.name}</strong>${b.name==="Massage 
 box.innerHTML=html;
 }
 function buyBusiness(name){if(playerLevel<3){log("[BUSINESS] Businesses unlock at Level 3.");return}if(name!=="Strip Club")return;if(hasBusiness(name))return;if(cash<5000){log("[BUSINESS] Need $5,000.");return}cash-=5000;businesses.push({name:"Strip Club",gross:1000,operatingRate:0,operatingCost:300,net:700,ready:true,lastCollectionDay:gameDay-1,staff:0});log("[BUSINESS] Strip Club opened for $5,000.");saveGame();updateScreen()}
-function openAutoShop(){if(hasBusiness("Auto Repair Shop"))return;businesses.push({name:"Auto Repair Shop",gross:700,operatingRate:0,operatingCost:250,net:450,ready:true,lastCollectionDay:gameDay-1});log("[BUSINESS] Auto Repair Shop is now operational.");saveGame();updateScreen()}
+function openAutoShop(){
+if(playerLevel<7){log("[BUSINESS] Auto Repair Shop unlocks at Level 7.");return}
+if(hasBusiness("Auto Repair Shop"))return;businesses.push({name:"Auto Repair Shop",gross:700,operatingRate:0,operatingCost:250,net:450,ready:true,lastCollectionDay:gameDay-1});log("[BUSINESS] Auto Repair Shop is now operational.");saveGame();updateScreen()}
 function collectBusiness(i){const b=businesses[i];if(!b)return;if(Number(b.lastCollectionDay)===Number(gameDay)){log("[BUSINESS] Already collected.");return}const p=Number(b.net);if(!Number.isFinite(p)||p<=0)return;cash+=p;b.lastCollectionDay=gameDay;log("[BUSINESS PAYOUT] "+b.name+" paid you +$"+p.toLocaleString()+" for today.");saveGame();updateScreen()}
 
 function renderArmsDealer(){
@@ -1462,7 +1495,9 @@ if(cash<3000){log("[MARKET] Not enough cash.");return}
 cash-=3000;turns+=10;purchasedTurnsToday+=10;
 log("[MARKET] +10 playable turns. Purchased "+purchasedTurnsToday+"/"+TURN_PURCHASE_LIMIT+" extra turns this 24-hour period.");
 saveGame();updateScreen()}
-function useToken(){if(tokens<=0){log("[TOKEN] None left.");return}if(turns>=maxTurns){log("[TOKEN] Turns full.");return}tokens--;turns=Math.min(maxTurns,turns+5);log("[TOKEN] +5 turns.");saveGame();updateScreen()}
+function useToken(){
+    // LEGACY/DORMANT SYSTEM: retain for save compatibility until token UI is formally retired.
+if(tokens<=0){log("[TOKEN] None left.");return}if(turns>=maxTurns){log("[TOKEN] Turns full.");return}tokens--;turns=Math.min(maxTurns,turns+5);log("[TOKEN] +5 turns.");saveGame();updateScreen()}
 
 function weatherLabel(){return currentWeather==="rain"?"RAIN":currentWeather==="storm"?"STORM":"CLEAR"}
 function rollWeather(){if(weatherDay===gameDay)return;weatherDay=gameDay;const r=Math.random();currentWeather=r<0.18?"rain":r<0.23?"storm":"clear";log("[WEATHER] Conditions changed: "+weatherLabel()+".")}
@@ -1622,6 +1657,8 @@ return required;
 
 function getReadyWorkers(limit){return stable.filter(w=>w&&w.condition>WORKER_WORK_READY_CONDITION&&!isWorkerJailed(w)).slice(0,limit)}
 function processLocationTrip(place,workers,individual=false){
+    // SINGLE AUTHORITY FOR TRIP RESOURCE VALIDATION: keep resource gates here in sync with callers.
+
 if(!workers||!workers.length){log("[TRIP] No workers ready.");return false}
 if(!canUseCondomsForWorkers(workers))return false;
 const protection=getTripProtection(individual);if(protection.count<1){log("[TRIP] No protection.");return false}
@@ -1967,7 +2004,7 @@ log("[ATTACK] Trouble found the operation while you were away, with nobody there
 }
 }
 }
-function processPassiveBusinessIncome(){businesses.forEach(b=>{if(!b||!b.net)return;if(Number(b.lastPassiveDay||0)>=gameDay)return;if(b.name==="Ranch")return;});}
+
 function processStableWelfare(){
 normalizeStable();
 const neglected=[],quit=[];
