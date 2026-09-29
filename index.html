@@ -648,19 +648,30 @@ function isInjured(m){return m&&Number(m.injuredUntilDay)>Number(gameDay)}
 
 function saveGame(){
 syncCrewState();
-localStorage.setItem(SAVE_KEY,JSON.stringify({
+const savePayload=JSON.stringify({
 cash,turns,maxTurns,playerLevel,playerXP,gameMinutes,gameDay,playerName,operationName,lastTurnRegenAt,
 purchasedTurnsToday,turnPurchaseWindowStart,expenses,supplies,stable,crew,namedThugs,randomThugs,thugs:crew,ownedProperties,businesses,upgrades,tokens,
 vehicleOwnership,activeVehicleType,weapons,armorOwned,armorDurability,armsDealerUnlocked,roanokeGiftReceived,borisGiftResolved,
 borisAttackPending,borisNightclubForSale,level4RivalResolved,storyStage,roanokeLessons,tabAttention,battleState,level2DiscordPromptShown,level4XPromptShown,level6DonatePromptShown,
 cocaineUseCountToday,cocaineConsecutiveUseCount,cocaineUsersToday,cocainePoliceEventTriggeredToday,
 cocaineBribeEventTriggeredToday,unassignedThugMaintenance,activityLog,currentWeather,weatherDay,firstThreeBattles,globalAttackCounter,lastEstateMishapDay,lastRanchUpkeepDay,lastPropertyTaxDay,activePropertyName,activeRoanokeJob,roanokeGate
-}));
+});
+// Keep a recovery copy of the last known-good save. This is intentionally separate
+// from the live key so a future migration error can never erase the player's state.
+const previous=localStorage.getItem(SAVE_KEY);
+if(previous&&previous!==savePayload)localStorage.setItem(SAVE_KEY+"Backup",previous);
+localStorage.setItem(SAVE_KEY,savePayload);
 const s=document.getElementById("saveStatus");if(s) s.textContent="Game saved.";
 }
 
 function loadGame(){
-const saved=localStorage.getItem(SAVE_KEY);if(!saved) return false;
+let saved=localStorage.getItem(SAVE_KEY);
+let saveSource=SAVE_KEY;
+if(!saved){
+  const backup=localStorage.getItem(SAVE_KEY+"Backup");
+  if(backup){saved=backup;saveSource=SAVE_KEY+"Backup";}
+}
+if(!saved)return false;
 try{
 const d=JSON.parse(saved);
 cash=d.cash??cash;turns=d.turns??turns;maxTurns=d.maxTurns??maxTurns;
@@ -796,8 +807,16 @@ else { const mp=businesses.find(b=>b&&b.name==="Massage Parlor / Nail Salon"); m
 }
 if(!totalOwnedVehicles()) vehicleOwnership={"Honda Civic":{owned:1,condition:85,upgradeLevel:0,speedBonus:0,reliabilityBonus:0}};
 if(!activeVehicleType||ownedCountOf(activeVehicleType)<=0) activeVehicleType=Object.keys(vehicleOwnership).find(n=>ownedCountOf(n)>0)||"Honda Civic";
+if(saveSource!==SAVE_KEY){
+  // A backup was recoverable. Restore it to the live slot only after it has loaded cleanly.
+  localStorage.setItem(SAVE_KEY,saved);
+}
 return true;
-}catch(e){console.log(e);return false}
+}catch(e){
+  console.error("[SAVE] Legacy save could not be loaded and was NOT overwritten.",e);
+  window.__pimpSlapSaveLoadError={message:String(e&&e.message||e),source:saveSource};
+  return null;
+}
 }
 
 function manualSave(){saveGame();log("[SAVE] Game saved successfully.");updateScreen()}
@@ -2135,7 +2154,15 @@ processPropertyEconomy();processOfflineAttack();processStableWelfare();rollWeath
 
 function bootGame(){
 const loaded=loadGame();
-if(loaded)log("[SAVE] Previous game loaded.");else startOpeningStory();
+if(loaded===true){
+  log("[SAVE] Previous game loaded.");
+}else if(loaded===null){
+  // NEVER start a fresh game after a save-load error. That would overwrite a legacy player.
+  log("[SAVE] Your existing save was found but could not be loaded. It has NOT been replaced.");
+  log("[SAVE] Check the browser console for the exact migration error, or restore the backup save.");
+}else{
+  startOpeningStory();
+}
 updateScreen();
 
 const TURN_REGEN_MS=13*60*1000;
