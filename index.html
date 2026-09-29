@@ -820,7 +820,7 @@ return true;
 }
 
 function manualSave(){saveGame();log("[SAVE] Game saved successfully.");updateScreen()}
-function resetGame(){if(!confirm("Start a NEW GAME? This erases your save."))return;localStorage.removeItem(SAVE_KEY);location.reload()}
+function resetGame(){if(!confirm("Start a NEW GAME? This erases your save and its recovery backup."))return;localStorage.removeItem(SAVE_KEY);localStorage.removeItem(SAVE_KEY+"Backup");location.reload()}
 function formatGameTime(m){let h=Math.floor(m/60),mins=m%60,s=h>=12?"PM":"AM",d=h%12;if(d===0)d=12;return d+":"+String(mins).padStart(2,"0")+" "+s}
 
 function logIcon(t){
