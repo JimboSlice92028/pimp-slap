@@ -203,7 +203,10 @@ button.roanoke-blocked:hover{background:#d19a10}
 <div class="panel" style="margin-top:20px;">
 <h2>Game Save</h2>
 <div>Auto-saves in this browser.</div>
+<div id="saveStatus" role="status" style="margin:10px 0;color:#7cff7c">Save status: checking…</div>
 <button onclick="manualSave()">SAVE GAME</button>
+<button onclick="exportGameSave()">DOWNLOAD SAVE BACKUP</button>
+<label style="display:block;margin-top:12px">RESTORE SAVE FILE (JSON)<input type="file" accept=".json,application/json" onchange="importGameSave(this)" style="display:block;margin-top:8px"></label>
 <button onclick="resetGame()">START NEW GAME</button>
 </div>
 </div>
@@ -333,6 +336,50 @@ const TURN_PURCHASE_WINDOW_MS=24*60*60*1000;
 let purchasedTurnsToday=0,turnPurchaseWindowStart=Date.now();
 let playerName="Pimp",operationName="The Operation",lastTurnRegenAt=Date.now();
 const SAVE_KEY="pimpSlapSave";
+let saveWritesBlocked=false;
+let saveStorageError="";
+function saveWarning(message){
+  saveStorageError=String(message||"Save storage unavailable");
+  const el=document.getElementById("saveStatus");
+  if(el){el.textContent="⚠ "+saveStorageError;el.style.color="#ffd36b";}
+  console.error("[SAVE]",saveStorageError);
+}
+function safeStorageRead(key){
+  try{return localStorage.getItem(key)}
+  catch(e){saveWritesBlocked=true;saveWarning("Browser storage blocked: "+e.message);return null}
+}
+function validateSaveObject(d){
+  return d&&typeof d==="object"&&!Array.isArray(d)&&
+    Number.isFinite(Number(d.cash))&&Number.isFinite(Number(d.playerLevel))&&
+    Array.isArray(d.stable)&&Number(d.playerLevel)>=1;
+}
+function exportGameSave(){
+  const primary=safeStorageRead(SAVE_KEY),backup=safeStorageRead(SAVE_KEY+"Backup");
+  const candidates=[primary,backup].filter(Boolean);
+  let data=null;
+  for(const raw of candidates){try{if(validateSaveObject(JSON.parse(raw))){data=raw;break}}catch(e){}}
+  if(!data){alert("No readable save to export. Do not clear browser data.");return}
+  const blob=new Blob([data],{type:"application/json"});
+  const url=URL.createObjectURL(blob),a=document.createElement("a");
+  a.href=url;a.download="PimpSlap-save-"+new Date().toISOString().slice(0,10)+".json";
+  document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),15000);
+}
+async function importGameSave(input){
+  const file=input.files&&input.files[0];if(!file)return;
+  try{
+    const raw=await file.text(),d=JSON.parse(raw);
+    if(!validateSaveObject(d))throw Error("Not a valid Pimp Slap save.");
+    if(!confirm("RESTORE GAME FROM FILE? This replaces the current active save. Export your current game first."))return;
+    const existing=safeStorageRead(SAVE_KEY);
+    if(saveWritesBlocked)throw Error("Browser storage is blocked.");
+    if(existing)localStorage.setItem(SAVE_KEY+"ImportRecovery",existing);
+    localStorage.setItem(SAVE_KEY,raw);
+    if(localStorage.getItem(SAVE_KEY)!==raw)throw Error("Save verification failed.");
+    location.reload();
+  }catch(e){saveWarning("Import failed: "+e.message);alert("Restore failed. Existing save was not intentionally cleared. "+e.message)}
+  finally{input.value=""}
+}
+
 let level2DiscordPromptShown=false,level4XPromptShown=false,level6DonatePromptShown=false;
 const AGE_GATE_KEY="pimpSlapAgeGateAccepted";
 function showAgeGate(){
@@ -344,7 +391,7 @@ const o=document.getElementById("ageGateOverlay");
 if(o)o.style.display="none";
 }
 function acceptAgeGate(){
-localStorage.setItem(AGE_GATE_KEY,"yes");
+try{localStorage.setItem(AGE_GATE_KEY,"yes")}catch(e){saveWarning("Age confirmation storage failed: "+e.message)}
 hideAgeGate();
 bootGame();
 }
@@ -647,6 +694,8 @@ function ownsBorisNightclub(){return businesses.some(b=>b&&b.name==="Boris's Run
 function isInjured(m){return m&&Number(m.injuredUntilDay)>Number(gameDay)}
 
 function saveGame(){
+if(saveWritesBlocked){saveWarning("Save blocked to protect existing data. Export any recoverable save.");return false;}
+try{
 syncCrewState();
 const savePayload=JSON.stringify({
 cash,turns,maxTurns,playerLevel,playerXP,gameMinutes,gameDay,playerName,operationName,lastTurnRegenAt,
@@ -656,24 +705,32 @@ borisAttackPending,borisNightclubForSale,level4RivalResolved,storyStage,roanokeL
 cocaineUseCountToday,cocaineConsecutiveUseCount,cocaineUsersToday,cocainePoliceEventTriggeredToday,
 cocaineBribeEventTriggeredToday,unassignedThugMaintenance,activityLog,currentWeather,weatherDay,firstThreeBattles,globalAttackCounter,lastEstateMishapDay,lastRanchUpkeepDay,lastPropertyTaxDay,activePropertyName,activeRoanokeJob,roanokeGate
 });
-// Keep a recovery copy of the last known-good save. This is intentionally separate
-// from the live key so a future migration error can never erase the player's state.
 const previous=localStorage.getItem(SAVE_KEY);
-if(previous&&previous!==savePayload)localStorage.setItem(SAVE_KEY+"Backup",previous);
+if(previous&&previous!==savePayload){
+  try{const parsed=JSON.parse(previous);
+    if(validateSaveObject(parsed))localStorage.setItem(SAVE_KEY+"Backup",previous);
+  }catch(e){console.warn("[SAVE] Preserving unreadable live save; refusing overwrite.",e);saveWritesBlocked=true;saveWarning("Existing save is unreadable; automatic overwrite blocked.");return false;}
+}
 localStorage.setItem(SAVE_KEY,savePayload);
-const s=document.getElementById("saveStatus");if(s) s.textContent="Game saved.";
+if(localStorage.getItem(SAVE_KEY)!==savePayload)throw Error("Save verification failed.");
+const status=document.getElementById("saveStatus");
+if(status){status.textContent="✓ Saved locally "+new Date().toLocaleTimeString();status.style.color="#7cff7c";}
+return true;
+}catch(e){saveWarning("Save failed: "+e.message);return false;}
 }
 
 function loadGame(){
-let saved=localStorage.getItem(SAVE_KEY);
+let saved=safeStorageRead(SAVE_KEY);
 let saveSource=SAVE_KEY;
 if(!saved){
-  const backup=localStorage.getItem(SAVE_KEY+"Backup");
+  const backup=safeStorageRead(SAVE_KEY+"Backup");
   if(backup){saved=backup;saveSource=SAVE_KEY+"Backup";}
 }
+if(saveWritesBlocked)return null;
 if(!saved)return false;
 try{
 const d=JSON.parse(saved);
+if(!validateSaveObject(d))throw Error("Save missing required game fields.");
 cash=d.cash??cash;turns=d.turns??turns;maxTurns=d.maxTurns??maxTurns;
 purchasedTurnsToday=Number.isFinite(Number(d.purchasedTurnsToday))?Math.max(0,Math.floor(Number(d.purchasedTurnsToday))):0;
 turnPurchaseWindowStart=Number.isFinite(Number(d.turnPurchaseWindowStart))?Number(d.turnPurchaseWindowStart):Date.now();
@@ -809,18 +866,30 @@ if(!totalOwnedVehicles()) vehicleOwnership={"Honda Civic":{owned:1,condition:85,
 if(!activeVehicleType||ownedCountOf(activeVehicleType)<=0) activeVehicleType=Object.keys(vehicleOwnership).find(n=>ownedCountOf(n)>0)||"Honda Civic";
 if(saveSource!==SAVE_KEY){
   // A backup was recoverable. Restore it to the live slot only after it has loaded cleanly.
-  localStorage.setItem(SAVE_KEY,saved);
+  try{localStorage.setItem(SAVE_KEY,saved)}catch(e){saveWarning("Backup loaded but primary restore failed: "+e.message)}
 }
 return true;
 }catch(e){
   console.error("[SAVE] Legacy save could not be loaded and was NOT overwritten.",e);
   window.__pimpSlapSaveLoadError={message:String(e&&e.message||e),source:saveSource};
+  saveWritesBlocked=true;
+  saveWarning("Existing save could not load. All saves blocked to protect recovery data.");
   return null;
 }
 }
 
-function manualSave(){saveGame();log("[SAVE] Game saved successfully.");updateScreen()}
-function resetGame(){if(!confirm("Start a NEW GAME? This erases your save and its recovery backup."))return;localStorage.removeItem(SAVE_KEY);localStorage.removeItem(SAVE_KEY+"Backup");localStorage.removeItem(AGE_GATE_KEY);location.reload()}
+function manualSave(){if(saveGame())log("[SAVE] Game saved successfully.");else alert("Save failed or blocked. Do not clear browser data. See Game Save status.");updateScreen()}
+function resetGame(){
+if(saveWritesBlocked){alert("Reset disabled: an existing save may need recovery.");return;}
+if(!confirm("Start a NEW GAME? Download your save backup first. This erases your current browser save."))return;
+try{
+ const previous=localStorage.getItem(SAVE_KEY);
+ if(previous)localStorage.setItem(SAVE_KEY+"ResetRecovery",previous);
+ localStorage.removeItem(SAVE_KEY);
+ localStorage.removeItem(AGE_GATE_KEY);
+ location.reload();
+}catch(e){saveWarning("New game failed: "+e.message)}
+}
 function formatGameTime(m){let h=Math.floor(m/60),mins=m%60,s=h>=12?"PM":"AM",d=h%12;if(d===0)d=12;return d+":"+String(mins).padStart(2,"0")+" "+s}
 
 function logIcon(t){
@@ -2156,17 +2225,20 @@ function bootGame(){
 const loaded=loadGame();
 if(loaded===true){
   log("[SAVE] Previous game loaded.");
+  const status=document.getElementById("saveStatus");if(status){status.textContent="✓ Existing save loaded";status.style.color="#7cff7c";}
 }else if(loaded===null){
   // NEVER start a fresh game after a save-load error. That would overwrite a legacy player.
   log("[SAVE] Your existing save was found but could not be loaded. It has NOT been replaced.");
   log("[SAVE] Check the browser console for the exact migration error, or restore the backup save.");
 }else{
   startOpeningStory();
+  const status=document.getElementById("saveStatus");if(status&&!saveStorageError)status.textContent="New game — browser save pending";
 }
 updateScreen();
 
 const TURN_REGEN_MS=13*60*1000;
 function applyTurnRegeneration(){
+if(saveWritesBlocked)return;
 const now=Date.now();
 if(!Number.isFinite(lastTurnRegenAt)||lastTurnRegenAt<=0){lastTurnRegenAt=now;return}
 const intervals=Math.floor((now-lastTurnRegenAt)/TURN_REGEN_MS);if(intervals<=0)return;
@@ -2178,16 +2250,16 @@ if(playerLevel>=3&&!roanokeGiftReceived)receiveRoanokeGift();
 saveGame();updateScreen();
 }
 applyTurnRegeneration();
-if(playerLevel>=3&&!borisGiftResolved)scheduleBorisGiftScene(3500);
-if(playerLevel===4&&!level4RivalResolved)scheduleLevel4RivalScene(5000);
+if(!saveWritesBlocked&&playerLevel>=3&&!borisGiftResolved)scheduleBorisGiftScene(3500);
+if(!saveWritesBlocked&&playerLevel===4&&!level4RivalResolved)scheduleLevel4RivalScene(5000);
 setInterval(applyTurnRegeneration,30000);
 document.addEventListener("visibilitychange",()=>{if(!document.hidden)applyTurnRegeneration()});
 }
 
 // Existing players are never interrupted by the age gate. A saved game bypasses it.
 // A brand-new player must answer the 18+ question before the game initializes.
-const hasExistingGame=!!localStorage.getItem(SAVE_KEY);
-const hasAcceptedAge=localStorage.getItem(AGE_GATE_KEY)==="yes";
+const hasExistingGame=!!safeStorageRead(SAVE_KEY)||!!safeStorageRead(SAVE_KEY+"Backup")||saveWritesBlocked;
+const hasAcceptedAge=safeStorageRead(AGE_GATE_KEY)==="yes";
 if(hasExistingGame||hasAcceptedAge)bootGame();
 else showAgeGate();
 </script>
