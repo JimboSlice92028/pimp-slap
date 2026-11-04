@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pimp Slap</title>
+<title>Pros &amp; Cons — Turf Strategy</title>
 <style>
 body{margin:0;background:#111;color:#eee;font-family:Arial,sans-serif}
 .game{max-width:1100px;margin:auto;padding:20px}
@@ -101,13 +101,33 @@ button.roanoke-blocked:hover{background:#d19a10}
 @media (max-width:900px){.stats{grid-template-columns:repeat(3,1fr)}}
 @media (max-width:800px){.tab-bar{grid-template-columns:repeat(2,1fr)}}
 @media (max-width:700px){.stats,.home-layout{grid-template-columns:1fr}.home-activity,.home-actions,.home-encounter,.home-supplies,.home-progress{grid-column:1;grid-row:auto}h1{font-size:38px}}
+
+/* PROS & CONS visual rebrand — game mechanics and legacy save keys unchanged */
+:root{--pc-bg:#0a0f17;--pc-panel:#14202c;--pc-border:#304354;--pc-accent:#a7f3d0;--pc-text:#f3f7f9}
+body{background:radial-gradient(ellipse at 50% -15%,#1a3441,#0a0f17 58%);color:var(--pc-text);font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+.game{max-width:1160px;padding:clamp(12px,3vw,30px)}
+.pc-header{padding:28px 0 22px;margin-bottom:14px;border-bottom:1px solid var(--pc-border)}
+.pc-kicker{font:700 11px/1.4 monospace;letter-spacing:.2em;color:#90b6b8}
+.pc-header h1{text-align:left;font-size:clamp(44px,9vw,100px);font-weight:950;letter-spacing:-.07em;line-height:1;margin:12px 0;color:#f7fafc}
+.pc-header h1 em{color:var(--pc-accent);font-style:normal}
+.pc-tag{font:700 12px/1.5 monospace;letter-spacing:.18em;color:var(--pc-accent)}
+.subtitle{text-align:left;color:#adbdc6;margin-bottom:24px;font-size:14px}
+.stat,.panel{background:var(--pc-panel);border-color:var(--pc-border);border-radius:8px}
+.stat strong,h2,.highlight{color:var(--pc-accent)}
+.worker,.crew-member,.business-card,.vehicle-card,.market-card,.weapon-card,.identity-card,.property-card,.supply-item,.battle-card{background:#1b2b36;border:1px solid #304354}
+button{background:#315d52;color:#f1fff8;border:1px solid #518878;border-radius:6px}
+button:hover{background:#427869}button:disabled{background:#2b3741;border-color:#40515c;color:#99a9b0}
+.tab-button{background:#1b2c38;border:1px solid #3c5661}.tab-button.active{background:#427869}
+.encounter,.battle-status{border-left-color:var(--pc-accent)}.log{background:#0a141b;border:1px solid #2b4450}
+.age-gate-card,.levelup-card{background:#14202c;border-color:var(--pc-accent);box-shadow:0 0 45px #a7f3d01c}
+.age-gate-card h2,.levelup-number{color:var(--pc-accent)}
+@media(max-width:700px){.pc-header h1{font-size:clamp(42px,11vw,70px)}}
 </style>
 </head>
 <body>
 <div class="game">
-<div style="width:100%;text-align:center;">
-<img src="Untitled_Artwork (2).png" alt="Pimp Slap" style="display:inline-block;width:100%;max-width:600px;height:auto;margin:0 auto;">
-<div class="subtitle">Build your operation. Survive the streets. Make your money.</div>
+<header class="pc-header"><div class="pc-kicker">SIRIUS LEE LABS / CLANKENSTEIN INDUSTRIES</div><h1>PROS <em>&amp;</em> CONS</h1><div class="pc-tag">EVERY MOVE HAS A PRICE.</div></header>
+<div class="subtitle">Build your operation. Weigh the risks. Own the consequences.</div>
 
 <div class="stats">
 <div class="stat">CASH<strong id="cash">$500</strong></div>
@@ -135,7 +155,7 @@ button.roanoke-blocked:hover{background:#d19a10}
 <div class="panel home-activity">
 <h2>Activity Log</h2>
 <button onclick="clearActivityLog()" style="margin-bottom:8px;">CLEAR LOG</button>
-<div id="log" class="log">[GAME] Welcome to Pimp Slap.</div>
+<div id="log" class="log">[GAME] Welcome to Pros & Cons.</div>
 </div>
 <div class="panel home-actions">
 <h2>Locations</h2>
@@ -185,10 +205,8 @@ button.roanoke-blocked:hover{background:#d19a10}
 <div id="identitySection" class="panel" style="display:none;"><h2>Identity</h2><div id="identityPanel"></div></div>
 <div class="panel" style="margin-top:20px;">
 <h2>Socials</h2>
-<p class="tab-note">Follow Pimp-Slap The Game and join the community.</p>
+<p class="tab-note">Join the community and follow development updates.</p>
 <a href="https://discord.gg/FM3Qvb4gU6" target="_blank" rel="noopener noreferrer" style="display:block;text-align:center;text-decoration:none;"><button type="button" style="background:#5865f2;">JOIN THE DISCORD</button></a>
-<a href="https://x.com/pimpslapgame" target="_blank" rel="noopener noreferrer" style="display:block;text-align:center;text-decoration:none;"><button type="button" style="background:#fff;color:#000;">FOLLOW ON X</button></a>
-<a href="mailto:pimpslapgame@gmail.com" target="_blank" rel="noopener noreferrer" style="display:block;text-align:center;text-decoration:none;"><button type="button" style="background:#5865f2;">EMAIL SUPPORT</button></a>
 </div>
 <div class="panel" style="margin-top:20px;">
 <h2>Support The Developer</h2>
@@ -227,8 +245,8 @@ button.roanoke-blocked:hover{background:#d19a10}
 
 <div id="ageGateOverlay" class="age-gate-overlay">
 <div class="age-gate-card">
-<h2>PIMP-SLAP</h2>
-<p><strong>Pimp-Slap is a satirical look at the world we live in.</strong></p>
+<h2>Pros & Cons</h2>
+<p><strong>Pros & Cons is a satirical look at the world we live in.</strong></p>
 <p>Nothing in this game is meant to excuse or condone violence. That being said...</p>
 <p class="age-gate-warning">Do your worst.</p>
 <p style="font-size:28px;font-weight:bold;color:#fff;margin-bottom:0;">18?</p>
@@ -252,10 +270,10 @@ button.roanoke-blocked:hover{background:#d19a10}
 <div class="discord-prompt-card">
 <h2>LIKE WHAT YOU SEE?</h2>
 <p>You made it to Level 2.</p>
-<p>Now jump in the Discord and see what else is going on with <strong>Pimp-Slap</strong>.</p>
+<p>Now jump in the Discord and see what else is going on with <strong>Pros & Cons</strong>.</p>
 <div class="discord-prompt-buttons">
 <a href="https://discord.gg/W6wqjT9h2" target="_blank" rel="noopener noreferrer" style="text-decoration:none;"><button type="button" class="discord-prompt-button discord-join-button">JUMP IN THE DISCORD</button></a>
-<button type="button" class="discord-prompt-button" onclick="closeLevel2DiscordPopup()">NO — KEEP PLAYING</button>
+<button type="button" class="discord-prompt-button" onclick="closeLevel2DiscordPopup()">KEEP PLAYING</button>
 </div>
 </div>
 </div>
@@ -264,10 +282,9 @@ button.roanoke-blocked:hover{background:#d19a10}
 <div class="x-prompt-card">
 <h2>LIKE WHAT YOU SEE?</h2>
 <p>You made it to Level 4.</p>
-<p>Now check out <strong>X</strong> and follow <strong>Pimp-Slap The Game (@pimpslapgame)</strong>.</p>
+<p>The old social account is being retired as part of the Pros &amp; Cons rebrand.</p>
 <div class="x-prompt-buttons">
-<a href="https://x.com/pimpslapgame" target="_blank" rel="noopener noreferrer" style="text-decoration:none;"><button type="button" class="x-prompt-button x-follow-button">YES — CHECK OUT X</button></a>
-<button type="button" class="x-prompt-button" onclick="closeLevel4XPopup()">NO — KEEP PLAYING</button>
+<button type="button" class="x-prompt-button" onclick="closeLevel4XPopup()">KEEP PLAYING</button>
 </div>
 </div>
 </div>
@@ -280,7 +297,7 @@ button.roanoke-blocked:hover{background:#d19a10}
 <p>All funds go to development, dog treats and bad decisions. Thank you!</p>
 <div class="donate-prompt-buttons">
 <a href="https://venmo.com/u/Sirius-Smooth" target="_blank" rel="noopener noreferrer" style="text-decoration:none;"><button type="button" class="donate-prompt-button donate-button">YES — DONATE</button></a>
-<button type="button" class="donate-prompt-button" onclick="closeLevel6DonatePopup()">NO — KEEP PLAYING</button>
+<button type="button" class="donate-prompt-button" onclick="closeLevel6DonatePopup()">KEEP PLAYING</button>
 </div>
 </div>
 </div>
@@ -361,14 +378,14 @@ function exportGameSave(){
   if(!data){alert("No readable save to export. Do not clear browser data.");return}
   const blob=new Blob([data],{type:"application/json"});
   const url=URL.createObjectURL(blob),a=document.createElement("a");
-  a.href=url;a.download="PimpSlap-save-"+new Date().toISOString().slice(0,10)+".json";
+  a.href=url;a.download="ProsAndCons-save-"+new Date().toISOString().slice(0,10)+".json";
   document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),15000);
 }
 async function importGameSave(input){
   const file=input.files&&input.files[0];if(!file)return;
   try{
     const raw=await file.text(),d=JSON.parse(raw);
-    if(!validateSaveObject(d))throw Error("Not a valid Pimp Slap save.");
+    if(!validateSaveObject(d))throw Error("Not a valid Pros & Cons save.");
     if(!confirm("RESTORE GAME FROM FILE? This replaces the current active save. Export your current game first."))return;
     const existing=safeStorageRead(SAVE_KEY);
     if(saveWritesBlocked)throw Error("Browser storage is blocked.");
